@@ -5,7 +5,7 @@
     "stargazers_count": 87,
     "forks_count": 23,
     "language": "Python",
-    "pushed_at": "2026-09-13T05:43:40Z",
+    "pushed_at": "2026-09-13T11:41:41Z",
     "html_url": "https://github.com/shiaho777/WebToApp"
   },
   {
@@ -74,7 +74,7 @@
   {
     "name": "LuaXIDE",
     "description": "Android Lua IDE with built-in interpreter, visual UI designer, debugger, and APK builder — all on-device, no root required.",
-    "stargazers_count": 5,
+    "stargazers_count": 6,
     "forks_count": 0,
     "language": "C",
     "pushed_at": "2026-09-12T09:30:14Z",
@@ -167,8 +167,17 @@
     "stargazers_count": 1,
     "forks_count": 0,
     "language": "Python",
-    "pushed_at": "2026-09-13T05:29:26Z",
+    "pushed_at": "2026-09-13T12:28:59Z",
     "html_url": "https://github.com/shiaho777/pyj-j"
+  },
+  {
+    "name": "browser-engine-shia",
+    "description": "A from-scratch, read-it-front-to-back browser engine. North star: highest compat-per-LOC.",
+    "stargazers_count": 1,
+    "forks_count": 0,
+    "language": "TypeScript",
+    "pushed_at": "2026-09-13T08:57:07Z",
+    "html_url": "https://github.com/shiaho777/browser-engine-shia"
   },
   {
     "name": "stratum",
@@ -196,15 +205,6 @@
     "language": "C++",
     "pushed_at": "2026-08-31T13:01:37Z",
     "html_url": "https://github.com/shiaho777/esp-overlay"
-  },
-  {
-    "name": "browser-engine-shia",
-    "description": "A from-scratch, read-it-front-to-back browser engine. North star: highest compat-per-LOC.",
-    "stargazers_count": 1,
-    "forks_count": 0,
-    "language": "TypeScript",
-    "pushed_at": "2026-08-31T11:58:59Z",
-    "html_url": "https://github.com/shiaho777/browser-engine-shia"
   },
   {
     "name": "issue-pr-ci-delivery",
