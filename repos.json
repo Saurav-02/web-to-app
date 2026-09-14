@@ -108,22 +108,22 @@
     "html_url": "https://github.com/shiaho777/anthropic-ui-skill"
   },
   {
-    "name": "memx",
-    "description": "MemX — ~100× lower LLM memory on Apple, original precision. Stable planes: ~9× phys · ~100× engine · ~300× vessel capability (bitexact).",
-    "stargazers_count": 4,
-    "forks_count": 0,
-    "language": "Objective-C",
-    "pushed_at": "2026-09-10T15:30:32Z",
-    "html_url": "https://github.com/shiaho777/memx"
-  },
-  {
     "name": "clipshelf",
     "description": "macOS menu bar clipboard history — rules on copy, app-aware paste, local search.",
     "stargazers_count": 4,
     "forks_count": 0,
     "language": "Swift",
-    "pushed_at": "2026-09-10T04:09:13Z",
+    "pushed_at": "2026-09-14T12:39:27Z",
     "html_url": "https://github.com/shiaho777/clipshelf"
+  },
+  {
+    "name": "memx",
+    "description": "MemX — ~100× lower LLM memory on Apple, original precision. Stable planes: ~9× phys · ~100× engine · ~300× vessel capability (bitexact).",
+    "stargazers_count": 4,
+    "forks_count": 0,
+    "language": "Objective-C",
+    "pushed_at": "2026-09-14T03:50:23Z",
+    "html_url": "https://github.com/shiaho777/memx"
   },
   {
     "name": "qsyy",
@@ -138,7 +138,7 @@
     "name": "An-Harness",
     "description": "Android-first on-device AI agent harness — exploring everything possible on Android",
     "stargazers_count": 3,
-    "forks_count": 0,
+    "forks_count": 1,
     "language": "Kotlin",
     "pushed_at": "2026-09-08T10:15:19Z",
     "html_url": "https://github.com/shiaho777/An-Harness"
@@ -167,7 +167,7 @@
     "stargazers_count": 1,
     "forks_count": 0,
     "language": "Python",
-    "pushed_at": "2026-09-13T21:18:53Z",
+    "pushed_at": "2026-09-14T05:39:47Z",
     "html_url": "https://github.com/shiaho777/pyj-j"
   },
   {
@@ -216,6 +216,15 @@
     "html_url": "https://github.com/shiaho777/issue-pr-ci-delivery"
   },
   {
+    "name": "LogSleuth",
+    "description": "Root-free Android logcat viewer & embeddable zero-permission logging SDK",
+    "stargazers_count": 0,
+    "forks_count": 0,
+    "language": "Kotlin",
+    "pushed_at": "2026-09-14T05:18:23Z",
+    "html_url": "https://github.com/shiaho777/LogSleuth"
+  },
+  {
     "name": "charter",
     "description": "Charter — agent-native Android framework: Compose design system, enforceable AGENTS.md contracts, and a one-command acceptance harness",
     "stargazers_count": 0,
@@ -223,14 +232,5 @@
     "language": "Kotlin",
     "pushed_at": "2026-09-10T05:36:50Z",
     "html_url": "https://github.com/shiaho777/charter"
-  },
-  {
-    "name": "LogSleuth",
-    "description": "Root-free Android logcat viewer & embeddable zero-permission logging SDK",
-    "stargazers_count": 0,
-    "forks_count": 0,
-    "language": "Kotlin",
-    "pushed_at": "2026-09-08T10:59:43Z",
-    "html_url": "https://github.com/shiaho777/LogSleuth"
   }
 ]
