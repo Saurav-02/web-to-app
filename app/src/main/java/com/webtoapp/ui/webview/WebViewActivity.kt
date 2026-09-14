@@ -92,6 +92,11 @@ import com.webtoapp.core.stats.AppUsageTracker
 import androidx.compose.ui.text.style.TextOverflow
 import com.webtoapp.ui.components.announcement.toUiTemplate
 
+/** Marker prefixes used by our own injected wrappers (userscripts, modules, bridges). */
+private fun isOwnInjectionMarker(message: String): Boolean =
+    message.startsWith("[UserScript:") || message.startsWith("[WebToApp") ||
+        message.startsWith("[WTA]") || message.startsWith("[wta-")
+
 class WebViewActivity : AppCompatActivity() {
 
     companion object {
@@ -118,11 +123,6 @@ class WebViewActivity : AppCompatActivity() {
                 putExtra(EXTRA_PREVIEW_APP_JSON, webAppJson)
             })
         }
-
-        /** Marker prefixes used by our own injected wrappers (userscripts, modules, bridges). */
-        private fun isOwnInjectionMarker(message: String): Boolean =
-            message.startsWith("[UserScript:") || message.startsWith("[WebToApp") ||
-                message.startsWith("[WTA]") || message.startsWith("[wta-")
 
         fun startForTest(context: Context, testUrl: String, moduleIds: List<String>) {
             context.startActivity(Intent(context, WebViewActivity::class.java).apply {
