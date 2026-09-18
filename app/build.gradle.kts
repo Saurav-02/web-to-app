@@ -201,6 +201,9 @@ android {
             excludes += "**/libsoftokn3.so"
             excludes += "**/liblgpllibs.so"
             excludes += "**/libplugin-container.so"
+            // GeckoView breakpad helper — depends on libmozglue.so which is already
+            // excluded, so it can never load; dead weight carried by every APK.
+            excludes += "**/libcrashhelper.so"
 
             excludes += "**/libcrypto_engine.so"
 
@@ -609,8 +612,6 @@ dependencies {
     implementation("androidx.webkit:webkit:1.9.0")
 
     implementation("androidx.datastore:datastore-preferences:1.0.0")
-
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     implementation("org.apache.commons:commons-compress:1.26.0")
     implementation("org.tukaani:xz:1.9")

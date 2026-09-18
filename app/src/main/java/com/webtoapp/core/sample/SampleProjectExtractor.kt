@@ -71,7 +71,7 @@ object SampleProjectExtractor {
 
             val assetPath = "$SAMPLES_DIR/$projectId"
             copyAssetFolder(context, assetPath, outputDir)
-            copySharedSampleAssetsIfNeeded(context, projectId, outputDir)
+            ensureSharedSampleAssets(context, projectId, outputDir)
 
             versionFile.writeText(currentVersion.toString())
 
@@ -180,27 +180,75 @@ object SampleProjectExtractor {
         }
     }
 
-    private fun copySharedSampleAssetsIfNeeded(
+    /**
+     * Shared dependency packs (python `.pypackages`, go `vendor`) are too heavy
+     * to ship inside the APK (~30MB raw). Bundled assets still win when present
+     * — a fork can re-embed `sample_projects/<pack>/` and skip downloads
+     * entirely — otherwise they are fetched on first use via
+     * [SampleSharedPackManager]. When the pack is unavailable the sample is
+     * extracted without it and the runtime falls back to online dependency
+     * installation (pip), matching the previous fail-soft behavior.
+     */
+    private suspend fun ensureSharedSampleAssets(
         context: Context,
         projectId: String,
         outputDir: File
     ) {
-
-        val pythonShared = when {
-            projectId.startsWith("python-fastapi") -> "$SAMPLES_DIR/python-fastapi-shared/.pypackages"
-            projectId.startsWith("python-django") -> "$SAMPLES_DIR/python-django-shared/.pypackages"
-            projectId.startsWith("python-flask") -> "$SAMPLES_DIR/python-flask-shared/.pypackages"
+        val shared = when {
+            projectId.startsWith("python-fastapi") -> "python-fastapi-shared" to ".pypackages"
+            projectId.startsWith("python-django") -> "python-django-shared" to ".pypackages"
+            projectId.startsWith("python-flask") -> "python-flask-shared" to ".pypackages"
+            projectId.startsWith("go-gin") -> "go-gin-shared" to "vendor"
+            projectId.startsWith("go-echo") -> "go-echo-shared" to "vendor"
+            projectId.startsWith("go-fiber") -> "go-fiber-shared" to "vendor"
             else -> null
-        }
-        pythonShared?.let { copyShared(context, it, File(outputDir, ".pypackages")) }
+        } ?: return
+        val (packName, subDir) = shared
+        val target = File(outputDir, subDir)
 
-        val goShared = when {
-            projectId.startsWith("go-gin") -> "$SAMPLES_DIR/go-gin-shared/vendor"
-            projectId.startsWith("go-echo") -> "$SAMPLES_DIR/go-echo-shared/vendor"
-            projectId.startsWith("go-fiber") -> "$SAMPLES_DIR/go-fiber-shared/vendor"
-            else -> null
+        if (bundledPackExists(context, packName)) {
+            copyShared(context, "$SAMPLES_DIR/$packName/$subDir", target)
+            return
         }
-        goShared?.let { copyShared(context, it, File(outputDir, "vendor")) }
+
+        val packDir = SampleSharedPackManager.ensurePack(context, packName)
+        val src = packDir?.let { File(it, subDir) }
+        if (src != null && src.isDirectory) {
+            AppLogger.i(TAG, "复制已下载共享依赖: ${src.absolutePath} -> ${target.absolutePath}")
+            copyDirectory(src, target)
+        }
+        if (!target.walkTopDown().any { it.isFile }) {
+            AppLogger.w(TAG, "共享 sample 依赖不可用: $packName（运行时回退到在线依赖安装）")
+        }
+    }
+
+    /**
+     * AssetManager.list() never reports dot-children like `.pypackages`, so a
+     * bundled pack is detected by scanning the host APK entries directly.
+     */
+    private fun bundledPackExists(context: Context, packName: String): Boolean {
+        val sourceApk = context.applicationInfo?.sourceDir?.takeIf { it.isNotBlank() }
+            ?.let { File(it) } ?: return false
+        if (!sourceApk.isFile) return false
+        val prefix = "assets/$SAMPLES_DIR/$packName/"
+        return try {
+            ZipFile(sourceApk).use { zip ->
+                zip.entries().asSequence().any { it.name.startsWith(prefix) }
+            }
+        } catch (e: Exception) {
+            AppLogger.w(TAG, "检测内置共享依赖失败: $packName", e)
+            false
+        }
+    }
+
+    private fun copyDirectory(src: File, dst: File) {
+        src.walkTopDown().filter { it.isFile }.forEach { file ->
+            val out = File(dst, file.relativeTo(src).path)
+            out.parentFile?.mkdirs()
+            file.inputStream().use { input ->
+                out.outputStream().use { output -> input.copyTo(output) }
+            }
+        }
     }
 
     private fun copyShared(context: Context, assetPath: String, target: File) {
@@ -245,5 +293,6 @@ object SampleProjectExtractor {
         if (samplesDir.exists()) {
             samplesDir.deleteRecursively()
         }
+        SampleSharedPackManager.clearPacks(context)
     }
 }

@@ -244,14 +244,6 @@
 -dontwarn androidx.datastore.**
 
 # ============================================================
-# Security crypto (alpha — 可能有反射)
-# ============================================================
--keep class androidx.security.crypto.** { *; }
--keep class com.google.crypto.tink.** { *; }
--dontwarn androidx.security.crypto.**
--dontwarn com.google.crypto.tink.**
-
-# ============================================================
 # Compress / xz — ServiceLoader 加载格式
 # ============================================================
 -keep class org.apache.commons.compress.compressors.FileNameUtil { *; }

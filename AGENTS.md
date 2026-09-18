@@ -16,6 +16,7 @@ Instructions for coding agents working in this repository.
 | `shell/` | Runtime template. Built to `app/src/main/assets/template/webview_shell.apk` via `:shell:assembleRelease` + `:app:syncShellTemplateApk`. |
 | `clone-host/` | Host-side APK clone / identity reshape support library. Its DEX asset generation (`syncCloneHostDex`) is deliberately disabled (`enabled = false`, AV false-positive mitigation, e0d2d4d6) — `AppCloner` runs fail-soft without the asset. |
 | `modules/` | Module Market catalog (`registry.json` + per-module folders). |
+| `sample-bundles/` | Heavy sample dependency packs (`python-*-shared.zip` + sha256-pinned `manifest.json`) fetched on demand by `SampleSharedPackManager` — deliberately NOT in `app/assets` (saves ~30MB raw / ~7MB compressed from the host APK). Regenerate via `scripts/build_sample_bundles.py`. |
 | `docs/` | VitePress documentation site (guide / developer / extensions, EN + ZH), published to https://shiaho777.github.io/web-to-app/ by `.github/workflows/docs-deploy.yml`. Site URL paths map 1:1 to files under `docs/` (`/zh/...` → `docs/zh/...`). |
 | `scripts/` | Build helpers and gates (`check_config_field_drift.py`). |
 
@@ -52,6 +53,7 @@ Mental model:
 - **Never** load user-visible text via `context.getString(R.string.*)` / `stringResource(R.string.*)`. `res/values/strings.xml` holds only `translatable="false"` resources (e.g. `app_name`) and no locale `values-*/` directories exist, so a localized resource string could never cover the 10 languages and would silently fall back to the default `values/` (Chinese). Use `Strings.xxx` (or `Strings.funName(arg)` for parameterised strings — see `linuxEnvInstalledToast(name)` for the pattern). Tests gate this: `kotlin source never references R string for user-visible text`, plus `values strings xml only holds non-localised resources` and `no locale values dirs or grouped app strings files exist` which block resurrecting resource-based strings.
 - `R.string` is reserved for `translatable="false"` non-localised resources only (e.g. `app_name`).
 - Prefer adding properties on the existing split objects (`StringsA` … `StringsE`, one object per file); match surrounding style.
+- **Shell gets generated string subsets, not the synced files.** `syncShellRuntimeSources` excludes `core/i18n/Strings*.kt`; `generateShellStrings` (→ `scripts/generate_shell_strings.py`) scans the synced runtime sources for `Strings.x` / `StringsX.y` references (aliases `val S = Strings` handled) and emits reduced `Strings.kt` / `StringsA-E.kt` under `shell/build/generated/shellStrings` carrying only referenced members plus the facade infrastructure — editor-only strings never reach the shell template or generated APKs (~0.75 MB compressed saved per APK). Missing references fail the shell compile loudly; nothing fails silently. Author strings in `app/` exactly as before — no extra step needed.
 
 ## Android and packaging constraints
 
@@ -72,6 +74,7 @@ Mental model:
 - Large runtime downloads use `NetworkModule.downloadClient` (extended timeouts), not the default short-lived client.
 - HTML / FRONTEND packaged shells need file-scheme access via `ShellWebViewConfig` (`allowFileAccess` / local-file detection). Do not regress pure file-based HTML loads.
 - Node.js export must embed `libnode_bridge.so`, `libnode.so` (16KB-aligned), and `libc++_shared.so` as native libs. Go export must embed `libgo_exec_loader.so`.
+- **C++ STL asymmetry (deliberate):** shell builds `c++_static` so the template drops `libc++_shared.so` entirely (all shell natives self-contained); the host keeps `c++_shared` because `injectNodeJsNativeLibs` copies `libc++_shared.so` from the host `nativeLibraryDir` into NODEJS_APP exports. Do not "unify" the two without rerouting that injection source.
 - Gradle custom tasks (`syncCloneHostDex`, etc.) must be configuration-cache safe: capture `File`/`Provider` values at configuration time, do not reference `Project`/`android.sdkDirectory` inside task closures.
 
 ## Workflow
@@ -114,6 +117,7 @@ Most common failure: preview works; exported APK silently skips the feature beca
 | Concern | Path |
 |---------|------|
 | What enters shell | `shell/build.gradle.kts` → `syncShellRuntimeSources` include/exclude |
+| Shell string subset | `:shell:generateShellStrings` → `scripts/generate_shell_strings.py` |
 | Shell template build | `:shell:assembleRelease` + `:app:syncShellTemplateApk` |
 | Template output | `app/src/main/assets/template/webview_shell.apk` |
 | Config → shell JSON | `app/.../apkbuilder/ApkConfigJsonFactory.kt` |

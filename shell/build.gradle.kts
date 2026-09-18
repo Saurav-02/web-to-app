@@ -42,7 +42,11 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags += "-std=c++17"
-                arguments += "-DANDROID_STL=c++_shared"
+                // Shell natives statically link libc++ so the template can drop
+                // libc++_shared.so (~4.4MB raw across 4 ABIs). Only crypto_engine and
+                // node_bridge used it. The HOST keeps c++_shared: ApkBuilder injects
+                // the host's libc++_shared.so into NODEJS_APP exports for libnode.so.
+                arguments += "-DANDROID_STL=c++_static"
             }
         }
     }
@@ -78,7 +82,11 @@ android {
             // syncShellRuntimeSources below) and ordered via preBuild deps —
             // never into the source tree, so git stays clean. Plain string
             // paths here: AGP forbids Provider instances in srcDirs.
-            java.srcDirs("src/main/java-overrides", "build/generated/shellRuntimeSrc")
+            java.srcDirs(
+                "src/main/java-overrides",
+                "build/generated/shellRuntimeSrc",
+                "build/generated/shellStrings",
+            )
             res.srcDirs("../app/src/main/res")
             assets.srcDirs("src/main/assets", "build/generated/shellRuntimeAssets")
         }
@@ -143,12 +151,21 @@ android {
             excludes += "**/libsoftokn3.so"
             excludes += "**/liblgpllibs.so"
             excludes += "**/libplugin-container.so"
+            // GeckoView breakpad helper — depends on libmozglue.so which is already
+            // excluded, so it can never load; dead weight carried by every APK.
+            excludes += "**/libcrashhelper.so"
 
             excludes += "**/libphp.so"
 
             // Host-preview-only user-mode exec loader; generated APKs
             // (targetSdk 28) always execve directly and never load it.
             excludes += "**/libstatic_exec.so"
+
+            // All shell natives are c++_static (see defaultConfig cmake arguments);
+            // nothing in the template may DT_NEEDED libc++_shared.so. NODEJS_APP
+            // exports still get it — ApkBuilder.injectNodeJsNativeLibs embeds the
+            // host copy for libnode.so.
+            excludes += "**/libc++_shared.so"
 
             // Cronet natives are injected into exported APKs by ApkBuilder when
             // 强制 HTTP/3 is enabled; the template never carries them.
@@ -251,7 +268,12 @@ val syncShellRuntimeSources by tasks.registering(Sync::class) {
         "**/core/extension/CodeSnippets.kt",
         "**/core/extension/ModuleTemplates.kt",
         "**/core/extension/DebugTestPages.kt",
-        "**/core/extension/ModulePreset.kt"
+        "**/core/extension/ModulePreset.kt",
+
+        // Strings.kt / StringsA-E.kt carry the full 10-language editor surface
+        // (~4.3 MB source, mostly editor-only text). Shell gets reduced copies
+        // emitted by generateShellStrings below (referenced members only).
+        "**/core/i18n/Strings*.kt"
     )
 
     into(layout.buildDirectory.dir("generated/shellRuntimeSrc"))
@@ -260,6 +282,92 @@ val syncShellRuntimeSources by tasks.registering(Sync::class) {
 // Explicit wiring (no tasks.matching scan, which breaks configuration cache):
 // generated sources must exist before any compilation.
 tasks.named("preBuild") { dependsOn(syncShellRuntimeSources) }
+
+/**
+ * Emits reduced Strings.kt / StringsA-E.kt into build/generated/shellStrings:
+ * only the members referenced by the synced runtime sources (plus the Strings
+ * language-state infrastructure). Editor-only strings stay out of the shell
+ * template and therefore out of every generated APK.
+ */
+abstract class GenerateShellStringsTask : DefaultTask() {
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
+    abstract val script: RegularFileProperty
+
+    @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val i18nDir: DirectoryProperty
+
+    @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val syncedSrcDir: DirectoryProperty
+
+    // Shell-only sources (src/main/java-overrides) also compile against
+    // Strings — they must feed the reference scan too.
+    @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val overridesDir: DirectoryProperty
+
+    @get:OutputDirectory
+    abstract val outDir: DirectoryProperty
+
+    @TaskAction
+    fun generate() {
+        // Self-contained python3 resolution (script closures can't serialize
+        // for the configuration cache; mirrors resolvePython3Command).
+        val isWindows = System.getProperty("os.name").lowercase().contains("windows")
+        val candidates: List<List<String>> = if (isWindows) {
+            listOf(listOf("python3"), listOf("python"), listOf("py", "-3"))
+        } else {
+            listOf(listOf("python3"), listOf("python"))
+        }
+        var python = listOf("python3")
+        for (candidate in candidates) {
+            try {
+                val probe = ProcessBuilder(candidate + "--version").redirectErrorStream(true).start()
+                val output = probe.inputStream.bufferedReader().readText()
+                if (probe.waitFor() == 0 && output.contains("Python 3")) {
+                    python = candidate
+                    break
+                }
+            } catch (_: Exception) {
+                // Candidate unavailable; try the next one.
+            }
+        }
+
+        val pb = ProcessBuilder(
+            python + listOf(
+                script.get().asFile.absolutePath,
+                "--synced-src", syncedSrcDir.get().asFile.absolutePath,
+                "--also-scan", overridesDir.get().asFile.absolutePath,
+                "--app-i18n", i18nDir.get().asFile.absolutePath,
+                "--out", outDir.get().asFile.absolutePath,
+            )
+        )
+        pb.redirectErrorStream(true)
+        val proc = pb.start()
+        val log = proc.inputStream.bufferedReader().readText()
+        val code = proc.waitFor()
+        logger.lifecycle(log.trim())
+        if (code != 0) {
+            throw GradleException("generateShellStrings failed ($code)")
+        }
+    }
+}
+
+val generateShellStrings by tasks.registering(GenerateShellStringsTask::class) {
+    description = "Generate reduced Strings*.kt for shell runtime (referenced members only)"
+    group = "build"
+    dependsOn(syncShellRuntimeSources)
+
+    script.set(rootProject.layout.projectDirectory.file("scripts/generate_shell_strings.py"))
+    i18nDir.set(rootProject.layout.projectDirectory.dir("app/src/main/java/com/webtoapp/core/i18n"))
+    syncedSrcDir.set(layout.buildDirectory.dir("generated/shellRuntimeSrc"))
+    overridesDir.set(layout.projectDirectory.dir("src/main/java-overrides"))
+    outDir.set(layout.buildDirectory.dir("generated/shellStrings"))
+}
+
+tasks.named("preBuild") { dependsOn(generateShellStrings) }
 
 val syncShellRuntimeAssets by tasks.registering(Copy::class) {
     description = "Mirror runtime-only asset files from app module to shell template (single source of truth: app/src/main/assets)."
@@ -450,8 +558,6 @@ dependencies {
     implementation("androidx.webkit:webkit:1.9.0")
 
     implementation("androidx.datastore:datastore-preferences:1.0.0")
-
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     implementation("org.apache.commons:commons-compress:1.26.0")
     implementation("org.tukaani:xz:1.9")
