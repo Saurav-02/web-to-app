@@ -32,25 +32,46 @@ class SampleProjectExtractorTest {
     }
 
     @Test
-    fun `python fastapi sample extraction includes shared pypackages`() = runBlocking {
+    fun `python fastapi sample extraction succeeds without shared pack`() = runBlocking {
         val result = SampleProjectExtractor.extractSampleProject(context, "python-fastapi")
 
         assertThat(result.isSuccess).isTrue()
         val projectDir = File(requireNotNull(result.getOrNull()))
         assertThat(File(projectDir, "main.py").exists()).isTrue()
         val sitePackagesDir = File(projectDir, ".pypackages")
-        assertThat(sitePackagesDir.exists()).isTrue()
-        assertThat(sitePackagesDir.walkTopDown().any { it.isFile }).isTrue()
+        assertThat(sitePackagesDir.walkTopDown().any { it.isFile }).isFalse()
     }
 
     @Test
-    fun `python django sample extraction includes shared pypackages`() = runBlocking {
+    fun `python fastapi sample extraction reuses cached shared pack`() = runBlocking {
+        seedSharedPack("python-fastapi-shared", ".pypackages/requests/__init__.py")
+
+        val result = SampleProjectExtractor.extractSampleProject(context, "python-fastapi")
+
+        assertThat(result.isSuccess).isTrue()
+        val projectDir = File(requireNotNull(result.getOrNull()))
+        assertThat(File(projectDir, ".pypackages/requests/__init__.py").isFile).isTrue()
+    }
+
+    @Test
+    fun `python django sample extraction succeeds without shared pack`() = runBlocking {
         val result = SampleProjectExtractor.extractSampleProject(context, "python-django")
 
         assertThat(result.isSuccess).isTrue()
         val projectDir = File(requireNotNull(result.getOrNull()))
         assertThat(File(projectDir, "manage.py").exists()).isTrue()
         val sitePackagesDir = File(projectDir, ".pypackages")
-        assertThat(sitePackagesDir.exists()).isTrue()
+        assertThat(sitePackagesDir.walkTopDown().any { it.isFile }).isFalse()
+    }
+
+    private fun seedSharedPack(packName: String, vararg files: String) {
+        val payloadDir =
+            File(context.filesDir, "sample_shared_packs/$packName/$packName")
+        files.forEach { rel ->
+            File(payloadDir, rel).apply {
+                parentFile?.mkdirs()
+                writeText("seed")
+            }
+        }
     }
 }
