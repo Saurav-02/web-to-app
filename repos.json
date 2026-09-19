@@ -27,6 +27,15 @@
     "html_url": "https://github.com/shiaho777/turn-mcp"
   },
   {
+    "name": "LuaXIDE",
+    "description": "Android Lua IDE with built-in interpreter, visual UI designer, debugger, and APK builder — all on-device, no root required.",
+    "stargazers_count": 9,
+    "forks_count": 0,
+    "language": "C",
+    "pushed_at": "2026-09-12T09:30:14Z",
+    "html_url": "https://github.com/shiaho777/LuaXIDE"
+  },
+  {
     "name": "NexFiles",
     "description": "An open source Material Design file manager, for Android 5.0+.",
     "stargazers_count": 8,
@@ -34,15 +43,6 @@
     "language": "Kotlin",
     "pushed_at": "2026-09-17T04:00:45Z",
     "html_url": "https://github.com/shiaho777/NexFiles"
-  },
-  {
-    "name": "LuaXIDE",
-    "description": "Android Lua IDE with built-in interpreter, visual UI designer, debugger, and APK builder — all on-device, no root required.",
-    "stargazers_count": 8,
-    "forks_count": 0,
-    "language": "C",
-    "pushed_at": "2026-09-12T09:30:14Z",
-    "html_url": "https://github.com/shiaho777/LuaXIDE"
   },
   {
     "name": "zv-codec",
@@ -167,7 +167,7 @@
     "stargazers_count": 1,
     "forks_count": 0,
     "language": "Python",
-    "pushed_at": "2026-09-18T12:14:01Z",
+    "pushed_at": "2026-09-18T17:08:46Z",
     "html_url": "https://github.com/shiaho777/pyj-j"
   },
   {
