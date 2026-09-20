@@ -9015,6 +9015,19 @@ object StringsC {
         AppLanguage.KOREAN -> "로그인"
     }
 
+    val httpAuthShowPassword: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "显示密码"
+        AppLanguage.ENGLISH -> "Show password"
+        AppLanguage.ARABIC -> "إظهار كلمة المرور"
+        AppLanguage.PORTUGUESE -> "Mostrar senha"
+        AppLanguage.SPANISH -> "Mostrar contraseña"
+        AppLanguage.FRENCH -> "Afficher le mot de passe"
+        AppLanguage.GERMAN -> "Passwort anzeigen"
+        AppLanguage.RUSSIAN -> "Показать пароль"
+        AppLanguage.JAPANESE -> "パスワードを表示"
+        AppLanguage.KOREAN -> "비밀번호 표시"
+    }
+
     val fwSectionSize: String get() = when (Strings.lang) {
         AppLanguage.CHINESE -> "窗口尺寸"
         AppLanguage.ENGLISH -> "Window Size"

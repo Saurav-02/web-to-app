@@ -2771,6 +2771,7 @@ object Strings {
     val httpAuthUsername: String get() = StringsC.httpAuthUsername
     val httpAuthPassword: String get() = StringsC.httpAuthPassword
     val httpAuthLogin: String get() = StringsC.httpAuthLogin
+    val httpAuthShowPassword: String get() = StringsC.httpAuthShowPassword
     val fwSectionSize: String get() = StringsC.fwSectionSize
     val fwWidthLabel: String get() = StringsC.fwWidthLabel
     val fwHeightLabel: String get() = StringsC.fwHeightLabel

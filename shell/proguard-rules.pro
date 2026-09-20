@@ -1,22 +1,20 @@
 # WebToApp ProGuard Rules
 #
-# 策略：启用代码收缩（移除未使用代码）+ 资源压缩（移除未使用资源），
-# 禁用混淆与激进优化。这是经过线上事故反复验证后的"稳定优先"配置，
-# 减包体积仍能保留 30%+ 收益，但完全避免反射/泛型/ServiceLoader/JNI 类陷阱。
+# 策略：启用代码收缩（移除未使用代码）+ 资源压缩（移除未使用资源）
+# + 混淆重命名（dex 约 8% 收益），仍关闭激进优化。
 #
-# 收益与权衡：
-#   - shrink:    保留，移除未使用类/方法（约 25% 体积削减）
-#   - obfuscate: 关闭（开源项目无意义，反而引入 Gson/Koin/反射 bug）
-#   - optimize:  关闭部分激进优化（保留默认收缩，避免内联引发的 NPE）
+# 混淆安全性说明：
+#   - com.webtoapp.** 仅允许混淆、不允许收缩；字段名单独固定，
+#     Gson/JSON 反射按名取字段不受影响（@SerializedName 成员规则兜底）。
+#   - JNI 回调类（NodeJniOutputBridge 等）与 manifest 组件继续显式 keep。
+#   - 崩溃栈仍能拿到行号（LineNumberTable 保留），类名需 mapping.txt 还原。
 #
 # 出问题时排查方法：
-#   1. ./gradlew :app:assembleRelease -PandroidProguardPrintUsage=true
+#   1. ./gradlew :shell:assembleRelease -PandroidProguardPrintUsage=true
 #      会在 build/outputs/mapping/release/usage.txt 写出被 R8 删除的所有内容
-#   2. ./gradlew :app:assembleRelease -PandroidProguardPrintSeeds=true
+#   2. ./gradlew :shell:assembleRelease -PandroidProguardPrintSeeds=true
 #      会写出被显式 keep 的所有内容
 #   3. 把崩溃栈对照 build/outputs/mapping/release/mapping.txt 反推
-
--dontobfuscate
 
 # 关掉一组容易破坏反射 / Compose / 协程语义的优化模式
 # 这些是 R8 历史上反复出现 bug 的优化通道，关掉它们体积代价可忽略
@@ -121,12 +119,11 @@
 -keepnames class kotlinx.coroutines.flow.** { *; }
 
 # ============================================================
-# 项目自身代码 — 全部保留（开源 + 重反射）
+# 项目自身代码 — 防收缩，但允许混淆重命名
+# （开源 + 重反射：类全量保留；字段名固定以保护未注解的 Gson 字段）
 # ============================================================
--keep class com.webtoapp.** { *; }
--keepclassmembers class com.webtoapp.** { *; }
--keep enum com.webtoapp.** { *; }
--keep interface com.webtoapp.** { *; }
+-keep,allowobfuscation class com.webtoapp.** { *; }
+-keepclassmembers class com.webtoapp.** { <fields>; }
 
 # data class 的合成构造器（含默认参数）— Gson 反序列化必须
 -keepclassmembers class com.webtoapp.data.model.** {
@@ -167,16 +164,6 @@
 -keep,allowobfuscation,allowshrinking class * extends com.google.gson.reflect.TypeToken
 
 # ============================================================
-# Koin DI — 大量反射 + ServiceLoader
-# ============================================================
--keep class org.koin.** { *; }
--keepclassmembers class * {
-    public <init>(org.koin.core.scope.Scope);
-}
--keepclassmembers class * extends org.koin.core.module.Module { *; }
--dontwarn org.koin.**
-
-# ============================================================
 # OkHttp / Okio — Platform 反射检测 OS 安全栈
 # ============================================================
 -keep class okhttp3.internal.platform.** { *; }
@@ -197,17 +184,6 @@
 -dontwarn coil.**
 
 # ============================================================
-# apksig — 反射读取 @Asn1Class/@Asn1Field 注解序列化 PKCS#7
-# ============================================================
--keep class com.android.apksig.** { *; }
--keepclassmembers class com.android.apksig.** { *; }
--keep @com.android.apksig.internal.asn1.Asn1Class class *
--keepclassmembers class * {
-    @com.android.apksig.internal.asn1.Asn1Field *;
-}
--dontwarn com.android.apksig.**
-
-# ============================================================
 # GeckoView — 大量 JNI / 注解反射
 # ============================================================
 -keep class org.mozilla.geckoview.** { *; }
@@ -219,14 +195,6 @@
 # ZXing — shell 未依赖，仅兜底
 # ============================================================
 -dontwarn com.google.zxing.**
-
-# ============================================================
-# BillingClient — AIDL stub
-# ============================================================
--keep class com.android.vending.billing.** { *; }
--keep class com.android.billingclient.** { *; }
--keep class com.google.android.gms.internal.** { *; }
--dontwarn com.android.billingclient.**
 
 # ============================================================
 # Credentials API + GoogleId — 反射解析 ID Token
@@ -252,29 +220,14 @@
 -dontwarn org.apache.commons.compress.**
 -dontwarn org.tukaani.xz.**
 -dontwarn org.brotli.dec.**
+# snakeyaml rides in transitively via GeckoView; its java.beans introspection
+# references don't exist on Android but those code paths are never hit.
 -dontwarn org.yaml.snakeyaml.**
 
 # ============================================================
 # Compose Runtime — 已有 consumer rules，仅压制 warn
 # ============================================================
 -dontwarn androidx.compose.**
-
-# ============================================================
-# Material / AppCompat — 已有 consumer rules，仅兜底
-# ============================================================
--dontwarn com.google.android.material.**
-
-# ============================================================
-# Custom Tabs (browser)
-# ============================================================
--keep class androidx.browser.** { *; }
--dontwarn androidx.browser.**
-
-# ============================================================
-# Haze (背景模糊)
-# ============================================================
--keep class dev.chrisbanes.haze.** { *; }
--dontwarn dev.chrisbanes.haze.**
 
 # Node.js JNI output bridge (R8 may rename onOutput otherwise)
 -keep class com.webtoapp.core.nodejs.NodeBridge { *; }

@@ -59,7 +59,11 @@ android {
     }
 
     signingConfigs {
-        getByName("debug")
+        getByName("debug") {
+            // The template is re-signed by ApkBuilder at export; its own v1 JAR
+            // signature (MANIFEST.MF + CERT.SF/RSA, ~200KB raw) is dead weight.
+            enableV1Signing = false
+        }
     }
 
     buildTypes {
@@ -87,7 +91,10 @@ android {
                 "build/generated/shellRuntimeSrc",
                 "build/generated/shellStrings",
             )
-            res.srcDirs("../app/src/main/res")
+            // Shell-local res first: values/shell_theme_compat.xml declares the
+            // Material3 color attrs / theme parents the shared app themes.xml
+            // needs, so the material library can stay out of the template.
+            res.srcDirs("src/main/res", "../app/src/main/res")
             assets.srcDirs("src/main/assets", "build/generated/shellRuntimeAssets")
         }
     }
@@ -131,6 +138,11 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            // Bundled-dependency legal boilerplate (META-INF/androidx/*/LICENSE.txt
+            // and friends) — not needed at runtime, ~150KB raw across the file set.
+            excludes += "META-INF/**/*.txt"
+            excludes += "META-INF/**/LICENSE"
+            excludes += "META-INF/**/NOTICE"
             excludes += "assets/omni.ja"
             excludes += "**/omni.ja"
             excludes += "**/org/bouncycastle/pqc/**"
@@ -520,7 +532,6 @@ dependencies {
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
-    implementation("com.google.android.material:material:1.10.0")
     implementation("androidx.activity:activity-compose:1.8.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.2")
@@ -552,9 +563,6 @@ dependencies {
     implementation("org.bouncycastle:bcpkix-jdk15to18:1.78.1")
     implementation("org.bouncycastle:bcprov-jdk15to18:1.78.1")
 
-    implementation("io.insert-koin:koin-android:3.5.3")
-    implementation("io.insert-koin:koin-androidx-compose:3.5.3")
-
     implementation("androidx.webkit:webkit:1.9.0")
 
     implementation("androidx.datastore:datastore-preferences:1.0.0")
@@ -567,8 +575,6 @@ dependencies {
     // Forced HTTP/3 upstream (see app/build.gradle.kts): classes only, natives are
     // injected into exported APKs by ApkBuilder when 强制 HTTP/3 is enabled.
     implementation("org.chromium.net:cronet-embedded:143.7445.0")
-
-    implementation("androidx.browser:browser:1.8.0")
 
     implementation("androidx.media:media:1.7.0")
 }

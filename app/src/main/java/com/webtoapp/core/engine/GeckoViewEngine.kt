@@ -764,7 +764,7 @@ class GeckoViewEngine(
             /**
              * HTTP Basic/Digest auth and proxy auth — the Gecko counterpart of
              * onReceivedHttpAuthRequest. Mirrors the WebView path's dialog (same strings,
-             * same TextInputLayout shape); Gecko has no cached-credential store exposed
+             * same field shape); Gecko has no cached-credential store exposed
              * here, so credentials are requested on every challenge.
              */
             override fun onAuthPrompt(
@@ -786,16 +786,12 @@ class GeckoViewEngine(
                             setPadding(64, 32, 64, 0)
 
                             if (!onlyPassword) {
-                                addView(com.google.android.material.textfield.TextInputLayout(activity).apply {
+                                addView(android.widget.EditText(activity).apply {
+                                    tag = "auth_username"
                                     hint = com.webtoapp.core.i18n.Strings.httpAuthUsername
-                                    boxBackgroundMode = com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE
-                                    setBoxCornerRadii(12f, 12f, 12f, 12f)
-                                    addView(com.google.android.material.textfield.TextInputEditText(activity).apply {
-                                        tag = "auth_username"
-                                        inputType = android.text.InputType.TYPE_CLASS_TEXT
-                                        isSingleLine = true
-                                        setText(options.username ?: "")
-                                    })
+                                    inputType = android.text.InputType.TYPE_CLASS_TEXT
+                                    isSingleLine = true
+                                    setText(options.username ?: "")
                                 })
                                 addView(android.view.View(activity).apply {
                                     layoutParams = android.widget.LinearLayout.LayoutParams(
@@ -804,18 +800,24 @@ class GeckoViewEngine(
                                 })
                             }
 
-                            addView(com.google.android.material.textfield.TextInputLayout(activity).apply {
+                            val passwordInput = android.widget.EditText(activity).apply {
+                                tag = "auth_password"
                                 hint = com.webtoapp.core.i18n.Strings.httpAuthPassword
-                                boxBackgroundMode = com.google.android.material.textfield.TextInputLayout.BOX_BACKGROUND_OUTLINE
-                                setBoxCornerRadii(12f, 12f, 12f, 12f)
-                                endIconMode = com.google.android.material.textfield.TextInputLayout.END_ICON_PASSWORD_TOGGLE
-                                addView(com.google.android.material.textfield.TextInputEditText(activity).apply {
-                                    tag = "auth_password"
-                                    inputType = android.text.InputType.TYPE_CLASS_TEXT or
-                                        android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
-                                    isSingleLine = true
-                                    setText(options.password ?: "")
-                                })
+                                inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                                    android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                                isSingleLine = true
+                                setText(options.password ?: "")
+                            }
+                            addView(passwordInput)
+
+                            addView(android.widget.CheckBox(activity).apply {
+                                text = com.webtoapp.core.i18n.Strings.httpAuthShowPassword
+                                setOnCheckedChangeListener { _, checked ->
+                                    passwordInput.inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                                        if (checked) android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                                        else android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                                    passwordInput.setSelection(passwordInput.length())
+                                }
                             })
                         }
 
