@@ -32,16 +32,16 @@ object StringsE {
     }
 
     val communityExtStoreTitle: String get() = when (Strings.lang) {
-        AppLanguage.CHINESE -> "社区扩展商店"
-        AppLanguage.ENGLISH -> "Community Extension Store"
-        AppLanguage.ARABIC -> "متجر الإضافات المجتمعية"
-        AppLanguage.PORTUGUESE -> "Loja de Extensões da Comunidade"
-        AppLanguage.SPANISH -> "Tienda de Extensiones de la Comunidad"
-        AppLanguage.FRENCH -> "Magasin d'Extensions Communautaires"
-        AppLanguage.GERMAN -> "Community-Erweiterungsstore"
-        AppLanguage.RUSSIAN -> "Магазин расширений сообщества"
-        AppLanguage.JAPANESE -> "コミュニティ拡張機能ストア"
-        AppLanguage.KOREAN -> "커뮤니티 확장 스토어"
+        AppLanguage.CHINESE -> "插件市场"
+        AppLanguage.ENGLISH -> "Plugin Market"
+        AppLanguage.ARABIC -> "سوق الإضافات"
+        AppLanguage.PORTUGUESE -> "Mercado de Plugins"
+        AppLanguage.SPANISH -> "Mercado de Plugins"
+        AppLanguage.FRENCH -> "Marché de Plugins"
+        AppLanguage.GERMAN -> "Plugin-Markt"
+        AppLanguage.RUSSIAN -> "Магазин плагинов"
+        AppLanguage.JAPANESE -> "プラグインマーケット"
+        AppLanguage.KOREAN -> "플러그인 마켓"
     }
     val browserExtTab: String get() = when (Strings.lang) {
         AppLanguage.CHINESE -> "浏览器扩展"

@@ -1,5 +1,7 @@
 package com.webtoapp.core.plugin
 
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import com.webtoapp.util.GsonProvider
 import java.util.UUID
@@ -279,8 +281,50 @@ data class PluginManifest(
     companion object {
         private val gson get() = GsonProvider.gson
 
+        private fun str(obj: JsonObject, key: String, def: String): String =
+            obj.get(key)?.takeIf { it.isJsonPrimitive && !it.isJsonNull }?.asString ?: def
+
+        private fun bool(obj: JsonObject, key: String, def: Boolean): Boolean =
+            obj.get(key)?.takeIf { it.isJsonPrimitive && it.asJsonPrimitive.isBoolean }
+                ?.asBoolean ?: def
+
+        private fun strList(obj: JsonObject, key: String, def: List<String>): List<String> =
+            obj.getAsJsonArray(key)
+                ?.mapNotNull { it.takeIf { e -> e.isJsonPrimitive }?.asString } ?: def
+
+        private fun strMap(obj: JsonObject, key: String): Map<String, String> =
+            obj.getAsJsonObject(key)?.entrySet()
+                ?.mapNotNull { (k, v) ->
+                    v.takeIf { it.isJsonPrimitive }?.asString?.let { k to it }
+                }?.toMap() ?: emptyMap()
+
+        /**
+         * Hand-written parser: hand-authored manifests omit optional fields, and
+         * Gson's Unsafe path would leave absent fields JVM-null despite the
+         * non-null Kotlin types — every accessor below applies its own default.
+         */
         fun fromJson(json: String): PluginManifest? = try {
-            gson.fromJson(json, PluginManifest::class.java)
+            val obj = JsonParser.parseString(json).asJsonObject
+            PluginManifest(
+                id = str(obj, "id", ""),
+                name = str(obj, "name", ""),
+                version = str(obj, "version", "1.0.0"),
+                description = str(obj, "description", ""),
+                author = str(obj, "author", ""),
+                homepage = str(obj, "homepage", ""),
+                icon = str(obj, "icon", "extension"),
+                matches = strList(obj, "matches", listOf("*")),
+                excludeMatches = strList(obj, "excludeMatches", emptyList()),
+                runAt = str(obj, "runAt", "document_end"),
+                permissions = strList(obj, "permissions", emptyList()),
+                toolbar = bool(obj, "toolbar", true),
+                preferredEntry = str(obj, "preferredEntry", ""),
+                gmGrants = strList(obj, "gmGrants", emptyList()),
+                requireUrls = strList(obj, "requireUrls", emptyList()),
+                resources = strMap(obj, "resources"),
+                noframes = bool(obj, "noframes", false),
+                legacyCompat = bool(obj, "legacyCompat", false)
+            ).takeIf { it.name.isNotBlank() }
         } catch (e: Exception) {
             null
         }

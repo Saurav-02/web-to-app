@@ -1447,16 +1447,16 @@ object StringsD {
     }
 
     val extensionModulesTab: String get() = when (Strings.lang) {
-        AppLanguage.CHINESE -> "扩展模块"
-        AppLanguage.ENGLISH -> "Extensions"
+        AppLanguage.CHINESE -> "插件"
+        AppLanguage.ENGLISH -> "Plugins"
         AppLanguage.ARABIC -> "الإضافات"
-        AppLanguage.PORTUGUESE -> "Extensões"
-        AppLanguage.SPANISH -> "Extensiones"
-        AppLanguage.FRENCH -> "Modules d'extension"
-        AppLanguage.GERMAN -> "Erweiterungen"
-        AppLanguage.RUSSIAN -> "Расширения"
-        AppLanguage.JAPANESE -> "拡張機能"
-        AppLanguage.KOREAN -> "확장 프로그램"
+        AppLanguage.PORTUGUESE -> "Plugins"
+        AppLanguage.SPANISH -> "Plugins"
+        AppLanguage.FRENCH -> "Plugins"
+        AppLanguage.GERMAN -> "Plugins"
+        AppLanguage.RUSSIAN -> "Плагины"
+        AppLanguage.JAPANESE -> "プラグイン"
+        AppLanguage.KOREAN -> "플러그인"
     }
 
     val moduleDeleteConfirm: String get() = when (Strings.lang) {
