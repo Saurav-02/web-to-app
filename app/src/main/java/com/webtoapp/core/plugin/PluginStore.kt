@@ -28,8 +28,8 @@ import java.io.File
  * ```
  * files/plugins/
  *   <id>/plugin.json     manifest (authored for HCJ, generated for userscripts)
- *   <id>/main.js         page script
- *   <id>/style.css       optional
+ *   <id>/main.js         page script (page CSS goes through hcj.addStyle)
+ *   <id>/style.css       legacy optional — still injected when present
  *   <id>/panel.html      optional — hosted by the plugin panel surface
  *   <id>/icon.*          optional package icon
  *   <id>/files/...       optional extra files (migrated multi-file modules)

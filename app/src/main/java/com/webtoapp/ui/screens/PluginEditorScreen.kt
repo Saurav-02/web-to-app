@@ -207,13 +207,6 @@ fun PluginEditorScreen(
                     onEdit = { codeEditTarget = 1 }
                 )
                 CodeSection(
-                    content = css,
-                    language = "CSS",
-                    fileName = PluginStore.CSS_FILE,
-                    placeholder = CSS_PLACEHOLDER,
-                    onEdit = { codeEditTarget = 2 }
-                )
-                CodeSection(
                     content = panelHtml,
                     language = "HTML",
                     fileName = PluginStore.PANEL_FILE,
@@ -227,7 +220,6 @@ fun PluginEditorScreen(
     codeEditTarget?.let { target ->
         val (content, language, placeholder) = when (target) {
             1 -> Triple(mainJs, "JavaScript", JS_PLACEHOLDER)
-            2 -> Triple(css, "CSS", CSS_PLACEHOLDER)
             else -> Triple(panelHtml, "HTML", HTML_PLACEHOLDER)
         }
         WtaCodeEditorDialog(
@@ -237,7 +229,6 @@ fun PluginEditorScreen(
             onSave = { newCode ->
                 when (target) {
                     1 -> mainJs = newCode
-                    2 -> css = newCode
                     else -> panelHtml = newCode
                 }
                 codeEditTarget = null
@@ -250,13 +241,12 @@ fun PluginEditorScreen(
 private fun slugFor(name: String): String =
     name.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-').ifBlank { "my-plugin" }
 
-private const val JS_PLACEHOLDER = "// main.js — runs inside matching pages\n// hcj.config / hcj.fetch / hcj.badge / hcj.panel …\n"
-private const val CSS_PLACEHOLDER = "/* style.css — injected into matching pages */\n"
+private const val JS_PLACEHOLDER = "// main.js — runs inside matching pages\n// hcj.config / hcj.fetch / hcj.badge / hcj.panel / hcj.addStyle …\n"
 private const val HTML_PLACEHOLDER = "<!-- panel.html — plugin popup UI hosted by the app -->\n"
 
 private val NEW_PLUGIN_STUB = """
 // main.js — runs inside matching pages.
-// API: hcj.config · hcj.fetch · hcj.badge · hcj.panel · hcj.notify · hcj.on · hcj.emit
+// API: hcj.config · hcj.fetch · hcj.badge · hcj.panel · hcj.notify · hcj.on · hcj.emit · hcj.addStyle
 
 hcj.on('action', () => {
     // Fired when the user taps this plugin's entry.

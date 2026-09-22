@@ -13,7 +13,9 @@ import java.util.concurrent.TimeoutException
  * HCJ plugin platform — unified model for the three plugin kinds:
  *
  *  - [PluginKind.HCJ]: first-party packages. A directory with `plugin.json`,
- *    `main.js`, optional `style.css`, optional `panel.html`, optional icon.
+ *    `main.js`, optional `panel.html`, optional icon. Page styles are
+ *    authored inside `main.js` via `hcj.addStyle(css)`; a bare `style.css`
+ *    file still loads for compatibility (migrated/older packages).
  *  - [PluginKind.USERSCRIPT]: Greasemonkey/Tampermonkey scripts. Imported into the
  *    same package layout (metadata block -> plugin.json); the GM_* polyfill is
  *    injected by the runtime, not stored.

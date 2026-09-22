@@ -2,13 +2,17 @@
 
 CSS 插件是纯样式覆盖——给站点做主题、重排版或暗色模式。它和 [HCJ 插件](/zh/extensions/js-module) 用同一个 `plugin.json` 清单，只是主体是样式表。
 
+::: tip 推荐：`hcj.addStyle(css)`
+页面样式通常直接写在 `main.js` 里，通过 `hcj.addStyle(css)` 注入——不需要独立文件，编辑器也只暴露 `main.js` / `panel.html`。单独的 `style.css` 文件为兼容保留（旧包或迁移包），见下文。
+:::
+
 ## 文件结构
 
 ```
 my-theme/
 ├── plugin.json    # 必需
 ├── main.js        # 必需 —— 可以是接近空的占位
-├── style.css      # 实际样式
+├── style.css      # 兼容保留 —— 推荐改用 main.js 里的 hcj.addStyle
 └── icon.png       # 可选
 ```
 
@@ -51,4 +55,4 @@ a {
 }
 ```
 
-可用的 `document_start` 样式插件示例见 [`modules/`](https://github.com/shiaho777/web-to-app/tree/main/modules) 下的 `web-tint`。
+可用的暗色插件示例见 [`app/src/main/assets/plugins/`](https://github.com/shiaho777/web-to-app/tree/main/app/src/main/assets/plugins) 下的 `builtin-dark-mode`（样式由 `main.js` 注入）。

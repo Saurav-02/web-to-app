@@ -63,6 +63,12 @@ object PluginInjection {
           });
         },
         notify: function(title, body) { B.notify(pid, token, String(title), String(body || '')); },
+        addStyle: function(css) {
+          var id = 'hcj-css-' + pid;
+          var s = document.getElementById(id);
+          if (!s) { s = document.createElement('style'); s.id = id; (document.head || document.documentElement).appendChild(s); }
+          s.textContent = String(css);
+        },
         badge: function(text, color) { B.badge(pid, token, text === null || text === undefined ? '' : String(text), color || ''); },
         panel: {
           open: function() { B.panelOpen(pid, token); },

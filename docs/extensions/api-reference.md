@@ -14,6 +14,7 @@ A consolidated reference for the plugin APIs. Status legend:
 | `hcj.fetch` | ✅ | Cross-origin via OkHttp, gated by `FETCH`; returns a Promise |
 | `hcj.notify` | ✅ | Android notification, gated by `NOTIFY` |
 | `hcj.badge` | ✅ | Toolbar badge, gated by `BADGE` |
+| `hcj.addStyle` | ✅ | Injects page CSS as `<style id="hcj-css-<id>">`, idempotent per plugin per document |
 | `hcj.panel.open` / `close` / `send` / `onMessage` | ✅ | Hosted in the user-chosen panel surface |
 | `hcj.on('action')` / `hcj.emit` | ✅ | Plugin entry tap / custom events |
 | `hcj.id` / `hcj.manifest` / `hcj.lang` | ✅ | |

@@ -2,13 +2,17 @@
 
 A CSS plugin is a pure style override — theming, restyling, or a dark mode for a site. It uses the same `plugin.json` manifest as an [HCJ plugin](/extensions/js-module), but the substance is the stylesheet.
 
+::: tip Preferred: `hcj.addStyle(css)`
+Page styles are normally authored inside `main.js` via `hcj.addStyle(css)` — no separate file needed, and the editor only exposes `main.js` / `panel.html`. A bare `style.css` file still loads for compatibility (older or migrated packages), as described below.
+:::
+
 ## File layout
 
 ```
 my-theme/
 ├── plugin.json    # required
 ├── main.js        # required — can be a near-empty stub
-├── style.css      # the actual styles
+├── style.css      # legacy optional — prefer hcj.addStyle in main.js
 └── icon.png       # optional
 ```
 
@@ -51,4 +55,4 @@ a {
 }
 ```
 
-See the built-in `web-tint` package under [`modules/`](https://github.com/shiaho777/web-to-app/tree/main/modules) for a working `document_start` style plugin.
+See the built-in `builtin-dark-mode` package under [`app/src/main/assets/plugins/`](https://github.com/shiaho777/web-to-app/tree/main/app/src/main/assets/plugins) for a working dark-mode plugin (it injects its styles from `main.js`).
