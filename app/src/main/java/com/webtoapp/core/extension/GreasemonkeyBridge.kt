@@ -132,8 +132,11 @@ class GreasemonkeyBridge(
 
     // ===== Menu Commands (integrated with floating window) =====
     var _menuCommands = {};
+    window.__WTA_GM_MENU__ = window.__WTA_GM_MENU__ || {};
+    window.__WTA_GM_MENU__[_sid] = _menuCommands;
     function GM_registerMenuCommand(name, fn, accessKey) {
         _menuCommands[name] = fn;
+        if (_bridge.menuCommand) _bridge.menuCommand(_sid, name, false);
         // Register to floating window if window manager available
         if (window.__WTA_SCRIPT_WINDOWS__) {
             window.__WTA_SCRIPT_WINDOWS__.addMenuButton(_sid, name, fn, {
@@ -143,7 +146,10 @@ class GreasemonkeyBridge(
         }
         return name;
     }
-    function GM_unregisterMenuCommand(name) { delete _menuCommands[name]; }
+    function GM_unregisterMenuCommand(name) {
+        delete _menuCommands[name];
+        if (_bridge.menuCommand) _bridge.menuCommand(_sid, name, true);
+    }
 
     // ===== Script Window API (WebToApp extension) =====
     function GM_openScriptWindow(html, options) {
@@ -427,6 +433,29 @@ class GreasemonkeyBridge(
     @JavascriptInterface
     fun log(message: String) {
         AppLogger.d(TAG, "[GM_log] $message")
+    }
+
+    // ------------------------------------------------------------------
+    // Menu commands -> unified plugin surface
+    // ------------------------------------------------------------------
+
+    /** scriptId -> ordered menu-command names registered by the running script. */
+    private val menuCommands = java.util.concurrent.ConcurrentHashMap<String, LinkedHashSet<String>>()
+
+    /** Fires on the JS bridge thread whenever a script's command set changes. */
+    var onMenuCommandsChanged: ((scriptId: String, names: List<String>) -> Unit)? = null
+
+    fun menuCommandsFor(scriptId: String): List<String> =
+        menuCommands[scriptId]?.toList() ?: emptyList()
+
+    @JavascriptInterface
+    fun menuCommand(alias: String, name: String, remove: Boolean) {
+        val scriptId = scriptIdByAlias[alias] ?: return
+        val set = menuCommands.getOrPut(scriptId) { LinkedHashSet() }
+        synchronized(set) {
+            if (remove) set.remove(name) else set.add(name)
+            onMenuCommandsChanged?.invoke(scriptId, set.toList())
+        }
     }
 
     private fun callbackToJs(callbackId: String, event: String, dataJson: String) {

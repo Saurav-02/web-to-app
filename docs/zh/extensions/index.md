@@ -1,38 +1,47 @@
-# 扩展开发
+# 插件开发
 
-WebToApp 在应用发布后仍可扩展。你可以添加四类扩展,它们都由同一个 `ExtensionManager` 管理,并由 WebView 在页面生命周期钩子处注入:
+WebToApp 生成的应用依然可扩展。三种插件共用同一个管理界面和注入管线：
 
-| 类型 | 是什么 | 适用场景 |
+| 类型 | 是什么 | 适合 |
 | --- | --- | --- |
-| **[JS 模块](/zh/extensions/js-module)** | `module.json` 清单 + `main.js`(+ 可选 CSS) | 带配置 UI 和浮动面板的自定义功能 |
-| **[CSS 模块](/zh/extensions/css-module)** | 纯样式覆盖(仍需 `main.js` 桩) | 主题化、重设样式、夜间模式 |
-| **[油猴脚本](/zh/extensions/userscript)** | Tampermonkey/Greasemonkey 风格 `.user.js` | 移植现有油猴脚本;`GM_*` API |
-| **[Chrome MV3](/zh/extensions/chrome-mv3)** | Manifest V3 Chrome 扩展 | 移植浏览器扩展;`chrome.*` API |
+| **[HCJ 插件](/zh/extensions/js-module)** | `plugin.json` + `main.js`（可选 `style.css`、`panel.html`）的包——纯 HTML + CSS + JS，无 DSL | 自定义功能、面板、设置界面 |
+| **[油猴脚本](/zh/extensions/userscript)** | Tampermonkey/Greasemonkey 风格的 `.user.js` | 移植现成脚本；`GM_*` API |
+| **[Chrome MV3](/zh/extensions/chrome-mv3)** | Manifest V3 Chrome 扩展 | 移植浏览器扩展；`chrome.*` API |
 
-## 注入如何工作
+HCJ（HTML+CSS+JS）是原生格式——可以理解为带真实 UI 能力的油猴脚本升级版。
 
-四种类型都被归一化为一个内部 `ExtensionModule` 模型。运行时,`WebViewManager` 在每个模块配置的**运行时机**注入它:
+## 注入机制
 
-| 运行时机 | 触发于 |
+脚本类插件按配置的**运行时机**注入：
+
+| 运行时机 | 触发点 |
 | --- | --- |
-| `DOCUMENT_START` | `onPageStarted` |
-| `DOCUMENT_END` | `onPageFinished`(DOMContentLoaded) |
-| `DOCUMENT_IDLE` | 加载后(默认) |
-| `CONTEXT_MENU` | 上下文菜单时 |
-| `BEFORE_UNLOAD` | 卸载前 |
+| `document_start` | `onPageStarted`，早于页面脚本 |
+| `document_end` | DOMContentLoaded（默认） |
+| `document_idle` | 页面加载完成后 |
 
-每个模块还带有 **URL 匹配规则**(Chrome 风格 glob 或正则),决定它在哪些页面运行。
+`style.css` 始终在 document-start 注入，视觉类插件在首帧渲染前生效。**URL 匹配规则**（Chrome 风格 glob 或 `/正则/`）决定插件在哪些页面运行。Chrome 扩展走 MV3 引擎——隐藏 WebView 跑后台 service worker + 动态注册 content script。
 
-::: warning 重要的准确性说明
-有些行为与其他扩展平台的暗示不同。这些在相关页面有说明,但值得预先了解:
-- **油猴脚本的 `GM_*` 函数不按 `@grant` 门控** —— 全部无条件暴露。
-- **Chrome 的 `ISOLATED` 与 `MAIN` world 并非真正隔离** —— Android WebView 只有单一 JS 上下文;隔离是模拟的。
-- **`GM_notification` 仅记录日志**;MV3 的"后台 service worker"是一个隐藏的 WebView,而非真正的 service worker。
+## 插件入口在哪
+
+每个插件都有**插件宿主面**上的入口，宿主形态由用户按应用（或全局）选择：
+
+- **工具栏** —— 原生工具栏里的插件按钮，点开插件抽屉
+- **悬浮句柄** —— 可拖动的原生悬浮柄，自动收起（工具栏隐藏时也可用）
+- **菜单** —— 收纳进右上角溢出菜单
+
+带 `panel.html` 的插件在用户选定的面板宿主中打开——**底部抽屉**、**悬浮窗**或**全屏**；无面板的插件则触发它的 `hcj.on('action')` 回调。Chrome 扩展的 `action.popup` 页面也托管在同一个面板面。
+
+::: warning 准确性说明
+- **油猴 `GM_*` 不受 `@grant` 门控** —— 全部无条件暴露。
+- **Chrome `ISOLATED`/`MAIN` world 并非真隔离** —— Android WebView 只有一个 JS 上下文，隔离是模拟的。
+- **MV3 "后台 service worker" 是一个隐藏 WebView**，不是真的 service worker。
 :::
 
-## 接下来去哪
+## 下一步
 
-- [JS 模块](/zh/extensions/js-module) —— 能力最强的原生格式。
-- [油猴脚本](/zh/extensions/userscript) —— `GM_*` / `GM.*` API 参考。
-- [Chrome MV3](/zh/extensions/chrome-mv3) —— 支持的 `chrome.*` 接口。
-- [发布到市场](/zh/extensions/publish) —— 与社区分享 JS/CSS 模块。
+- [HCJ 插件](/zh/extensions/js-module) —— 原生包格式
+- [CSS 插件](/zh/extensions/css-module) —— 纯样式覆盖
+- [油猴脚本](/zh/extensions/userscript) —— `GM_*` / `GM.*` API 参考
+- [Chrome MV3](/zh/extensions/chrome-mv3) —— 支持的 `chrome.*` 能力面
+- [发布到市场](/zh/extensions/publish) —— 与社区分享插件

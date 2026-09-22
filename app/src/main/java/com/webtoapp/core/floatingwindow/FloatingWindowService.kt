@@ -429,11 +429,12 @@ class FloatingWindowService : Service() {
                 webView = webView,
                 config = webViewConfig,
                 callbacks = callbacks,
-                extensionModuleIds = shellConfig.extensionModuleIds,
-                embeddedExtensionModules = shellConfig.embeddedExtensionModules,
-                extensionFabIcon = shellConfig.extensionFabIcon,
-                allowGlobalModuleFallback = false,
-                extensionEnabled = shellConfig.extensionEnabled,
+                pluginPayloads = shellConfig.embeddedPlugins
+                    .filter { it.enabled }
+                    .map { it.toResolved() },
+                pluginsEnabled = shellConfig.pluginsEnabled,
+                pluginEntryStyle = com.webtoapp.core.plugin.PluginEntryStyle.parse(shellConfig.pluginEntryStyle),
+                pluginPanelStyle = com.webtoapp.core.plugin.PluginPanelStyle.parse(shellConfig.pluginPanelStyle),
                 browserDisguiseConfig = shellConfig.browserDisguiseConfig,
                 deviceDisguiseConfig = shellConfig.deviceDisguiseConfig
             )

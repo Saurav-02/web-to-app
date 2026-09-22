@@ -64,7 +64,6 @@ class ChromeExtensionContentScriptRegistryTest {
         assertThat(module.cssCode).contains("color: red")
         assertThat(module.code).contains("__dyn")
         assertThat(module.runMode).isEqualTo(ModuleRunMode.AUTO)
-        assertThat(module.shouldRegisterInPanel()).isTrue()
     }
 
     @Test

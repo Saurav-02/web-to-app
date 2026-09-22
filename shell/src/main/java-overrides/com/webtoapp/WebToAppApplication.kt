@@ -126,7 +126,6 @@ class WebToAppApplication : Application() {
             shellAdBlocker = null
             shellModeManagerLocal = null
 
-            com.webtoapp.core.extension.ExtensionManager.release()
             com.webtoapp.core.crypto.AesCryptoEngine.clearKeyCache()
             com.webtoapp.core.webview.WebViewPool.release()
             com.webtoapp.core.perf.SystemPerfOptimizer.release()

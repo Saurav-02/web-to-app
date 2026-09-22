@@ -106,8 +106,4 @@ class LanguageManager(private val context: Context) {
 
         return context.createConfigurationContext(config)
     }
-
-    fun getPromptManager(): AiPromptManager {
-        return AiPromptManager
-    }
 }

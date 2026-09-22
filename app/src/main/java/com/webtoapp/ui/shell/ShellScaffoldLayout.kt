@@ -162,7 +162,14 @@ fun BoxScope.ShellScaffoldLayout(
                     consoleErrorCount = consoleMessages.count { it.level == ConsoleLevel.ERROR },
                     showFindButton = toolbarVisibility.showFind,
                     showFindBar = showFindBar,
-                    onToggleFindBar = onToggleFindBar
+                    onToggleFindBar = onToggleFindBar,
+                    showPluginButton = config.pluginsEnabled &&
+                        com.webtoapp.core.plugin.PluginEntryStyle.parse(config.pluginEntryStyle).let {
+                            it == com.webtoapp.core.plugin.PluginEntryStyle.TOOLBAR ||
+                                it == com.webtoapp.core.plugin.PluginEntryStyle.MENU
+                        },
+                    pluginMenuStyle = com.webtoapp.core.plugin.PluginEntryStyle.parse(config.pluginEntryStyle) ==
+                        com.webtoapp.core.plugin.PluginEntryStyle.MENU
                 )
             }
         }
@@ -313,6 +320,19 @@ fun BoxScope.ShellScaffoldLayout(
                     onClose = onToggleFindBar
                 )
             }
+
+            // Unified plugin surface: sheet, panel host and the floating handle
+            // (entry style TOOLBAR mounts inside ShellTopAppBar instead).
+            if (config.pluginsEnabled) {
+                com.webtoapp.ui.plugin.PluginSurfaceHost(
+                    entryStyle = com.webtoapp.core.plugin.PluginEntryStyle.parse(config.pluginEntryStyle),
+                    panelStyle = com.webtoapp.core.plugin.PluginPanelStyle.parse(config.pluginPanelStyle),
+                    toolbarVisible = showToolbar,
+                    floatingHandleModifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = 24.dp)
+                )
+            }
         }
     }
 }
@@ -338,7 +358,9 @@ private fun ShellTopAppBar(
     consoleErrorCount: Int = 0,
     showFindButton: Boolean = true,
     showFindBar: Boolean = false,
-    onToggleFindBar: () -> Unit = {}
+    onToggleFindBar: () -> Unit = {},
+    showPluginButton: Boolean = false,
+    pluginMenuStyle: Boolean = false
 ) {
     val context = LocalContext.current
 
@@ -424,6 +446,14 @@ private fun ShellTopAppBar(
                     onClick = onToggleFindBar,
                     icon = if (showFindBar) Icons.Filled.Search else Icons.Outlined.Search,
                     contentDescription = Strings.nativeBridgeCapsFindInPage
+                )
+            }
+            // Plugin slot — the unified entry for HCJ plugins, userscripts and
+            // chrome extensions (badge counts plugins matching the current page).
+            if (showPluginButton) {
+                com.webtoapp.ui.plugin.PluginToolbarButton(
+                    onClick = { com.webtoapp.core.plugin.PluginHostState.openPluginSheet() },
+                    menuStyle = pluginMenuStyle
                 )
             }
         },

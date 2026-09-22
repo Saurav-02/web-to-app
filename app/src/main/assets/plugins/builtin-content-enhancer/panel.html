@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; padding: 16px; color: #1f2937; }
+.wta-tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:4px}
+.wta-tool-btn{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px;border-radius:12px;border:1px solid var(--wta-outline,#e5e7eb);background:var(--wta-surface-dim,#f9fafb);cursor:pointer;color:var(--wta-on-surface,#374151);transition:all .2s}
+.wta-tool-btn:active{background:var(--wta-accent-soft,rgba(99,102,241,.1))}
+.wta-tool-icon{font-size:24px}
+.wta-tool-label{font-size:13px;font-weight:500}
+  #wta-toast { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%);
+    background: #111827; color: #fff; font-size: 13px; padding: 8px 16px; border-radius: 20px;
+    opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90%; }
+  #wta-toast.show { opacity: .95; }
+</style>
+</head>
+<body>
+<div id="root"><div class="wta-mod-panel">
+<div class="wta-tool-grid">
+<button class="wta-tool-btn" data-ce-action="enableCopy"><span class="wta-tool-icon"><svg style="display:block" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/></svg></span><span class="wta-tool-label" id="wta-tool-copy"></span></button>
+<button class="wta-tool-btn" data-ce-action="copyText"><span class="wta-tool-icon"><svg style="display:block" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 013 3L12 15l-4 1 1-4z"/></svg></span><span class="wta-tool-label" id="wta-tool-text"></span></button>
+<button class="wta-tool-btn" data-ce-action="copyHtml"><span class="wta-tool-icon"><svg style="display:block" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span><span class="wta-tool-label" id="wta-tool-html"></span></button>
+<button class="wta-tool-btn" data-ce-action="toTop"><span class="wta-tool-icon"><svg style="display:block" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V8"/><path d="M6 13l6-6 6 6"/><path d="M4 3h16"/></svg></span><span class="wta-tool-label" id="wta-tool-top"></span></button>
+<button class="wta-tool-btn" data-ce-action="toBottom"><span class="wta-tool-icon"><svg style="display:block" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="M6 11l6 6 6-6"/><path d="M4 21h16"/></svg></span><span class="wta-tool-label" id="wta-tool-bottom"></span></button>
+</div>
+</div></div>
+<div id="wta-toast"></div>
+<script>
+  var root = document.getElementById('root');
+  var toastEl = document.getElementById('wta-toast');
+  var toastTimer = null;
+
+  function wire() {
+    root.querySelectorAll('[data-wta-action]').forEach(function (el) {
+      if (el.__wired) return;
+      el.__wired = true;
+      el.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        hcjPanel.send({ cmd: 'act', action: el.getAttribute('data-wta-action'), arg: el.getAttribute('data-wta-arg') || '' });
+      });
+    });
+  }
+
+  function showToast(m) {
+    toastEl.textContent = m;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 1800);
+  }
+
+  hcjPanel.onMessage(function (m) {
+    if (!m) return;
+    if (m.type === 'panel' && typeof m.html === 'string') { root.innerHTML = m.html; wire(); }
+    else if (m.type === 'toast') showToast(m.msg || '');
+    else if (m.type === 'state' && typeof render === 'function') render(m);
+    else if (m.type === 'findstate' && typeof renderFind === 'function') renderFind(m);
+  });
+
+  function render(m) {
+    var ids = ['wta-tool-copy', 'wta-tool-text', 'wta-tool-html', 'wta-tool-top', 'wta-tool-bottom'];
+    var keys = ['enableCopy', 'copyText', 'copyHtml', 'toTop', 'toBottom'];
+    ids.forEach(function (id, i) { var el = document.getElementById(id); if (el && m.labels && m.labels[keys[i]]) el.textContent = m.labels[keys[i]]; });
+  }
+  root.querySelectorAll('[data-ce-action]').forEach(function (el) {
+    el.addEventListener('click', function () {
+      hcjPanel.send({ cmd: 'act', action: el.getAttribute('data-ce-action') });
+    });
+  });
+  wire();
+  hcjPanel.send({ cmd: 'refresh' });
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; padding: 20px; text-align: center; color: #1f2937; }
+  .icon { font-size: 52px; margin-bottom: 14px; line-height: 1; }
+  .status { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+  .desc { font-size: 13px; color: #9ca3af; margin-bottom: 20px; }
+  .btn { width: 100%; padding: 13px; border: none; border-radius: 12px; font-size: 15px; font-weight: 500; cursor: pointer; transition: opacity .15s; }
+  .btn:active { opacity: .8; }
+  .btn.primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
+  .btn.secondary { background: #f3f4f6; color: #374151; }
+</style>
+</head>
+<body>
+  <div class="icon" id="icon">🌙</div>
+  <div class="status" id="status"></div>
+  <div class="desc" id="desc"></div>
+  <button class="btn primary" id="btn"></button>
+<script>
+  var iconEl = document.getElementById('icon');
+  var statusEl = document.getElementById('status');
+  var descEl = document.getElementById('desc');
+  var btn = document.getElementById('btn');
+
+  function render(s) {
+    iconEl.textContent = s.enabled ? '🌙' : '☀️';
+    statusEl.textContent = s.enabled ? s.t.on : s.t.off;
+    descEl.textContent = s.t.desc;
+    btn.textContent = s.enabled ? s.t.turnOff : s.t.turnOn;
+    btn.className = 'btn ' + (s.enabled ? 'secondary' : 'primary');
+  }
+
+  hcjPanel.onMessage(function (m) {
+    if (m && m.type === 'state') render(m);
+  });
+  btn.addEventListener('click', function () { hcjPanel.send({ cmd: 'toggle' }); });
+  hcjPanel.send({ cmd: 'getState' });
+</script>
+</body>
+</html>

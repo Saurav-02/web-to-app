@@ -1,10 +1,29 @@
 # API Reference
 
-A consolidated reference for the extension APIs. Status legend:
+A consolidated reference for the plugin APIs. Status legend:
 
 - ✅ **Functional** — works as expected.
 - 🟡 **Partial** — works with caveats (see notes).
 - ⬜ **Stub** — present but returns defaults / no-op.
+
+## HCJ `hcj.*` (page side)
+
+| API | Status | Notes |
+| --- | --- | --- |
+| `hcj.config.get` / `set` / `remove` / `all` | ✅ | Persistent KV, gated by `STORAGE` permission |
+| `hcj.fetch` | ✅ | Cross-origin via OkHttp, gated by `FETCH`; returns a Promise |
+| `hcj.notify` | ✅ | Android notification, gated by `NOTIFY` |
+| `hcj.badge` | ✅ | Toolbar badge, gated by `BADGE` |
+| `hcj.panel.open` / `close` / `send` / `onMessage` | ✅ | Hosted in the user-chosen panel surface |
+| `hcj.on('action')` / `hcj.emit` | ✅ | Plugin entry tap / custom events |
+| `hcj.id` / `hcj.manifest` / `hcj.lang` | ✅ | |
+
+## `hcjPanel.*` (panel side)
+
+| API | Status | Notes |
+| --- | --- | --- |
+| `hcjPanel.config.*` | ✅ | Same KV store as the page side |
+| `hcjPanel.send` / `hcjPanel.onMessage` / `hcjPanel.close` | ✅ | Panel ↔ page channel and dismissal |
 
 ## Userscript `GM_*`
 

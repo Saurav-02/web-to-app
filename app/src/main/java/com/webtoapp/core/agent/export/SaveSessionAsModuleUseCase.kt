@@ -8,7 +8,6 @@ import com.webtoapp.core.agent.files.ProjectFileManager
 import com.webtoapp.core.extension.ChromeExtensionParser
 import com.webtoapp.core.extension.ConfigItemType
 import com.webtoapp.core.extension.ExtensionFileManager
-import com.webtoapp.core.extension.ExtensionManager
 import com.webtoapp.core.extension.ExtensionModule
 import com.webtoapp.core.extension.ModuleAuthor
 import com.webtoapp.core.extension.ModuleCategory
@@ -27,7 +26,6 @@ import java.io.File
 class SaveSessionAsModuleUseCase(
     private val context: Context,
     private val files: ProjectFileManager,
-    private val extensionManager: ExtensionManager,
     private val extensionFiles: ExtensionFileManager
 ) {
 
@@ -92,11 +90,14 @@ class SaveSessionAsModuleUseCase(
             )
             ?: return Result.Failure("module.json is not a valid module manifest")
 
-        val saved = extensionManager.addModule(module)
-        return saved.fold(
-            onSuccess = { ok -> Result.Success(listOf(ok.id), listOf(ok.name)) },
-            onFailure = { Result.Failure(it.message ?: "Module rejected") }
-        )
+        return when (val saved = com.webtoapp.core.plugin.PluginImporter(context)
+            .installLegacyModule(module)
+        ) {
+            is com.webtoapp.core.plugin.PluginImporter.ImportResult.Success ->
+                Result.Success(listOf(saved.plugin.id), listOf(saved.plugin.name))
+            is com.webtoapp.core.plugin.PluginImporter.ImportResult.Error ->
+                Result.Failure(saved.message)
+        }
     }
 
     private fun parseJsModuleManifest(text: String): ExtensionModule? = runCatching {
@@ -183,11 +184,14 @@ class SaveSessionAsModuleUseCase(
                 "Userscript metadata block is missing or invalid"
             })
         }
-        val saved = extensionManager.addModule(parse.module)
-        return saved.fold(
-            onSuccess = { ok -> Result.Success(listOf(ok.id), listOf(ok.name)) },
-            onFailure = { Result.Failure(it.message ?: "Userscript rejected") }
-        )
+        return when (val saved = com.webtoapp.core.plugin.PluginImporter(context)
+            .installLegacyModule(parse.module)
+        ) {
+            is com.webtoapp.core.plugin.PluginImporter.ImportResult.Success ->
+                Result.Success(listOf(saved.plugin.id), listOf(saved.plugin.name))
+            is com.webtoapp.core.plugin.PluginImporter.ImportResult.Error ->
+                Result.Failure(saved.message)
+        }
     }
 
     private suspend fun saveAsChromeExtension(artifactRoot: File): Result {
@@ -206,11 +210,13 @@ class SaveSessionAsModuleUseCase(
             }
             val ids = mutableListOf<String>()
             val names = mutableListOf<String>()
-            parse.modules.forEach { module ->
-                extensionManager.addModule(module).onSuccess {
-                    ids += it.id
-                    names += it.name
+            when (val saved = com.webtoapp.core.plugin.PluginImporter(context)
+                .installChromeRecords(parse.modules)
+            ) {
+                is com.webtoapp.core.plugin.PluginImporter.ImportResult.Success -> {
+                    parse.modules.forEach { ids += it.id; names += it.name }
                 }
+                is com.webtoapp.core.plugin.PluginImporter.ImportResult.Error -> {}
             }
             return if (ids.isEmpty()) {
                 extensionDir.deleteRecursively()

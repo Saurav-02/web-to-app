@@ -124,7 +124,7 @@ fun HomeScreen(
     onOpenAppModifier: () -> Unit = {},
     onOpenAiSettings: () -> Unit = {},
     onOpenAgent: () -> Unit = {},
-    onOpenExtensionModules: () -> Unit = {},
+    onOpenPlugins: () -> Unit = {},
     onOpenLinuxEnvironment: () -> Unit = {},
     onOpenBrowserKernel: () -> Unit = {},
     onOpenHostsAdBlock: () -> Unit = {},
@@ -341,8 +341,8 @@ fun HomeScreen(
                             )
                             HorizontalDivider()
                             DropdownMenuItem(
-                                text = { Text(Strings.menuExtensionModules) },
-                                onClick = { showMoreMenu = false; onOpenExtensionModules() },
+                                text = { Text(Strings.pluginsTitle) },
+                                onClick = { showMoreMenu = false; onOpenPlugins() },
                                 leadingIcon = { Icon(Icons.Outlined.Extension, null, Modifier.size(20.dp)) }
                             )
                             DropdownMenuItem(

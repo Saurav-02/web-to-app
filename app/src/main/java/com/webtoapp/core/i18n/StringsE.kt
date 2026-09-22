@@ -15794,4 +15794,697 @@ object StringsE {
         AppLanguage.KOREAN -> "이 패키지 이름 전용 RSA-3072 인증서를 생성하고 재사용합니다 — 전역 서명과 독립적이며 빌드 간에 안정적입니다"
     }
 
+    // ------------------------------------------------------------------
+    // Plugins (HCJ / userscript / Chrome extension unified surface)
+    // ------------------------------------------------------------------
+
+    val pluginsTitle: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "插件"
+        AppLanguage.ENGLISH -> "Plugins"
+        AppLanguage.ARABIC -> "الإضافات"
+        AppLanguage.PORTUGUESE -> "Plugins"
+        AppLanguage.SPANISH -> "Plugins"
+        AppLanguage.FRENCH -> "Plugins"
+        AppLanguage.GERMAN -> "Plugins"
+        AppLanguage.RUSSIAN -> "Плагины"
+        AppLanguage.JAPANESE -> "プラグイン"
+        AppLanguage.KOREAN -> "플러그인"
+    }
+
+    val searchPlugins: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "搜索插件…"
+        AppLanguage.ENGLISH -> "Search plugins…"
+        AppLanguage.ARABIC -> "ابحث في الإضافات…"
+        AppLanguage.PORTUGUESE -> "Pesquisar plugins…"
+        AppLanguage.SPANISH -> "Buscar plugins…"
+        AppLanguage.FRENCH -> "Rechercher des plugins…"
+        AppLanguage.GERMAN -> "Plugins suchen…"
+        AppLanguage.RUSSIAN -> "Поиск плагинов…"
+        AppLanguage.JAPANESE -> "プラグインを検索…"
+        AppLanguage.KOREAN -> "플러그인 검색…"
+    }
+
+    val pluginKindHcj: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "网页插件"
+        AppLanguage.ENGLISH -> "Web plugin"
+        AppLanguage.ARABIC -> "إضافة ويب"
+        AppLanguage.PORTUGUESE -> "Plugin web"
+        AppLanguage.SPANISH -> "Plugin web"
+        AppLanguage.FRENCH -> "Plugin web"
+        AppLanguage.GERMAN -> "Web-Plugin"
+        AppLanguage.RUSSIAN -> "Веб-плагин"
+        AppLanguage.JAPANESE -> "Webプラグイン"
+        AppLanguage.KOREAN -> "웹 플러그인"
+    }
+
+    val pluginKindUserscript: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "用户脚本"
+        AppLanguage.ENGLISH -> "Userscript"
+        AppLanguage.ARABIC -> "نص مستخدم"
+        AppLanguage.PORTUGUESE -> "Userscript"
+        AppLanguage.SPANISH -> "Userscript"
+        AppLanguage.FRENCH -> "Userscript"
+        AppLanguage.GERMAN -> "Benutzerskript"
+        AppLanguage.RUSSIAN -> "Юзерскрипт"
+        AppLanguage.JAPANESE -> "ユーザースクリプト"
+        AppLanguage.KOREAN -> "유저스크립트"
+    }
+
+    val pluginKindChrome: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "Chrome 扩展"
+        AppLanguage.ENGLISH -> "Chrome ext."
+        AppLanguage.ARABIC -> "إضافة Chrome"
+        AppLanguage.PORTUGUESE -> "Ext. Chrome"
+        AppLanguage.SPANISH -> "Ext. Chrome"
+        AppLanguage.FRENCH -> "Ext. Chrome"
+        AppLanguage.GERMAN -> "Chrome-Erw."
+        AppLanguage.RUSSIAN -> "Расш. Chrome"
+        AppLanguage.JAPANESE -> "Chrome拡張"
+        AppLanguage.KOREAN -> "Chrome 확장"
+    }
+
+    val pluginSectionInstalled: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "已安装"
+        AppLanguage.ENGLISH -> "Installed"
+        AppLanguage.ARABIC -> "المثبّتة"
+        AppLanguage.PORTUGUESE -> "Instalados"
+        AppLanguage.SPANISH -> "Instalados"
+        AppLanguage.FRENCH -> "Installés"
+        AppLanguage.GERMAN -> "Installiert"
+        AppLanguage.RUSSIAN -> "Установленные"
+        AppLanguage.JAPANESE -> "インストール済み"
+        AppLanguage.KOREAN -> "설치됨"
+    }
+
+    val pluginSectionBuiltIn: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "内置"
+        AppLanguage.ENGLISH -> "Built-in"
+        AppLanguage.ARABIC -> "مضمّنة"
+        AppLanguage.PORTUGUESE -> "Integrados"
+        AppLanguage.SPANISH -> "Integrados"
+        AppLanguage.FRENCH -> "Intégrés"
+        AppLanguage.GERMAN -> "Integriert"
+        AppLanguage.RUSSIAN -> "Встроенные"
+        AppLanguage.JAPANESE -> "内蔵"
+        AppLanguage.KOREAN -> "내장"
+    }
+
+    val pluginsEmpty: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "还没有插件"
+        AppLanguage.ENGLISH -> "No plugins yet"
+        AppLanguage.ARABIC -> "لا توجد إضافات بعد"
+        AppLanguage.PORTUGUESE -> "Nenhum plugin ainda"
+        AppLanguage.SPANISH -> "Aún no hay plugins"
+        AppLanguage.FRENCH -> "Aucun plugin pour l'instant"
+        AppLanguage.GERMAN -> "Noch keine Plugins"
+        AppLanguage.RUSSIAN -> "Плагинов пока нет"
+        AppLanguage.JAPANESE -> "プラグインはまだありません"
+        AppLanguage.KOREAN -> "아직 플러그인이 없습니다"
+    }
+
+    val pluginsEmptyHint: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "导入 .hcj 包、.user.js 脚本或 Chrome 扩展，或新建一个插件"
+        AppLanguage.ENGLISH -> "Import a .hcj package, a .user.js script or a Chrome extension — or create a new plugin"
+        AppLanguage.ARABIC -> "استورد حزمة .hcj أو نص .user.js أو إضافة Chrome — أو أنشئ إضافة جديدة"
+        AppLanguage.PORTUGUESE -> "Importe um pacote .hcj, um script .user.js ou uma extensão do Chrome — ou crie um novo plugin"
+        AppLanguage.SPANISH -> "Importa un paquete .hcj, un script .user.js o una extensión de Chrome — o crea un nuevo plugin"
+        AppLanguage.FRENCH -> "Importez un paquet .hcj, un script .user.js ou une extension Chrome — ou créez un nouveau plugin"
+        AppLanguage.GERMAN -> "Importiere ein .hcj-Paket, ein .user.js-Skript oder eine Chrome-Erweiterung — oder erstelle ein neues Plugin"
+        AppLanguage.RUSSIAN -> "Импортируйте пакет .hcj, скрипт .user.js или расширение Chrome — или создайте новый плагин"
+        AppLanguage.JAPANESE -> ".hcj パッケージ、.user.js スクリプト、Chrome 拡張をインポートするか、新しいプラグインを作成"
+        AppLanguage.KOREAN -> ".hcj 패키지, .user.js 스크립트 또는 Chrome 확장을 가져오거나 새 플러그인을 만드세요"
+    }
+
+    val pluginImport: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "导入插件"
+        AppLanguage.ENGLISH -> "Import plugin"
+        AppLanguage.ARABIC -> "استيراد إضافة"
+        AppLanguage.PORTUGUESE -> "Importar plugin"
+        AppLanguage.SPANISH -> "Importar plugin"
+        AppLanguage.FRENCH -> "Importer un plugin"
+        AppLanguage.GERMAN -> "Plugin importieren"
+        AppLanguage.RUSSIAN -> "Импорт плагина"
+        AppLanguage.JAPANESE -> "プラグインをインポート"
+        AppLanguage.KOREAN -> "플러그인 가져오기"
+    }
+
+    val pluginNew: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "新建插件"
+        AppLanguage.ENGLISH -> "New plugin"
+        AppLanguage.ARABIC -> "إضافة جديدة"
+        AppLanguage.PORTUGUESE -> "Novo plugin"
+        AppLanguage.SPANISH -> "Nuevo plugin"
+        AppLanguage.FRENCH -> "Nouveau plugin"
+        AppLanguage.GERMAN -> "Neues Plugin"
+        AppLanguage.RUSSIAN -> "Новый плагин"
+        AppLanguage.JAPANESE -> "新規プラグイン"
+        AppLanguage.KOREAN -> "새 플러그인"
+    }
+
+    val pluginHostStyle: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "入口与面板样式"
+        AppLanguage.ENGLISH -> "Entry & panel style"
+        AppLanguage.ARABIC -> "نمط الدخول واللوحة"
+        AppLanguage.PORTUGUESE -> "Estilo de entrada e painel"
+        AppLanguage.SPANISH -> "Estilo de entrada y panel"
+        AppLanguage.FRENCH -> "Style d'entrée et de panneau"
+        AppLanguage.GERMAN -> "Einstiegs- & Panelstil"
+        AppLanguage.RUSSIAN -> "Стиль входа и панели"
+        AppLanguage.JAPANESE -> "エントリーとパネルのスタイル"
+        AppLanguage.KOREAN -> "진입점 및 패널 스타일"
+    }
+
+    val pluginEntryStyle: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "插件入口"
+        AppLanguage.ENGLISH -> "Plugin entry"
+        AppLanguage.ARABIC -> "مدخل الإضافات"
+        AppLanguage.PORTUGUESE -> "Entrada de plugins"
+        AppLanguage.SPANISH -> "Entrada de plugins"
+        AppLanguage.FRENCH -> "Entrée des plugins"
+        AppLanguage.GERMAN -> "Plugin-Einstieg"
+        AppLanguage.RUSSIAN -> "Вход в плагины"
+        AppLanguage.JAPANESE -> "プラグインの入口"
+        AppLanguage.KOREAN -> "플러그인 진입점"
+    }
+
+    val pluginPanelStyleLabel: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "面板样式"
+        AppLanguage.ENGLISH -> "Panel style"
+        AppLanguage.ARABIC -> "نمط اللوحة"
+        AppLanguage.PORTUGUESE -> "Estilo do painel"
+        AppLanguage.SPANISH -> "Estilo del panel"
+        AppLanguage.FRENCH -> "Style du panneau"
+        AppLanguage.GERMAN -> "Panelstil"
+        AppLanguage.RUSSIAN -> "Стиль панели"
+        AppLanguage.JAPANESE -> "パネルスタイル"
+        AppLanguage.KOREAN -> "패널 스타일"
+    }
+
+    val entryStyleToolbar: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "工具栏"
+        AppLanguage.ENGLISH -> "Toolbar"
+        AppLanguage.ARABIC -> "شريط الأدوات"
+        AppLanguage.PORTUGUESE -> "Barra de ferramentas"
+        AppLanguage.SPANISH -> "Barra de herramientas"
+        AppLanguage.FRENCH -> "Barre d'outils"
+        AppLanguage.GERMAN -> "Symbolleiste"
+        AppLanguage.RUSSIAN -> "Панель инструментов"
+        AppLanguage.JAPANESE -> "ツールバー"
+        AppLanguage.KOREAN -> "툴바"
+    }
+
+    val entryStyleMenu: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "菜单"
+        AppLanguage.ENGLISH -> "Menu"
+        AppLanguage.ARABIC -> "القائمة"
+        AppLanguage.PORTUGUESE -> "Menu"
+        AppLanguage.SPANISH -> "Menú"
+        AppLanguage.FRENCH -> "Menu"
+        AppLanguage.GERMAN -> "Menü"
+        AppLanguage.RUSSIAN -> "Меню"
+        AppLanguage.JAPANESE -> "メニュー"
+        AppLanguage.KOREAN -> "메뉴"
+    }
+
+    val entryStyleFloating: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "悬浮手柄"
+        AppLanguage.ENGLISH -> "Floating handle"
+        AppLanguage.ARABIC -> "مقبض عائم"
+        AppLanguage.PORTUGUESE -> "Alça flutuante"
+        AppLanguage.SPANISH -> "Control flotante"
+        AppLanguage.FRENCH -> "Poignée flottante"
+        AppLanguage.GERMAN -> "Schwebender Griff"
+        AppLanguage.RUSSIAN -> "Плавающая ручка"
+        AppLanguage.JAPANESE -> "フローティングハンドル"
+        AppLanguage.KOREAN -> "플로팅 핸들"
+    }
+
+    val panelStyleSheet: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "底部面板"
+        AppLanguage.ENGLISH -> "Bottom sheet"
+        AppLanguage.ARABIC -> "لوحة سفلية"
+        AppLanguage.PORTUGUESE -> "Folha inferior"
+        AppLanguage.SPANISH -> "Hoja inferior"
+        AppLanguage.FRENCH -> "Panneau inférieur"
+        AppLanguage.GERMAN -> "Unteres Panel"
+        AppLanguage.RUSSIAN -> "Нижняя панель"
+        AppLanguage.JAPANESE -> "ボトムシート"
+        AppLanguage.KOREAN -> "하단 시트"
+    }
+
+    val panelStyleWindow: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "悬浮窗"
+        AppLanguage.ENGLISH -> "Floating window"
+        AppLanguage.ARABIC -> "نافذة عائمة"
+        AppLanguage.PORTUGUESE -> "Janela flutuante"
+        AppLanguage.SPANISH -> "Ventana flotante"
+        AppLanguage.FRENCH -> "Fenêtre flottante"
+        AppLanguage.GERMAN -> "Schwebefenster"
+        AppLanguage.RUSSIAN -> "Плавающее окно"
+        AppLanguage.JAPANESE -> "フローティングウィンドウ"
+        AppLanguage.KOREAN -> "플로팅 창"
+    }
+
+    val panelStyleFullscreen: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "全屏对话框"
+        AppLanguage.ENGLISH -> "Fullscreen dialog"
+        AppLanguage.ARABIC -> "حوار بملء الشاشة"
+        AppLanguage.PORTUGUESE -> "Diálogo em tela cheia"
+        AppLanguage.SPANISH -> "Diálogo a pantalla completa"
+        AppLanguage.FRENCH -> "Dialogue plein écran"
+        AppLanguage.GERMAN -> "Vollbild-Dialog"
+        AppLanguage.RUSSIAN -> "Полноэкранный диалог"
+        AppLanguage.JAPANESE -> "全画面ダイアログ"
+        AppLanguage.KOREAN -> "전체 화면 대화상자"
+    }
+
+    val pluginPin: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "固定到工具栏"
+        AppLanguage.ENGLISH -> "Pin to toolbar"
+        AppLanguage.ARABIC -> "تثبيت في شريط الأدوات"
+        AppLanguage.PORTUGUESE -> "Fixar na barra"
+        AppLanguage.SPANISH -> "Fijar a la barra"
+        AppLanguage.FRENCH -> "Épingler à la barre"
+        AppLanguage.GERMAN -> "An Symbolleiste anheften"
+        AppLanguage.RUSSIAN -> "Закрепить на панели"
+        AppLanguage.JAPANESE -> "ツールバーに固定"
+        AppLanguage.KOREAN -> "툴바에 고정"
+    }
+
+    val pluginUnpin: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "取消固定"
+        AppLanguage.ENGLISH -> "Unpin"
+        AppLanguage.ARABIC -> "إلغاء التثبيت"
+        AppLanguage.PORTUGUESE -> "Desafixar"
+        AppLanguage.SPANISH -> "Desfijar"
+        AppLanguage.FRENCH -> "Désépingler"
+        AppLanguage.GERMAN -> "Lösen"
+        AppLanguage.RUSSIAN -> "Открепить"
+        AppLanguage.JAPANESE -> "固定を解除"
+        AppLanguage.KOREAN -> "고정 해제"
+    }
+
+    val pluginExportHcj: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "导出 .hcj 包"
+        AppLanguage.ENGLISH -> "Export .hcj package"
+        AppLanguage.ARABIC -> "تصدير حزمة .hcj"
+        AppLanguage.PORTUGUESE -> "Exportar pacote .hcj"
+        AppLanguage.SPANISH -> "Exportar paquete .hcj"
+        AppLanguage.FRENCH -> "Exporter le paquet .hcj"
+        AppLanguage.GERMAN -> ".hcj-Paket exportieren"
+        AppLanguage.RUSSIAN -> "Экспорт пакета .hcj"
+        AppLanguage.JAPANESE -> ".hcj パッケージをエクスポート"
+        AppLanguage.KOREAN -> ".hcj 패키지 내보내기"
+    }
+
+    val pluginDeleteConfirmTitle: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "删除插件？"
+        AppLanguage.ENGLISH -> "Delete plugin?"
+        AppLanguage.ARABIC -> "حذف الإضافة؟"
+        AppLanguage.PORTUGUESE -> "Excluir plugin?"
+        AppLanguage.SPANISH -> "¿Eliminar plugin?"
+        AppLanguage.FRENCH -> "Supprimer le plugin ?"
+        AppLanguage.GERMAN -> "Plugin löschen?"
+        AppLanguage.RUSSIAN -> "Удалить плагин?"
+        AppLanguage.JAPANESE -> "プラグインを削除しますか？"
+        AppLanguage.KOREAN -> "플러그인을 삭제할까요?"
+    }
+
+    fun pluginImportSuccess(name: String): String = when (Strings.lang) {
+        AppLanguage.CHINESE -> "已导入：$name"
+        AppLanguage.ENGLISH -> "Imported: $name"
+        AppLanguage.ARABIC -> "تم الاستيراد: $name"
+        AppLanguage.PORTUGUESE -> "Importado: $name"
+        AppLanguage.SPANISH -> "Importado: $name"
+        AppLanguage.FRENCH -> "Importé : $name"
+        AppLanguage.GERMAN -> "Importiert: $name"
+        AppLanguage.RUSSIAN -> "Импортировано: $name"
+        AppLanguage.JAPANESE -> "インポートしました：$name"
+        AppLanguage.KOREAN -> "가져옴: $name"
+    }
+
+    val pluginEditorEdit: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "编辑插件"
+        AppLanguage.ENGLISH -> "Edit plugin"
+        AppLanguage.ARABIC -> "تحرير الإضافة"
+        AppLanguage.PORTUGUESE -> "Editar plugin"
+        AppLanguage.SPANISH -> "Editar plugin"
+        AppLanguage.FRENCH -> "Modifier le plugin"
+        AppLanguage.GERMAN -> "Plugin bearbeiten"
+        AppLanguage.RUSSIAN -> "Редактировать плагин"
+        AppLanguage.JAPANESE -> "プラグインを編集"
+        AppLanguage.KOREAN -> "플러그인 편집"
+    }
+
+    val pluginTabInfo: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "信息"
+        AppLanguage.ENGLISH -> "Info"
+        AppLanguage.ARABIC -> "معلومات"
+        AppLanguage.PORTUGUESE -> "Info"
+        AppLanguage.SPANISH -> "Info"
+        AppLanguage.FRENCH -> "Infos"
+        AppLanguage.GERMAN -> "Info"
+        AppLanguage.RUSSIAN -> "Инфо"
+        AppLanguage.JAPANESE -> "情報"
+        AppLanguage.KOREAN -> "정보"
+    }
+
+    val pluginTabPanel: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "面板"
+        AppLanguage.ENGLISH -> "Panel"
+        AppLanguage.ARABIC -> "اللوحة"
+        AppLanguage.PORTUGUESE -> "Painel"
+        AppLanguage.SPANISH -> "Panel"
+        AppLanguage.FRENCH -> "Panneau"
+        AppLanguage.GERMAN -> "Panel"
+        AppLanguage.RUSSIAN -> "Панель"
+        AppLanguage.JAPANESE -> "パネル"
+        AppLanguage.KOREAN -> "패널"
+    }
+
+    val pluginFieldName: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "名称"
+        AppLanguage.ENGLISH -> "Name"
+        AppLanguage.ARABIC -> "الاسم"
+        AppLanguage.PORTUGUESE -> "Nome"
+        AppLanguage.SPANISH -> "Nombre"
+        AppLanguage.FRENCH -> "Nom"
+        AppLanguage.GERMAN -> "Name"
+        AppLanguage.RUSSIAN -> "Название"
+        AppLanguage.JAPANESE -> "名前"
+        AppLanguage.KOREAN -> "이름"
+    }
+
+    val pluginFieldId: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "插件 ID"
+        AppLanguage.ENGLISH -> "Plugin ID"
+        AppLanguage.ARABIC -> "معرّف الإضافة"
+        AppLanguage.PORTUGUESE -> "ID do plugin"
+        AppLanguage.SPANISH -> "ID del plugin"
+        AppLanguage.FRENCH -> "ID du plugin"
+        AppLanguage.GERMAN -> "Plugin-ID"
+        AppLanguage.RUSSIAN -> "ID плагина"
+        AppLanguage.JAPANESE -> "プラグイン ID"
+        AppLanguage.KOREAN -> "플러그인 ID"
+    }
+
+    val pluginFieldVersion: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "版本"
+        AppLanguage.ENGLISH -> "Version"
+        AppLanguage.ARABIC -> "الإصدار"
+        AppLanguage.PORTUGUESE -> "Versão"
+        AppLanguage.SPANISH -> "Versión"
+        AppLanguage.FRENCH -> "Version"
+        AppLanguage.GERMAN -> "Version"
+        AppLanguage.RUSSIAN -> "Версия"
+        AppLanguage.JAPANESE -> "バージョン"
+        AppLanguage.KOREAN -> "버전"
+    }
+
+    val pluginFieldMatches: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "匹配规则"
+        AppLanguage.ENGLISH -> "Match patterns"
+        AppLanguage.ARABIC -> "أنماط المطابقة"
+        AppLanguage.PORTUGUESE -> "Padrões de correspondência"
+        AppLanguage.SPANISH -> "Patrones de coincidencia"
+        AppLanguage.FRENCH -> "Motifs de correspondance"
+        AppLanguage.GERMAN -> "Treffermuster"
+        AppLanguage.RUSSIAN -> "Шаблоны совпадения"
+        AppLanguage.JAPANESE -> "マッチパターン"
+        AppLanguage.KOREAN -> "일치 패턴"
+    }
+
+    val pluginFieldMatchesHint: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "每行一条，如 *://*.example.com/* 或 /正则/"
+        AppLanguage.ENGLISH -> "One per line, e.g. *://*.example.com/* or /regex/"
+        AppLanguage.ARABIC -> "واحد في كل سطر، مثل *://*.example.com/* أو /regex/"
+        AppLanguage.PORTUGUESE -> "Um por linha, ex.: *://*.example.com/* ou /regex/"
+        AppLanguage.SPANISH -> "Uno por línea, ej.: *://*.example.com/* o /regex/"
+        AppLanguage.FRENCH -> "Un par ligne, ex. *://*.example.com/* ou /regex/"
+        AppLanguage.GERMAN -> "Eines pro Zeile, z. B. *://*.example.com/* oder /regex/"
+        AppLanguage.RUSSIAN -> "По одному в строке, напр. *://*.example.com/* или /regex/"
+        AppLanguage.JAPANESE -> "1 行に 1 つ。例: *://*.example.com/* または /正規表現/"
+        AppLanguage.KOREAN -> "한 줄에 하나씩, 예: *://*.example.com/* 또는 /정규식/"
+    }
+
+    val pluginFieldExcludes: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "排除规则"
+        AppLanguage.ENGLISH -> "Exclude patterns"
+        AppLanguage.ARABIC -> "أنماط الاستبعاد"
+        AppLanguage.PORTUGUESE -> "Padrões de exclusão"
+        AppLanguage.SPANISH -> "Patrones de exclusión"
+        AppLanguage.FRENCH -> "Motifs d'exclusion"
+        AppLanguage.GERMAN -> "Ausschlussmuster"
+        AppLanguage.RUSSIAN -> "Шаблоны исключения"
+        AppLanguage.JAPANESE -> "除外パターン"
+        AppLanguage.KOREAN -> "제외 패턴"
+    }
+
+    val pluginFieldRunAt: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "注入时机"
+        AppLanguage.ENGLISH -> "Run at"
+        AppLanguage.ARABIC -> "وقت التشغيل"
+        AppLanguage.PORTUGUESE -> "Executar em"
+        AppLanguage.SPANISH -> "Ejecutar en"
+        AppLanguage.FRENCH -> "Exécuter à"
+        AppLanguage.GERMAN -> "Ausführen bei"
+        AppLanguage.RUSSIAN -> "Запуск при"
+        AppLanguage.JAPANESE -> "実行タイミング"
+        AppLanguage.KOREAN -> "실행 시점"
+    }
+
+    val runAtStart: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "页面加载前"
+        AppLanguage.ENGLISH -> "Before page load"
+        AppLanguage.ARABIC -> "قبل تحميل الصفحة"
+        AppLanguage.PORTUGUESE -> "Antes do carregamento"
+        AppLanguage.SPANISH -> "Antes de cargar la página"
+        AppLanguage.FRENCH -> "Avant le chargement"
+        AppLanguage.GERMAN -> "Vor dem Laden"
+        AppLanguage.RUSSIAN -> "До загрузки страницы"
+        AppLanguage.JAPANESE -> "ページ読み込み前"
+        AppLanguage.KOREAN -> "페이지 로드 전"
+    }
+
+    val runAtEnd: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "DOM 就绪后"
+        AppLanguage.ENGLISH -> "After DOM ready"
+        AppLanguage.ARABIC -> "بعد جاهزية DOM"
+        AppLanguage.PORTUGUESE -> "Após o DOM pronto"
+        AppLanguage.SPANISH -> "Tras el DOM listo"
+        AppLanguage.FRENCH -> "Après le DOM prêt"
+        AppLanguage.GERMAN -> "Nach DOM-Bereitschaft"
+        AppLanguage.RUSSIAN -> "После готовности DOM"
+        AppLanguage.JAPANESE -> "DOM 準備完了後"
+        AppLanguage.KOREAN -> "DOM 준비 후"
+    }
+
+    val runAtIdle: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "页面加载完成后"
+        AppLanguage.ENGLISH -> "After page load"
+        AppLanguage.ARABIC -> "بعد تحميل الصفحة"
+        AppLanguage.PORTUGUESE -> "Após o carregamento"
+        AppLanguage.SPANISH -> "Tras cargar la página"
+        AppLanguage.FRENCH -> "Après le chargement"
+        AppLanguage.GERMAN -> "Nach dem Laden"
+        AppLanguage.RUSSIAN -> "После загрузки страницы"
+        AppLanguage.JAPANESE -> "ページ読み込み後"
+        AppLanguage.KOREAN -> "페이지 로드 후"
+    }
+
+    val pluginFieldPermissions: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "权限"
+        AppLanguage.ENGLISH -> "Permissions"
+        AppLanguage.ARABIC -> "الأذونات"
+        AppLanguage.PORTUGUESE -> "Permissões"
+        AppLanguage.SPANISH -> "Permisos"
+        AppLanguage.FRENCH -> "Autorisations"
+        AppLanguage.GERMAN -> "Berechtigungen"
+        AppLanguage.RUSSIAN -> "Разрешения"
+        AppLanguage.JAPANESE -> "権限"
+        AppLanguage.KOREAN -> "권한"
+    }
+
+    val pluginPermStorage: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "存储（hcj.config)"
+        AppLanguage.ENGLISH -> "Storage (hcj.config)"
+        AppLanguage.ARABIC -> "التخزين (hcj.config)"
+        AppLanguage.PORTUGUESE -> "Armazenamento (hcj.config)"
+        AppLanguage.SPANISH -> "Almacenamiento (hcj.config)"
+        AppLanguage.FRENCH -> "Stockage (hcj.config)"
+        AppLanguage.GERMAN -> "Speicher (hcj.config)"
+        AppLanguage.RUSSIAN -> "Хранилище (hcj.config)"
+        AppLanguage.JAPANESE -> "ストレージ (hcj.config)"
+        AppLanguage.KOREAN -> "저장소 (hcj.config)"
+    }
+
+    val pluginPermFetch: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "跨域请求（hcj.fetch)"
+        AppLanguage.ENGLISH -> "Cross-origin fetch (hcj.fetch)"
+        AppLanguage.ARABIC -> "طلبات عبر المصادر (hcj.fetch)"
+        AppLanguage.PORTUGUESE -> "Requisições entre origens (hcj.fetch)"
+        AppLanguage.SPANISH -> "Solicitudes entre orígenes (hcj.fetch)"
+        AppLanguage.FRENCH -> "Requêtes inter-origines (hcj.fetch)"
+        AppLanguage.GERMAN -> "Cross-Origin-Abrufe (hcj.fetch)"
+        AppLanguage.RUSSIAN -> "Межсайтовые запросы (hcj.fetch)"
+        AppLanguage.JAPANESE -> "クロスオリジン取得 (hcj.fetch)"
+        AppLanguage.KOREAN -> "크로스 오리진 요청 (hcj.fetch)"
+    }
+
+    val pluginPermNotify: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "通知（hcj.notify)"
+        AppLanguage.ENGLISH -> "Notifications (hcj.notify)"
+        AppLanguage.ARABIC -> "الإشعارات (hcj.notify)"
+        AppLanguage.PORTUGUESE -> "Notificações (hcj.notify)"
+        AppLanguage.SPANISH -> "Notificaciones (hcj.notify)"
+        AppLanguage.FRENCH -> "Notifications (hcj.notify)"
+        AppLanguage.GERMAN -> "Benachrichtigungen (hcj.notify)"
+        AppLanguage.RUSSIAN -> "Уведомления (hcj.notify)"
+        AppLanguage.JAPANESE -> "通知 (hcj.notify)"
+        AppLanguage.KOREAN -> "알림 (hcj.notify)"
+    }
+
+    val pluginPermBadge: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "工具栏角标（hcj.badge)"
+        AppLanguage.ENGLISH -> "Toolbar badge (hcj.badge)"
+        AppLanguage.ARABIC -> "شارة شريط الأدوات (hcj.badge)"
+        AppLanguage.PORTUGUESE -> "Emblema da barra (hcj.badge)"
+        AppLanguage.SPANISH -> "Insignia de barra (hcj.badge)"
+        AppLanguage.FRENCH -> "Badge de barre (hcj.badge)"
+        AppLanguage.GERMAN -> "Symbolleisten-Badge (hcj.badge)"
+        AppLanguage.RUSSIAN -> "Значок на панели (hcj.badge)"
+        AppLanguage.JAPANESE -> "ツールバーバッジ (hcj.badge)"
+        AppLanguage.KOREAN -> "툴바 배지 (hcj.badge)"
+    }
+
+    val pluginPermClipboard: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "剪贴板（hcj.clipboard)"
+        AppLanguage.ENGLISH -> "Clipboard (hcj.clipboard)"
+        AppLanguage.ARABIC -> "الحافظة (hcj.clipboard)"
+        AppLanguage.PORTUGUESE -> "Área de transferência (hcj.clipboard)"
+        AppLanguage.SPANISH -> "Portapapeles (hcj.clipboard)"
+        AppLanguage.FRENCH -> "Presse-papiers (hcj.clipboard)"
+        AppLanguage.GERMAN -> "Zwischenablage (hcj.clipboard)"
+        AppLanguage.RUSSIAN -> "Буфер обмена (hcj.clipboard)"
+        AppLanguage.JAPANESE -> "クリップボード (hcj.clipboard)"
+        AppLanguage.KOREAN -> "클립보드 (hcj.clipboard)"
+    }
+
+    val pluginPermDownload: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "下载（hcj.download)"
+        AppLanguage.ENGLISH -> "Downloads (hcj.download)"
+        AppLanguage.ARABIC -> "التنزيلات (hcj.download)"
+        AppLanguage.PORTUGUESE -> "Downloads (hcj.download)"
+        AppLanguage.SPANISH -> "Descargas (hcj.download)"
+        AppLanguage.FRENCH -> "Téléchargements (hcj.download)"
+        AppLanguage.GERMAN -> "Downloads (hcj.download)"
+        AppLanguage.RUSSIAN -> "Загрузки (hcj.download)"
+        AppLanguage.JAPANESE -> "ダウンロード (hcj.download)"
+        AppLanguage.KOREAN -> "다운로드 (hcj.download)"
+    }
+
+    val pluginShowEntry: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "在插件入口中显示"
+        AppLanguage.ENGLISH -> "Show in plugin entry"
+        AppLanguage.ARABIC -> "إظهار في مدخل الإضافات"
+        AppLanguage.PORTUGUESE -> "Mostrar na entrada de plugins"
+        AppLanguage.SPANISH -> "Mostrar en la entrada de plugins"
+        AppLanguage.FRENCH -> "Afficher dans l'entrée des plugins"
+        AppLanguage.GERMAN -> "Im Plugin-Einstieg anzeigen"
+        AppLanguage.RUSSIAN -> "Показывать во входе плагинов"
+        AppLanguage.JAPANESE -> "プラグイン入口に表示"
+        AppLanguage.KOREAN -> "플러그인 진입점에 표시"
+    }
+
+    val pluginNameRequired: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "名称必填"
+        AppLanguage.ENGLISH -> "Name is required"
+        AppLanguage.ARABIC -> "الاسم مطلوب"
+        AppLanguage.PORTUGUESE -> "O nome é obrigatório"
+        AppLanguage.SPANISH -> "El nombre es obligatorio"
+        AppLanguage.FRENCH -> "Le nom est requis"
+        AppLanguage.GERMAN -> "Name ist erforderlich"
+        AppLanguage.RUSSIAN -> "Требуется название"
+        AppLanguage.JAPANESE -> "名前は必須です"
+        AppLanguage.KOREAN -> "이름은 필수입니다"
+    }
+
+    val pluginScriptTab: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "脚本"
+        AppLanguage.ENGLISH -> "Script"
+        AppLanguage.ARABIC -> "النص"
+        AppLanguage.PORTUGUESE -> "Script"
+        AppLanguage.SPANISH -> "Script"
+        AppLanguage.FRENCH -> "Script"
+        AppLanguage.GERMAN -> "Skript"
+        AppLanguage.RUSSIAN -> "Скрипт"
+        AppLanguage.JAPANESE -> "スクリプト"
+        AppLanguage.KOREAN -> "스크립트"
+    }
+
+    val pluginAttachEmpty: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "未挂载插件"
+        AppLanguage.ENGLISH -> "No plugins attached"
+        AppLanguage.ARABIC -> "لا توجد إضافات مرفقة"
+        AppLanguage.PORTUGUESE -> "Nenhum plugin anexado"
+        AppLanguage.SPANISH -> "Sin plugins adjuntos"
+        AppLanguage.FRENCH -> "Aucun plugin attaché"
+        AppLanguage.GERMAN -> "Keine Plugins angehängt"
+        AppLanguage.RUSSIAN -> "Плагины не прикреплены"
+        AppLanguage.JAPANESE -> "プラグイン未アタッチ"
+        AppLanguage.KOREAN -> "연결된 플러그인 없음"
+    }
+
+    val pluginAttachHint: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "挂载的插件只在此应用内运行"
+        AppLanguage.ENGLISH -> "Attached plugins run inside this app"
+        AppLanguage.ARABIC -> "تعمل الإضافات المرفقة داخل هذا التطبيق"
+        AppLanguage.PORTUGUESE -> "Plugins anexados rodam dentro deste app"
+        AppLanguage.SPANISH -> "Los plugins adjuntos se ejecutan en esta app"
+        AppLanguage.FRENCH -> "Les plugins attachés s'exécutent dans cette app"
+        AppLanguage.GERMAN -> "Angehängte Plugins laufen in dieser App"
+        AppLanguage.RUSSIAN -> "Прикреплённые плагины работают в этом приложении"
+        AppLanguage.JAPANESE -> "アタッチしたプラグインはこのアプリ内で動作"
+        AppLanguage.KOREAN -> "연결된 플러그인은 이 앱 내에서 실행됩니다"
+    }
+
+    val pluginAdd: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "添加插件"
+        AppLanguage.ENGLISH -> "Add plugins"
+        AppLanguage.ARABIC -> "إضافة إضافات"
+        AppLanguage.PORTUGUESE -> "Adicionar plugins"
+        AppLanguage.SPANISH -> "Añadir plugins"
+        AppLanguage.FRENCH -> "Ajouter des plugins"
+        AppLanguage.GERMAN -> "Plugins hinzufügen"
+        AppLanguage.RUSSIAN -> "Добавить плагины"
+        AppLanguage.JAPANESE -> "プラグインを追加"
+        AppLanguage.KOREAN -> "플러그인 추가"
+    }
+
+    val pluginSelectTitle: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "选择插件"
+        AppLanguage.ENGLISH -> "Select plugins"
+        AppLanguage.ARABIC -> "اختيار الإضافات"
+        AppLanguage.PORTUGUESE -> "Selecionar plugins"
+        AppLanguage.SPANISH -> "Seleccionar plugins"
+        AppLanguage.FRENCH -> "Sélectionner des plugins"
+        AppLanguage.GERMAN -> "Plugins auswählen"
+        AppLanguage.RUSSIAN -> "Выбрать плагины"
+        AppLanguage.JAPANESE -> "プラグインを選択"
+        AppLanguage.KOREAN -> "플러그인 선택"
+    }
+
+    fun pluginSelectedCount(count: Int): String = when (Strings.lang) {
+        AppLanguage.CHINESE -> "已选 $count 个插件"
+        AppLanguage.ENGLISH -> "$count selected"
+        AppLanguage.ARABIC -> "تم اختيار $count"
+        AppLanguage.PORTUGUESE -> "$count selecionados"
+        AppLanguage.SPANISH -> "$count seleccionados"
+        AppLanguage.FRENCH -> "$count sélectionnés"
+        AppLanguage.GERMAN -> "$count ausgewählt"
+        AppLanguage.RUSSIAN -> "Выбрано: $count"
+        AppLanguage.JAPANESE -> "$count 件選択中"
+        AppLanguage.KOREAN -> "${count}개 선택됨"
+    }
+
 }

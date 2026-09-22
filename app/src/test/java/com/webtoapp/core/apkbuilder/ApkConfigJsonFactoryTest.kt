@@ -330,30 +330,26 @@ class ApkConfigJsonFactoryTest {
     }
 
     @Test
-    fun `embedded modules serialize nested rules and config values structurally`() {
+    fun `embedded plugins serialize nested rules and payloads structurally`() {
         val config = ApkConfig(
             meta = MetaBlock(
                 appName = "Modules",
                 packageName = "com.example.modules",
                 targetUrl = "https://example.com"
             ),
-            extension = ExtensionBlock(
-                embeddedModules = listOf(
-                    EmbeddedExtensionModule(
+            plugin = PluginBlock(
+                embeddedPlugins = listOf(
+                    EmbeddedPlugin(
                         id = "module\"one",
                         name = "Module\nOne",
-                        code = "console.log(\"safe json\");",
-                        cssCode = "body::before { content: \"x\"; }",
-                        urlMatches = listOf(
-                            EmbeddedUrlMatchRule(
+                        mainJs = "console.log(\"safe json\");",
+                        css = "body::before { content: \"x\"; }",
+                        matches = listOf(
+                            EmbeddedMatchPattern(
                                 pattern = "https://example.com/*",
-                                isRegex = false,
+                                regex = false,
                                 exclude = false
                             )
-                        ),
-                        configValues = mapOf(
-                            "selector\"key" to ".card[data-x=\"1\"]",
-                            "message" to "line\nbreak"
                         )
                     )
                 )
@@ -362,14 +358,13 @@ class ApkConfigJsonFactoryTest {
 
         val module = JsonParser.parseString(ApkConfigJsonFactory.create(config))
             .asJsonObject
-            .getAsJsonArray("embeddedExtensionModules")[0]
+            .getAsJsonArray("embeddedPlugins")[0]
             .asJsonObject
 
         assertThat(module.get("id").asString).isEqualTo("module\"one")
         assertThat(module.get("name").asString).isEqualTo("Module\nOne")
-        assertThat(module.getAsJsonArray("urlMatches")[0].asJsonObject.get("pattern").asString)
+        assertThat(module.getAsJsonArray("matches")[0].asJsonObject.get("pattern").asString)
             .isEqualTo("https://example.com/*")
-        assertThat(module.getAsJsonObject("configValues").get("selector\"key").asString)
-            .isEqualTo(".card[data-x=\"1\"]")
+        assertThat(module.get("mainJs").asString).isEqualTo("console.log(\"safe json\");")
     }
 }

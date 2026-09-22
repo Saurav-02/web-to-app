@@ -164,7 +164,7 @@ fun buildAppCapabilities(editState: EditState): List<AppCapability> = listOf(
         level = WtaCapabilityLevel.Advanced,
         icon = Icons.Outlined.Code,
         keywords = listOf("扩展", "模块", "脚本", "extension", "插件"),
-        configured = editState.extensionModuleEnabled || editState.extensionModuleIds.isNotEmpty()
+        configured = editState.pluginsEnabled || editState.pluginIds.isNotEmpty()
     ),
     AppCapability(
         id = "appearance",

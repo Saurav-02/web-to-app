@@ -79,9 +79,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.webtoapp.core.extension.ExtensionManager
 import com.webtoapp.core.extension.ModuleCategory
-import com.webtoapp.core.extension.ModuleSourceType
 import com.webtoapp.core.extension.UserScriptParser
 import com.webtoapp.core.i18n.Strings
 import com.webtoapp.core.logging.AppLogger
@@ -146,12 +144,12 @@ fun ModuleMarketScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val extensionManager = remember { ExtensionManager.getInstance(context) }
-    val repo = remember { ModuleMarketRepository.getInstance(context, extensionManager) }
+    val pluginStore = remember { com.webtoapp.core.plugin.PluginStore.getInstance(context) }
+    val repo = remember { ModuleMarketRepository.getInstance(context) }
 
     val state by repo.state.collectAsState()
     var views by remember { mutableStateOf<List<MarketModuleView>>(emptyList()) }
-    val installedModules by extensionManager.modules.collectAsState()
+    val installedModules by pluginStore.plugins.collectAsState()
 
     LaunchedEffect(repo) {
         repo.views.collectLatest { views = it }
@@ -306,12 +304,12 @@ fun ModuleMarketScreen(
                 homepage = BrowserExtensionStore.storePageUrl(r.storeId)
             )
             val installed = installedModules.firstOrNull {
-                it.sourceType == ModuleSourceType.CHROME_EXTENSION && it.chromeExtId == r.storeId
+                it.kind == com.webtoapp.core.plugin.PluginKind.CHROME_EXTENSION && it.chromeExtId == r.storeId
             }
             MarketModuleView(
                 entry = entry,
                 state = if (installed != null) MarketInstallState.UpToDate else MarketInstallState.NotInstalled,
-                installedVersion = installed?.version?.name,
+                installedVersion = installed?.versionName,
                 submission = null,
                 ratingValue = r.ratingValue,
                 ratingCount = r.ratingCount,
@@ -480,7 +478,7 @@ fun ModuleMarketScreen(
                         installProgress = installProgress,
                         favorites = gfFavorites,
                         installedUserScriptNames = installedModules
-                            .filter { it.sourceType == ModuleSourceType.USERSCRIPT || it.sourceType == ModuleSourceType.GREASYFORK }
+                            .filter { it.kind == com.webtoapp.core.plugin.PluginKind.USERSCRIPT }
                             .map { it.name }
                             .toSet(),
                         onInstall = { result ->
@@ -861,9 +859,9 @@ private fun CwsSearchContent(
     listState: androidx.compose.foundation.lazy.LazyListState
 ) {
     val context = LocalContext.current
-    val extensionManager = remember(context) { ExtensionManager.getInstance(context) }
-    val installedModules by extensionManager.modules.collectAsState()
-    val builtIn by extensionManager.builtInModules.collectAsState()
+    val pluginStore = remember(context) { com.webtoapp.core.plugin.PluginStore.getInstance(context) }
+    val installedModules by pluginStore.plugins.collectAsState()
+    val builtIn by pluginStore.builtInPlugins.collectAsState()
     val allInstalled = remember(installedModules, builtIn) { installedModules + builtIn }
 
     var browseCategory by remember {
@@ -1068,7 +1066,7 @@ private fun cwsSortLabel(mode: CwsSortMode): String = when (mode) {
 
 private fun storeEntryToView(
     entry: BrowserExtensionStore.StoreEntry,
-    installedModules: List<com.webtoapp.core.extension.ExtensionModule>
+    installedModules: List<com.webtoapp.core.plugin.Plugin>
 ): MarketModuleView {
     val tags = CwsTags.fromName(entry.name).map { it.label }
     val marketEntry = ModuleMarketEntry(
@@ -1089,12 +1087,12 @@ private fun storeEntryToView(
         )
     )
     val installed = installedModules.firstOrNull {
-        it.sourceType == ModuleSourceType.CHROME_EXTENSION && it.chromeExtId == entry.storeId
+        it.kind == com.webtoapp.core.plugin.PluginKind.CHROME_EXTENSION && it.chromeExtId == entry.storeId
     }
     return MarketModuleView(
         entry = marketEntry,
         state = if (installed != null) MarketInstallState.UpToDate else MarketInstallState.NotInstalled,
-        installedVersion = installed?.version?.name,
+        installedVersion = installed?.versionName,
         submission = null,
         ratingValue = entry.ratingValue,
         ratingCount = entry.ratingCount,

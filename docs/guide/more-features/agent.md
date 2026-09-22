@@ -4,7 +4,7 @@ A tool-calling assistant inside the app that can operate the entire WebToApp sur
 
 ## What it can do
 
-Beyond generating web apps, extension modules, userscripts, MV3 Chrome extensions, and local runtime projects, the Agent can directly perform actions across the app:
+Beyond generating web apps, plugins, userscripts, MV3 Chrome extensions, and local runtime projects, the Agent can directly perform actions across the app:
 
 - **App lifecycle** — create, edit, duplicate, delete, build APK/AAB, export, share, create shortcuts, move to categories.
 - **Ports & engines** — scan/kill ports, check/select/delete browser engines (WebView, GeckoView).
@@ -13,7 +13,7 @@ Beyond generating web apps, extension modules, userscripts, MV3 Chrome extension
 - **Stats & health** — usage statistics, URL health checks.
 - **App modifier** — list installed apps, clone/rebrand apps, batch import from text, export templates.
 - **Build environment & compliance** — initialize the Linux build environment, install components, run Google Play policy checks.
-- **Modules** — list, create, and update extension modules.
+- **Modules** — list, create, and update plugins.
 - **Files** — read, write, edit, delete, list, glob, and grep project files.
 
 ## Features
@@ -29,4 +29,4 @@ Agent uses the model and keys configured in [AI Settings](/guide/more-features/a
 
 ## Notes
 
-Agent produces *source* and performs *actions*. To install a generated extension, save it through the [Extension Modules](/guide/more-features/extension-modules) flow.
+Agent produces *source* and performs *actions*. To install a generated extension, save it through the [Plugins](/guide/more-features/extension-modules) flow.

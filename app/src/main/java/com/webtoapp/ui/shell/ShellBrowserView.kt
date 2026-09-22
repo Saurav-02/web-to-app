@@ -70,11 +70,12 @@ fun ShellBrowserAndroidView(
                         webViewManager = webViewManager,
                         callbacks = webViewCallbacks,
                         adBlocker = WebToAppApplication.adBlock,
-                        extensionModuleIds = config.extensionModuleIds,
-                        embeddedExtensionModules = config.embeddedExtensionModules,
-                        extensionFabIcon = config.extensionFabIcon,
-                        allowGlobalModuleFallback = false,
-                        extensionEnabled = config.extensionEnabled,
+                        pluginPayloads = config.embeddedPlugins
+                            .filter { it.enabled }
+                            .map { it.toResolved() },
+                        pluginsEnabled = config.pluginsEnabled,
+                        pluginEntryStyle = com.webtoapp.core.plugin.PluginEntryStyle.parse(config.pluginEntryStyle),
+                        pluginPanelStyle = com.webtoapp.core.plugin.PluginPanelStyle.parse(config.pluginPanelStyle),
                         browserDisguiseConfig = config.browserDisguiseConfig,
                         deviceDisguiseConfig = config.deviceDisguiseConfig,
                         appOriginUrl = config.targetUrl

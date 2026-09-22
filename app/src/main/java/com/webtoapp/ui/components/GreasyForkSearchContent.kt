@@ -46,7 +46,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.webtoapp.core.extension.ExtensionManager
 import com.webtoapp.core.extension.UserScriptParser
 import com.webtoapp.core.i18n.Strings
 import com.webtoapp.core.logging.AppLogger
@@ -559,17 +558,18 @@ suspend fun installGreasyForkScript(
             AppLogger.w("GreasyForkInstall", "Script parsed with warnings: ${parsed.warnings}")
         }
 
-        val extensionManager = ExtensionManager.getInstance(appContext)
         val greasyForkModule = parsed.module.copy(sourceType = com.webtoapp.core.extension.ModuleSourceType.GREASYFORK)
-        val addResult = extensionManager.addModule(greasyForkModule)
-        addResult.onSuccess {
-            Toast.makeText(
-                appContext,
-                Strings.moduleMarketInstalled.replace("%s", result.name),
-                Toast.LENGTH_SHORT
-            ).show()
-        }.onFailure { e ->
-            snackbar.showSnackbar(Strings.gfInstallFailed.replace("%s", e.message ?: "unknown"))
+        when (val addResult = com.webtoapp.core.plugin.PluginImporter(appContext)
+            .installLegacyModule(greasyForkModule)
+        ) {
+            is com.webtoapp.core.plugin.PluginImporter.ImportResult.Success ->
+                Toast.makeText(
+                    appContext,
+                    Strings.moduleMarketInstalled.replace("%s", result.name),
+                    Toast.LENGTH_SHORT
+                ).show()
+            is com.webtoapp.core.plugin.PluginImporter.ImportResult.Error ->
+                snackbar.showSnackbar(Strings.gfInstallFailed.replace("%s", addResult.message))
         }
     } catch (e: Exception) {
         AppLogger.e("GreasyForkInstall", "install failed for ${result.id}", e)

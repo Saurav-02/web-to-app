@@ -21,9 +21,6 @@ import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import com.webtoapp.core.adblock.AdBlocker
 import com.webtoapp.core.crypto.SecureAssetLoader
-import com.webtoapp.core.extension.ExtensionManager
-import com.webtoapp.core.extension.ExtensionPanelScript
-import com.webtoapp.core.extension.ModuleRunTime
 import com.webtoapp.data.model.NewWindowBehavior
 import com.webtoapp.data.model.ScriptRunTime
 import com.webtoapp.data.model.UserAgentMode
@@ -51,9 +48,6 @@ class WebViewManager(
 ) {
     private val proxyScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var proxyApplyJob: Job? = null
-    private var extensionPanelSyncJob: Job? = null
-    private var extensionPanelDeferredInjectionJob: Job? = null
-    private var extensionPanelInjected = false
     private val privateNetworkScriptHandlers = java.util.WeakHashMap<WebView, ScriptHandler>()
     private val downloadBridgeScriptHandlers = java.util.WeakHashMap<WebView, ScriptHandler>()
     private val blobCacheHookHandlers = java.util.WeakHashMap<WebView, ScriptHandler>()
@@ -90,6 +84,8 @@ class WebViewManager(
             "application/javascript", "application/json",
             "application/xml", "image/svg+xml"
         )
+
+        private const val PLUGIN_NOTIFICATION_CHANNEL_ID = "plugin_notifications"
 
         private val DESKTOP_UA_MODES = setOf(
             UserAgentMode.CHROME_DESKTOP,
@@ -1210,15 +1206,19 @@ class WebViewManager(
         """
     }
 
-    private var appExtensionModuleIds: List<String> = emptyList()
+    private var appPluginPayloads: List<com.webtoapp.core.plugin.PluginSession.Resolved> = emptyList()
 
-    private var embeddedModules: List<com.webtoapp.core.shell.EmbeddedShellModule> = emptyList()
+    private var pluginsEnabled: Boolean = true
 
-    private var allowGlobalModuleFallback: Boolean = false
+    private var pluginEntryStyle: com.webtoapp.core.plugin.PluginEntryStyle =
+        com.webtoapp.core.plugin.PluginEntryStyle.TOOLBAR
 
-    private var extensionFabIcon: String = ""
+    private var pluginPanelStyle: com.webtoapp.core.plugin.PluginPanelStyle =
+        com.webtoapp.core.plugin.PluginPanelStyle.BOTTOM_SHEET
 
-    private var extensionMasterEnabled: Boolean = true
+    private var expectLatePluginPayloads: Boolean = false
+
+    private var pluginSession: com.webtoapp.core.plugin.PluginSession? = null
 
     private var gmBridge: com.webtoapp.core.extension.GreasemonkeyBridge? = null
     private var geoBridge: GeolocationBridge? = null
@@ -1237,9 +1237,6 @@ class WebViewManager(
 
     private val pagePhaseExecutionState =
         java.util.WeakHashMap<WebView, MutableSet<String>>()
-
-    private val extensionModuleDeferredJobs =
-        java.util.WeakHashMap<WebView, MutableMap<String, Job>>()
 
     private val primeUserActivationDone = java.util.WeakHashMap<WebView, Boolean>()
 
@@ -1384,17 +1381,9 @@ class WebViewManager(
         }
     }
 
-    private fun getActiveModulesForCurrentApp(): List<com.webtoapp.core.extension.ExtensionModule> {
-        if (!extensionMasterEnabled) return emptyList()
-        val extensionManager = ExtensionManager.getInstance(context)
-
-        return if (appExtensionModuleIds.isNotEmpty()) {
-            extensionManager.getModulesByIds(appExtensionModuleIds)
-        } else if (allowGlobalModuleFallback) {
-            extensionManager.getEnabledModules()
-        } else {
-            emptyList()
-        }
+    private fun getActivePluginsForCurrentApp(): List<com.webtoapp.core.plugin.Plugin> {
+        if (!pluginsEnabled) return emptyList()
+        return appPluginPayloads.map { it.plugin }
     }
 
     private var appliedBrowsingDataClearGeneration = -1L
@@ -1404,11 +1393,13 @@ class WebViewManager(
         webView: WebView,
         config: WebViewConfig,
         callbacks: WebViewCallbacks,
-        extensionModuleIds: List<String> = emptyList(),
-        embeddedExtensionModules: List<com.webtoapp.core.shell.EmbeddedShellModule> = emptyList(),
-        extensionFabIcon: String = "",
-        allowGlobalModuleFallback: Boolean = false,
-        extensionEnabled: Boolean = true,
+        pluginPayloads: List<com.webtoapp.core.plugin.PluginSession.Resolved> = emptyList(),
+        pluginsEnabled: Boolean = true,
+        pluginEntryStyle: com.webtoapp.core.plugin.PluginEntryStyle =
+            com.webtoapp.core.plugin.PluginEntryStyle.TOOLBAR,
+        pluginPanelStyle: com.webtoapp.core.plugin.PluginPanelStyle =
+            com.webtoapp.core.plugin.PluginPanelStyle.BOTTOM_SHEET,
+        expectLatePluginPayloads: Boolean = false,
         browserDisguiseConfig: com.webtoapp.core.appearance.BrowserDisguiseConfig? = null,
         deviceDisguiseConfig: com.webtoapp.core.appearance.DeviceDisguiseConfig? = null
     ) {
@@ -1432,14 +1423,11 @@ class WebViewManager(
 
         this.cachedKernelFlavorJs = null
 
-        this.appExtensionModuleIds = extensionModuleIds
-
-        this.embeddedModules = embeddedExtensionModules
-        this.allowGlobalModuleFallback = allowGlobalModuleFallback
-
-        this.extensionFabIcon = extensionFabIcon
-
-        this.extensionMasterEnabled = extensionEnabled
+        this.appPluginPayloads = pluginPayloads
+        this.pluginsEnabled = pluginsEnabled
+        this.pluginEntryStyle = pluginEntryStyle
+        this.pluginPanelStyle = pluginPanelStyle
+        this.expectLatePluginPayloads = expectLatePluginPayloads
 
         this.currentDeviceDisguiseConfig = deviceDisguiseConfig
 
@@ -1476,10 +1464,7 @@ class WebViewManager(
             errorPageManager = ErrorPageManager(errorConfig)
         }
 
-        AppLogger.d("WebViewManager", "configureWebView: extensionModuleIds=${extensionModuleIds.size}, embeddedModules=${embeddedExtensionModules.size}")
-        embeddedExtensionModules.forEach { module ->
-            AppLogger.d("WebViewManager", "  Embedded module: id=${module.id}, name=${module.name}, enabled=${module.enabled}, runAt=${module.runAt}")
-        }
+        AppLogger.d("WebViewManager", "configureWebView: plugins=${pluginPayloads.size}, enabled=$pluginsEnabled, entry=$pluginEntryStyle, panel=$pluginPanelStyle")
 
         val dnsManager = com.webtoapp.core.dns.DnsManager(context)
         val hostsMappingEnabled = config.hostsMappingEnabled && config.hostsMappings.isNotEmpty()
@@ -1691,9 +1676,9 @@ class WebViewManager(
                 com.webtoapp.core.kernel.KernelFlavorMetadata.apply(webView, identity.profile)
 
                 if (!isDesktopModeRequested && identity.userAgent == null) {
-                    val hasActiveChromeExt = getActiveModulesForCurrentApp().any { module ->
-                        module.sourceType == com.webtoapp.core.extension.ModuleSourceType.CHROME_EXTENSION &&
-                        module.chromeExtId.isNotEmpty()
+                    val hasActiveChromeExt = getActivePluginsForCurrentApp().any { plugin ->
+                        plugin.kind == com.webtoapp.core.plugin.PluginKind.CHROME_EXTENSION &&
+                        plugin.chromeExtId.isNotEmpty()
                     }
                     if (hasActiveChromeExt) {
                         val desktopUa = DESKTOP_USER_AGENT ?: DESKTOP_USER_AGENT_FALLBACK
@@ -1870,23 +1855,61 @@ class WebViewManager(
             // Register the GM bridge only when userscripts can actually run: the interface
             // object is exposed to every frame of every page, so an unconditional
             // registration hands a cross-origin HTTP client to apps with zero userscripts.
-            // Global-fallback mode keeps the bridge registered because its module set is
-            // resolved dynamically per page load and a late addJavascriptInterface would
+            // The interface object is exposed to every frame of every page, so an
+            // unconditional registration hands a cross-origin HTTP client to apps
+            // with zero userscripts. Late payloads keep the bridge registered when
+            // the set is resolved dynamically — a late addJavascriptInterface would
             // not reach already-loaded pages.
-            val hasUserscriptModules = runCatching {
-                resolveActiveExtensionModules().any {
-                    it.sourceType == com.webtoapp.core.extension.ModuleSourceType.USERSCRIPT ||
-                        it.sourceType == com.webtoapp.core.extension.ModuleSourceType.GREASYFORK
-                } || embeddedModules.any { it.enabled && it.isUserscript() }
+            val hasUserscriptPlugins = runCatching {
+                pluginPayloads.any { it.plugin.kind == com.webtoapp.core.plugin.PluginKind.USERSCRIPT }
             }.getOrDefault(false)
             gmBridge?.destroy()
             gmBridge = null
-            if (hasUserscriptModules || allowGlobalModuleFallback) {
+            if (hasUserscriptPlugins || expectLatePluginPayloads) {
                 val bridge = com.webtoapp.core.extension.GreasemonkeyBridge(context) { webView }
+                bridge.onMenuCommandsChanged = { scriptId, names ->
+                    pluginSession?.updateMenuCommands(scriptId, names)
+                }
                 gmBridge = bridge
                 addJavascriptInterface(bridge, com.webtoapp.core.extension.GreasemonkeyBridge.JS_INTERFACE_NAME)
             } else {
                 removeJavascriptInterface(com.webtoapp.core.extension.GreasemonkeyBridge.JS_INTERFACE_NAME)
+            }
+
+            pluginSession?.destroy()
+            pluginSession = null
+            destroyChromePanelWebViews()
+            removeJavascriptInterface("__hcjBridge")
+            if (pluginsEnabled) {
+                val session = com.webtoapp.core.plugin.PluginSession(
+                    configStore = com.webtoapp.core.plugin.PluginConfigStore(context),
+                    appLang = { Strings.lang.code },
+                    pageEvaluator = { js -> evaluateJavascript(js, null) },
+                    notifySink = { pid, title, body ->
+                        postPluginNotification(pid, title, body)
+                    }
+                )
+                session.onChromeEntry = { plugin ->
+                    val page = plugin.popupPath.ifBlank { plugin.optionsPagePath }
+                    if (page.isNotBlank()) showChromeExtensionPage(plugin.chromeExtId, page)
+                }
+                session.userscriptAliasFor = { pid -> gmBridge?.storageAliasFor(pid) ?: pid }
+                session.panelRequestOverride = { resolved ->
+                    if (resolved.plugin.kind == com.webtoapp.core.plugin.PluginKind.CHROME_EXTENSION) {
+                        val page = resolved.plugin.popupPath.ifBlank { resolved.plugin.optionsPagePath }
+                        if (page.isBlank()) null else com.webtoapp.core.plugin.PluginHostState.PanelRequest(
+                            pluginId = resolved.plugin.id,
+                            kind = resolved.plugin.kind,
+                            url = "chrome-extension://${resolved.plugin.chromeExtId}/$page"
+                        )
+                    } else null
+                }
+                session.popupWebViewFactory = { url -> createChromePanelWebView(url) }
+                session.onPanelClosed = { destroyChromePanelWebViews() }
+                session.setPlugins(pluginPayloads)
+                session.attach()
+                addJavascriptInterface(session.bridge, "__hcjBridge")
+                pluginSession = session
             }
 
             initChromeExtensionRuntimes(webView)
@@ -1908,12 +1931,54 @@ class WebViewManager(
             isFocusableInTouchMode = true
             requestFocus()
         }
-        extensionPanelInjected = false
+    }
 
-        if (!extensionMasterEnabled) {
-            hideExtensionPanel(webView)
-        }
-        startExtensionPanelSync(webView)
+    /**
+     * Late-arriving plugin payloads (the store loads asynchronously). Rebuilds
+     * the session set, spins up chrome runtimes if they just appeared, and
+     * re-runs injection for the current page so late plugins still land.
+     */
+    fun updatePluginPayloads(webView: WebView, payloads: List<com.webtoapp.core.plugin.PluginSession.Resolved>) {
+        appPluginPayloads = payloads
+        if (!pluginsEnabled) return
+        val session = pluginSession ?: return
+        session.setPlugins(payloads)
+        initChromeExtensionRuntimes(webView)
+        if (ensureDesktopUaForDeferredChromeExt(webView)) return
+        val url = webView.url?.takeIf { it.isNotBlank() && it != "about:blank" } ?: return
+        session.onUrlChanged(url)
+        // Bootstrap is idempotent; re-running all phases lets document_start
+        // plugins land even when they missed the actual start.
+        injectPlugins(webView, url, ScriptRunTime.DOCUMENT_START)
+        injectPlugins(webView, url, ScriptRunTime.DOCUMENT_END)
+        injectPlugins(webView, url, ScriptRunTime.DOCUMENT_IDLE)
+    }
+
+    private fun postPluginNotification(pluginId: String, title: String, body: String) {
+        com.webtoapp.core.notification.PushNotificationHelper.ensureChannel(
+            context,
+            PLUGIN_NOTIFICATION_CHANNEL_ID,
+            when (Strings.lang) {
+                com.webtoapp.core.i18n.AppLanguage.CHINESE -> "插件通知"
+                com.webtoapp.core.i18n.AppLanguage.ENGLISH -> "Plugin notifications"
+                com.webtoapp.core.i18n.AppLanguage.ARABIC -> "إشعارات الإضافات"
+                com.webtoapp.core.i18n.AppLanguage.PORTUGUESE -> "Notificações de plugins"
+                com.webtoapp.core.i18n.AppLanguage.SPANISH -> "Notificaciones de plugins"
+                com.webtoapp.core.i18n.AppLanguage.FRENCH -> "Notifications des plugins"
+                com.webtoapp.core.i18n.AppLanguage.GERMAN -> "Plugin-Benachrichtigungen"
+                com.webtoapp.core.i18n.AppLanguage.RUSSIAN -> "Уведомления плагинов"
+                com.webtoapp.core.i18n.AppLanguage.JAPANESE -> "プラグイン通知"
+                com.webtoapp.core.i18n.AppLanguage.KOREAN -> "플러그인 알림"
+            },
+            "Notifications posted by web plugins"
+        )
+        com.webtoapp.core.notification.PushNotificationHelper.show(
+            context = context,
+            channelId = PLUGIN_NOTIFICATION_CHANNEL_ID,
+            title = title,
+            body = body,
+            notificationId = ("plugin:$pluginId").hashCode()
+        )
     }
 
     private fun applyNormalProxy(
@@ -2261,12 +2326,11 @@ class WebViewManager(
                 if (TlsMitmBridge.isRunning()) {
                     TlsMitmBridge.allowHost(runCatching { android.net.Uri.parse(url ?: "").host }.getOrNull())
                 }
-                extensionPanelInjected = false
                 view?.let {
                     userscriptInjectionState.remove(it)
                     pagePhaseExecutionState.remove(it)
-                    cancelDeferredExtensionModuleInjection(it)
                 }
+                url?.let { pluginSession?.onUrlChanged(it) }
 
                 // Embedded sign-in frames ("Sign in with Google" buttons, captcha
                 // challenges) are cross-origin iframes that need third-party cookies,
@@ -3096,7 +3160,6 @@ class WebViewManager(
                 view?.let { goneView ->
                     userscriptInjectionState.remove(goneView)
                     pagePhaseExecutionState.remove(goneView)
-                    cancelDeferredExtensionModuleInjection(goneView)
                     managedWebViews.remove(goneView)
                     primeUserActivationDone.remove(goneView)
                     failoverCursor.remove(goneView)
@@ -3971,12 +4034,7 @@ class WebViewManager(
             primeUserActivationDone.remove(webView)
             failoverCursor.remove(webView)
             cancelFailoverTimeout(webView)
-            cancelDeferredExtensionModuleInjection(webView)
-            extensionPanelSyncJob?.cancel()
-            extensionPanelSyncJob = null
-            extensionPanelDeferredInjectionJob?.cancel()
-            extensionPanelDeferredInjectionJob = null
-            extensionPanelInjected = false
+            webView.removeJavascriptInterface("__hcjBridge")
 
             webView.apply {
 
@@ -4308,31 +4366,35 @@ class WebViewManager(
         extensionRuntimes.clear()
 
         try {
-            val allChromeExtModules = getActiveModulesForCurrentApp().filter { module ->
-                module.sourceType == com.webtoapp.core.extension.ModuleSourceType.CHROME_EXTENSION &&
-                module.chromeExtId.isNotEmpty()
+            val allChromeExtPlugins = getActivePluginsForCurrentApp().filter { plugin ->
+                plugin.kind == com.webtoapp.core.plugin.PluginKind.CHROME_EXTENSION &&
+                plugin.chromeExtId.isNotEmpty()
             }
 
-            if (allChromeExtModules.isEmpty()) return
+            if (allChromeExtPlugins.isEmpty()) return
 
-            val chromeExtRuntimeModules = allChromeExtModules.filter { module ->
-                module.sourceType == com.webtoapp.core.extension.ModuleSourceType.CHROME_EXTENSION &&
-                    module.chromeExtId.isNotEmpty() &&
-                    (module.backgroundScript.isNotEmpty() || module.manifestJson.contains("declarative_net_request"))
+            val chromeExtRuntimePlugins = allChromeExtPlugins.filter { plugin ->
+                plugin.backgroundScript.isNotEmpty() || plugin.manifestJson.contains("declarative_net_request")
             }
 
-            val extensionGroups = chromeExtRuntimeModules.groupBy { it.chromeExtId }
-
-            for ((extId, modules) in extensionGroups) {
-                val primaryModule = modules.first()
-                val originUrl = com.webtoapp.core.extension.deriveOriginUrl(primaryModule.urlMatches)
+            for (plugin in chromeExtRuntimePlugins) {
+                val extId = plugin.chromeExtId
+                val originUrl = com.webtoapp.core.extension.deriveOriginUrl(
+                    plugin.matches.map {
+                        com.webtoapp.core.extension.UrlMatchRule(
+                            pattern = it.pattern,
+                            isRegex = it.isRegex,
+                            exclude = it.exclude
+                        )
+                    }
+                )
 
                 val runtime = com.webtoapp.core.extension.ChromeExtensionRuntime(
                     context = context,
                     extensionId = extId,
-                    backgroundScriptPath = primaryModule.backgroundScript,
+                    backgroundScriptPath = plugin.backgroundScript,
                     originUrl = originUrl,
-                    manifestJson = primaryModule.manifestJson.ifBlank { "{}" }
+                    manifestJson = plugin.manifestJson.ifBlank { "{}" }
                 )
                 runtime.initialize(webView)
                 extensionRuntimes[extId] = runtime
@@ -4340,12 +4402,12 @@ class WebViewManager(
                 // ~100k rules) off the main thread so activating an extension never
                 // blocks the WebView setup.
                 kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-                    loadDeclarativeNetRequestRules(extId, primaryModule.manifestJson)
+                    loadDeclarativeNetRequestRules(extId, plugin.manifestJson)
                 }
                 AppLogger.d("WebViewManager", "Created background runtime for extension: $extId")
             }
 
-            if (allChromeExtModules.isNotEmpty()) {
+            if (allChromeExtPlugins.isNotEmpty()) {
                 val contentBridge = com.webtoapp.core.extension.ContentExtensionBridge(
                     runtimes = extensionRuntimes,
                     currentWebViewProvider = { webView },
@@ -4355,7 +4417,7 @@ class WebViewManager(
                 webView.addJavascriptInterface(contentBridge, com.webtoapp.core.extension.ChromeExtensionRuntime.JS_BRIDGE_NAME)
                 AppLogger.d(
                     "WebViewManager",
-                    "Registered WtaExtBridge for ${allChromeExtModules.map { it.chromeExtId }.distinct().size} extension(s)"
+                    "Registered WtaExtBridge for ${allChromeExtPlugins.map { it.chromeExtId }.distinct().size} extension(s)"
                 )
             }
         } catch (e: Exception) {
@@ -4399,19 +4461,6 @@ class WebViewManager(
                     webView.evaluateJavascript(spoofScript, null)
                 }
             }
-            if (!scriptlessMode && !minimizeLocalRuntimeInjection) {
-                injectExtensionPanelScript(webView)
-            } else {
-                AppLogger.d(
-                    "WebViewManager",
-                    if (minimizeLocalRuntimeInjection) {
-                        "Skip extension panel injection for local runtime page: $url"
-                    } else {
-                        "Skip extension panel injection for scriptless page: $url"
-                    }
-                )
-            }
-
             if (!conservativeMode && !minimizeLocalRuntimeInjection) {
                 injectIsolationScript(webView)
             } else if (minimizeLocalRuntimeInjection) {
@@ -4474,14 +4523,14 @@ class WebViewManager(
             }
 
         if (minimizeLocalRuntimeInjection) {
-            // Ambient machinery stays suppressed on local-runtime pages, but modules the
+            // Ambient machinery stays suppressed on local-runtime pages, but plugins the
             // user explicitly attached to this app are user intent — they must still run.
-            // Global-fallback modules keep being skipped: they are ambient, not attached.
-            injectAllExtensionModules(webView, url, runAt, appAttachedOnly = true)
+            // The ambient/global set keeps being skipped: it is ambient, not attached.
+            injectPlugins(webView, url, runAt, appAttachedOnly = true)
             return
         }
 
-        injectAllExtensionModules(webView, url, runAt)
+        injectPlugins(webView, url, runAt)
     }
 
     private fun buildPagePhaseExecutionKey(url: String?, runAt: ScriptRunTime): String {
@@ -4551,168 +4600,6 @@ class WebViewManager(
             AppLogger.i("WebViewManager", "[DeviceDisguise] Spoof script installed at document start")
         } catch (e: Exception) {
             AppLogger.w("WebViewManager", "[DeviceDisguise] Document-start failed, will use onPageStarted fallback", e)
-        }
-    }
-
-    private data class ExtensionPanelEligibility(
-        val hasEmbeddedModules: Boolean,
-        val hasAppModules: Boolean,
-        val hasGlobalModules: Boolean,
-        val isLoading: Boolean,
-        val totalEnabledModules: Int,
-    ) {
-        val shouldInject: Boolean
-            get() = hasEmbeddedModules || hasAppModules || hasGlobalModules
-    }
-
-    private fun getExtensionPanelEligibility(): ExtensionPanelEligibility {
-        val extensionManager = ExtensionManager.getInstance(context)
-
-        if (!extensionMasterEnabled) {
-            return ExtensionPanelEligibility(
-                hasEmbeddedModules = false,
-                hasAppModules = false,
-                hasGlobalModules = false,
-                isLoading = extensionManager.isLoading.value,
-                totalEnabledModules = 0,
-            )
-        }
-        val hasEmbeddedModules = embeddedModules.any { it.enabled && it.shouldRegisterInPanel() }
-        val appModules = if (appExtensionModuleIds.isNotEmpty()) {
-            runCatching { extensionManager.getModulesByIds(appExtensionModuleIds) }.getOrElse { emptyList() }
-        } else {
-            emptyList()
-        }
-        val hasAppModules = appModules.any { it.shouldRegisterInPanel() }
-        val enabledModules = runCatching { extensionManager.getEnabledModules() }.getOrElse { emptyList() }
-        val hasGlobalModules = allowGlobalModuleFallback && enabledModules.any { it.shouldRegisterInPanel() }
-        return ExtensionPanelEligibility(
-            hasEmbeddedModules = hasEmbeddedModules,
-            hasAppModules = hasAppModules,
-            hasGlobalModules = hasGlobalModules,
-            isLoading = extensionManager.isLoading.value,
-            totalEnabledModules = enabledModules.size,
-        )
-    }
-
-    private fun logExtensionPanelEligibility(prefix: String, eligibility: ExtensionPanelEligibility) {
-        AppLogger.d(
-            "WebViewManager",
-            "$prefix: shouldInject=${eligibility.shouldInject}, loading=${eligibility.isLoading}, " +
-                "embedded=${eligibility.hasEmbeddedModules}, app=${eligibility.hasAppModules}, " +
-                "global=${eligibility.hasGlobalModules}, enabled=${eligibility.totalEnabledModules}, " +
-                "appIds=${appExtensionModuleIds.size}, embedded=${embeddedModules.size}, " +
-                "allowGlobal=$allowGlobalModuleFallback, fabIcon=${extensionFabIcon.take(32)}"
-        )
-    }
-
-    private fun startDeferredExtensionPanelInjection(webView: WebView) {
-        extensionPanelDeferredInjectionJob?.cancel()
-        extensionPanelDeferredInjectionJob = proxyScope.launch {
-            val extensionManager = ExtensionManager.getInstance(context)
-            extensionManager.isLoading.filter { !it }.first()
-            val eligibility = getExtensionPanelEligibility()
-            logExtensionPanelEligibility("Deferred extension panel eligibility", eligibility)
-            val url = webView.url?.takeIf { it.isNotBlank() && it != "about:blank" }
-            if (eligibility.shouldInject && url != null && !false) {
-                injectExtensionPanelScript(webView)
-            }
-        }
-    }
-
-    private fun startExtensionPanelSync(webView: WebView) {
-        extensionPanelSyncJob?.cancel()
-        extensionPanelSyncJob = proxyScope.launch {
-            val extensionManager = ExtensionManager.getInstance(context)
-            combine(
-                extensionManager.modules,
-                extensionManager.builtInModules,
-                extensionManager.isLoading
-            ) { modules, builtIns, loading ->
-                Triple(modules, builtIns, loading)
-            }
-                .distinctUntilChanged()
-                .collect {
-                    val eligibility = getExtensionPanelEligibility()
-                    logExtensionPanelEligibility("Extension panel sync", eligibility)
-                    val url = webView.url?.takeIf { it.isNotBlank() && it != "about:blank" }
-                        ?: return@collect
-                    if (false) {
-                        hideExtensionPanel(webView)
-                        extensionPanelInjected = false
-                        return@collect
-                    }
-                    if (eligibility.shouldInject && !extensionPanelInjected) {
-                        injectExtensionPanelScript(webView)
-                    } else if (!eligibility.shouldInject && extensionPanelInjected) {
-                        hideExtensionPanel(webView)
-                        extensionPanelInjected = false
-                    }
-                }
-        }
-    }
-
-    private fun hideExtensionPanel(webView: WebView) {
-        try {
-
-            webView.evaluateJavascript(
-                """
-                (function(){
-                    try {
-                        var ids = [
-                            'wta-ext-fab',
-                            'wta-ext-show-btn',
-                            'wta-ext-overlay',
-                            'wta-ext-main-panel',
-                            'wta-module-detail'
-                        ];
-                        ids.forEach(function(id){
-                            var el = document.getElementById(id);
-                            if (el && el.parentNode) {
-                                el.parentNode.removeChild(el);
-                            }
-                        });
-                        if (window.__WTA_PANEL__) {
-                            try { delete window.__WTA_PANEL__; }
-                            catch(_) { window.__WTA_PANEL__ = null; }
-                        }
-                    } catch(e) {}
-                })();
-                """.trimIndent(),
-                null
-            )
-        } catch (e: Exception) {
-            AppLogger.e("WebViewManager", "Extension panel hide failed", e)
-        }
-    }
-
-    private fun injectExtensionPanelScript(webView: WebView) {
-
-        val eligibility = getExtensionPanelEligibility()
-        logExtensionPanelEligibility("Extension panel injection check", eligibility)
-        if (!eligibility.shouldInject) {
-            if (eligibility.isLoading) {
-                startDeferredExtensionPanelInjection(webView)
-            }
-            return
-        }
-
-        try {
-
-            // Expose the app-configured language to in-webview scripts so they
-            // don't depend on the device locale (navigator.language).
-            webView.evaluateJavascript("window.__wtaAppLang='${Strings.lang.code}'", null)
-
-            val panelScript = ExtensionPanelScript.getPanelInitScript(extensionFabIcon)
-            webView.evaluateJavascript(panelScript, null)
-
-            val helperScript = ExtensionPanelScript.getModuleHelperScript()
-            webView.evaluateJavascript(helperScript, null)
-
-            extensionPanelInjected = true
-            AppLogger.d("WebViewManager", "Extension panel script injected")
-        } catch (e: Exception) {
-            AppLogger.e("WebViewManager", "Extension panel script injection failed", e)
         }
     }
 
@@ -5462,135 +5349,77 @@ class WebViewManager(
         }
     }
 
-    private fun ScriptRunTime.toModuleRunTime(): ModuleRunTime = when (this) {
-        ScriptRunTime.DOCUMENT_START -> ModuleRunTime.DOCUMENT_START
-        ScriptRunTime.DOCUMENT_END -> ModuleRunTime.DOCUMENT_END
-        ScriptRunTime.DOCUMENT_IDLE -> ModuleRunTime.DOCUMENT_IDLE
+    private fun ScriptRunTime.toPluginRunAt(): com.webtoapp.core.plugin.PluginRunAt = when (this) {
+        ScriptRunTime.DOCUMENT_START -> com.webtoapp.core.plugin.PluginRunAt.DOCUMENT_START
+        ScriptRunTime.DOCUMENT_END -> com.webtoapp.core.plugin.PluginRunAt.DOCUMENT_END
+        ScriptRunTime.DOCUMENT_IDLE -> com.webtoapp.core.plugin.PluginRunAt.DOCUMENT_IDLE
     }
 
-    private fun resolveActiveExtensionModules(
+    /**
+     * One pass of plugin injection for a page phase: HCJ payload (bootstrap +
+     * CSS + wrapped main.js from the session), userscripts via the GM path, and
+     * chrome extension content scripts resolved from their on-disk packages.
+     *
+     * @param appAttachedOnly On local-runtime pages: run only plugins explicitly
+     * attached to this app. The ambient/global set stays suppressed — local
+     * pages should not inherit unrelated scripts.
+     */
+    private fun injectPlugins(
+        webView: WebView,
+        url: String,
+        runAt: ScriptRunTime,
         appAttachedOnly: Boolean = false
-    ): List<com.webtoapp.core.extension.ExtensionModule> {
-        if (!extensionMasterEnabled) return emptyList()
-        val baseModules = when {
-            appExtensionModuleIds.isNotEmpty() -> {
-                ExtensionManager.getInstance(context).getModulesByIds(appExtensionModuleIds)
-            }
-            !appAttachedOnly && allowGlobalModuleFallback -> {
-                ExtensionManager.getInstance(context).getEnabledModules()
-            }
-            else -> emptyList()
+    ) {
+        if (!pluginsEnabled) return
+        val session = pluginSession ?: return
+        val pluginRunAt = runAt.toPluginRunAt()
+
+        // Expose the app-configured language so injected plugin JS uses the app
+        // language rather than the device locale.
+        webView.evaluateJavascript("window.__wtaAppLang='${Strings.lang.code}'", null)
+
+        if (runAt == ScriptRunTime.DOCUMENT_START) {
+            injectEarlyCss(webView, url, pluginRunAt)
         }
-        if (baseModules.isEmpty()) return emptyList()
 
-        val dynamicScripts = baseModules
-            .asSequence()
-            .filter {
-                it.sourceType == com.webtoapp.core.extension.ModuleSourceType.CHROME_EXTENSION &&
-                    it.chromeExtId.isNotEmpty()
-            }
-            .map { it.chromeExtId }
-            .distinct()
-            .flatMap { extId ->
-                com.webtoapp.core.extension.ChromeExtensionContentScriptRegistry
-                    .buildModules(context, extId)
-                    .asSequence()
-            }
-            .toList()
+        val hcjJs = session.injectionFor(pluginRunAt, url, appAttachedOnly)
+        if (hcjJs.isNotBlank()) {
+            webView.evaluateJavascript(hcjJs, null)
+        }
 
-        return if (dynamicScripts.isEmpty()) {
-            baseModules
-        } else {
-            baseModules + dynamicScripts
+        val userscripts = session.userscriptsFor(pluginRunAt, url, appAttachedOnly)
+        if (userscripts.isNotEmpty()) {
+            injectUserscriptPlugins(webView, userscripts)
+        }
+
+        val chromeScripts = resolveChromeContentScripts(pluginRunAt, url, appAttachedOnly)
+        if (chromeScripts.isNotEmpty()) {
+            injectChromeExtModules(webView, chromeScripts, runAt)
         }
     }
 
     /**
-     * @param appAttachedOnly On local-runtime pages: run only modules explicitly attached
-     * to this app (per-app ids or embedded). The global-fallback module set stays
-     * suppressed — it is ambient and local pages should not inherit unrelated scripts.
+     * Chrome extension content scripts for this phase, built from each active
+     * extension's on-disk manifest (the registry returns legacy module records;
+     * only their code/css/runAt/matches are consumed here).
      */
-    private fun injectAllExtensionModules(
-        webView: WebView,
+    private fun resolveChromeContentScripts(
+        pluginRunAt: com.webtoapp.core.plugin.PluginRunAt,
         url: String,
-        runAt: ScriptRunTime,
-        appAttachedOnly: Boolean = false
-    ) {
-
-        if (!extensionMasterEnabled) {
-
-            return
-        }
-
-        if (embeddedModules.isNotEmpty()) {
-            injectEmbeddedModules(webView, url, runAt)
-            return
-        }
-
-        if (appExtensionModuleIds.isEmpty() && (appAttachedOnly || !allowGlobalModuleFallback)) {
-            return
-        }
-
-        val extensionManager = ExtensionManager.getInstance(context)
-        if (extensionManager.isLoading.value && resolveActiveExtensionModules(appAttachedOnly).isEmpty()) {
-            scheduleDeferredExtensionModuleInjection(webView, url, runAt, appAttachedOnly)
-            return
-        }
-
-        performExtensionModuleInjection(webView, url, runAt, appAttachedOnly)
-    }
-
-    private fun scheduleDeferredExtensionModuleInjection(
-        webView: WebView,
-        url: String,
-        runAt: ScriptRunTime,
-        appAttachedOnly: Boolean = false
-    ) {
-        val jobs = extensionModuleDeferredJobs.getOrPut(webView) { mutableMapOf() }
-        val jobKey = buildPagePhaseExecutionKey(url, runAt)
-        jobs[jobKey]?.cancel()
-        AppLogger.d(
-            "WebViewManager",
-            "injectAllExtensionModules: modules still loading, deferring injection (${runAt.name}, url=$url)"
-        )
-        jobs[jobKey] = proxyScope.launch {
-            val extensionManager = ExtensionManager.getInstance(context)
-            extensionManager.isLoading.filter { !it }.first()
-            val currentUrl = webView.url?.takeIf { it.isNotBlank() && it != "about:blank" }
-            if (currentUrl == null || currentUrl != url) {
-                AppLogger.d(
-                    "WebViewManager",
-                    "Deferred extension module injection skipped: url changed ($url -> $currentUrl)"
-                )
-                return@launch
-            }
-            ensureChromeExtensionRuntimesForDeferredModules(webView)
-            if (ensureDesktopUaForDeferredChromeExt(webView)) {
-                return@launch
-            }
-            performExtensionModuleInjection(webView, url, runAt, appAttachedOnly)
-        }
-    }
-
-    private fun ensureChromeExtensionRuntimesForDeferredModules(webView: WebView) {
-        if (extensionRuntimes.isNotEmpty()) return
-        val hasChromeExtModules = getActiveModulesForCurrentApp().any { module ->
-            module.sourceType == com.webtoapp.core.extension.ModuleSourceType.CHROME_EXTENSION &&
-                module.chromeExtId.isNotEmpty()
-        }
-        if (hasChromeExtModules) {
-            AppLogger.d(
-                "WebViewManager",
-                "Deferred load resolved Chrome extension module(s); initializing runtimes"
-            )
-            initChromeExtensionRuntimes(webView)
-        }
+        appAttachedOnly: Boolean
+    ): List<com.webtoapp.core.extension.ExtensionModule> {
+        val session = pluginSession ?: return emptyList()
+        val moduleRunAt = com.webtoapp.core.extension.ModuleRunTime.valueOf(pluginRunAt.name)
+        return session.chromeExtIds(url, appAttachedOnly).flatMap { extId ->
+            com.webtoapp.core.extension.ChromeExtensionContentScriptRegistry
+                .buildModules(context, extId)
+        }.filter { it.runAt == moduleRunAt && it.matchesUrl(url) }
     }
 
     /**
      * Resolves the single browser identity for [config] from the currently cached disguise
      * sources. Reading the cached device-disguise config (rather than taking it as a parameter)
-     * keeps this usable both during configuration and from deferred extension handling.
+     * keeps this usable both during configuration and from late plugin updates.
      */
     private fun resolveBrowserIdentityFor(config: WebViewConfig): com.webtoapp.core.kernel.BrowserIdentity =
         com.webtoapp.core.kernel.BrowserIdentityResolver.resolve(
@@ -5609,9 +5438,9 @@ class WebViewManager(
         val config = currentConfig ?: return false
         if (isDesktopUaRequested(config)) return false
         if (resolveBrowserIdentityFor(config).userAgent != null) return false
-        val hasActiveChromeExt = getActiveModulesForCurrentApp().any { module ->
-            module.sourceType == com.webtoapp.core.extension.ModuleSourceType.CHROME_EXTENSION &&
-                module.chromeExtId.isNotEmpty()
+        val hasActiveChromeExt = getActivePluginsForCurrentApp().any { plugin ->
+            plugin.kind == com.webtoapp.core.plugin.PluginKind.CHROME_EXTENSION &&
+                plugin.chromeExtId.isNotEmpty()
         }
         if (!hasActiveChromeExt) return false
         val desktopUa = DESKTOP_USER_AGENT ?: DESKTOP_USER_AGENT_FALLBACK
@@ -5630,127 +5459,30 @@ class WebViewManager(
         return true
     }
 
-    private fun cancelDeferredExtensionModuleInjection(webView: WebView) {
-        extensionModuleDeferredJobs.remove(webView)?.values?.forEach { it.cancel() }
-    }
-
-    private fun performExtensionModuleInjection(
-        webView: WebView,
-        url: String,
-        runAt: ScriptRunTime,
+    /**
+     * All chrome extension content-script records for the active extensions —
+     * used by early-CSS so styles land before the page paints.
+     */
+    private fun resolveAllChromeContentScripts(
         appAttachedOnly: Boolean = false
-    ) {
-
-        val moduleRunAt = runAt.toModuleRunTime()
-
-        // Expose the app-configured language so injected module JS (I18N tables)
-        // uses the app language rather than the device locale.
-        webView.evaluateJavascript("window.__wtaAppLang='${Strings.lang.code}'", null)
-
-        val allModules = resolveActiveExtensionModules(appAttachedOnly)
-        if (allModules.isEmpty()) {
-            AppLogger.d("WebViewManager", "injectAllExtensionModules: No active modules (${runAt.name})")
-            return
-        }
-
-        AppLogger.d("WebViewManager", "injectAllExtensionModules: runAt=${runAt.name}, url=$url, totalModules=${allModules.size}")
-
-        if (runAt == ScriptRunTime.DOCUMENT_START) {
-            injectEarlyCss(webView, allModules, url, moduleRunAt)
-        }
-
-        val matching = allModules.filter { it.runAt == moduleRunAt && it.matchesUrl(url) }
-
-        val chromeModules = matching.filter {
-            it.sourceType == com.webtoapp.core.extension.ModuleSourceType.CHROME_EXTENSION &&
-            it.chromeExtId.isNotEmpty()
-        }
-        val userscriptModules = matching.filter {
-            it.sourceType == com.webtoapp.core.extension.ModuleSourceType.USERSCRIPT ||
-            it.sourceType == com.webtoapp.core.extension.ModuleSourceType.GREASYFORK
-        }
-        val customModules = matching.filter {
-            it.sourceType != com.webtoapp.core.extension.ModuleSourceType.CHROME_EXTENSION &&
-            it.sourceType != com.webtoapp.core.extension.ModuleSourceType.USERSCRIPT &&
-            it.sourceType != com.webtoapp.core.extension.ModuleSourceType.GREASYFORK
-        }
-
-        if (chromeModules.isNotEmpty()) {
-            injectChromeExtModules(webView, chromeModules, runAt)
-        }
-        if (userscriptModules.isNotEmpty()) {
-            injectUserscriptModules(webView, userscriptModules)
-        }
-        if (customModules.isNotEmpty()) {
-            injectCustomModules(webView, customModules)
-        }
-
-        AppLogger.d("WebViewManager", "injectAllExtensionModules: Injected ${chromeModules.size} chrome + ${userscriptModules.size} userscript + ${customModules.size} custom modules (${runAt.name})")
-
-        if (runAt == ScriptRunTime.DOCUMENT_END) {
-            registerAllModulesInPanel(webView, allModules, url)
-        }
-    }
-
-    private fun injectEmbeddedModules(webView: WebView, url: String, runAt: ScriptRunTime) {
-        try {
-            val targetRunAt = runAt.name
-
-            AppLogger.d("WebViewManager", "injectEmbeddedModules: url=$url, runAt=$targetRunAt, totalModules=${embeddedModules.size}")
-
-            val matchingModules = embeddedModules.filter { module ->
-                module.enabled && module.runAt == targetRunAt && module.matchesUrl(url)
-            }
-
-            if (matchingModules.isEmpty()) {
-                AppLogger.d("WebViewManager", "injectEmbeddedModules: No matching modules")
-                return
-            }
-
-            val userscriptModules = matchingModules.filter { it.isUserscript() }
-            val standardModules = matchingModules.filterNot { it.isUserscript() }
-
-            if (userscriptModules.isNotEmpty()) {
-                injectEmbeddedUserscriptModules(webView, userscriptModules)
-            }
-
-            if (standardModules.isNotEmpty()) {
-                val injectionCode = standardModules.joinToString("\n\n") { module ->
-                    """
-                    // ========== ${module.name} ==========
-                    (function() {
-                        try {
-                            ${module.generateExecutableCode()}
-                        } catch(__moduleError__) {
-                            console.error('[WebToApp Module Error] ${module.name}:', __moduleError__);
-                        }
-                    })();
-                    """.trimIndent()
-                }
-                webView.evaluateJavascript(injectionCode, null)
-            }
-
-            AppLogger.d(
-                "WebViewManager",
-                "Injected ${standardModules.size} embedded module(s) + ${userscriptModules.size} embedded userscript(s) (${runAt.name})"
-            )
-        } catch (e: Exception) {
-            AppLogger.e("WebViewManager", "Embedded module injection failed", e)
+    ): List<com.webtoapp.core.extension.ExtensionModule> {
+        val session = pluginSession ?: return emptyList()
+        return session.chromeExtIds("", appAttachedOnly).flatMap { extId ->
+            com.webtoapp.core.extension.ChromeExtensionContentScriptRegistry
+                .buildModules(context, extId)
         }
     }
 
     private fun injectEarlyCss(
         webView: WebView,
-        allModules: List<com.webtoapp.core.extension.ExtensionModule>,
         url: String,
-        currentRunAt: ModuleRunTime
+        currentRunAt: com.webtoapp.core.plugin.PluginRunAt
     ) {
         try {
-            val earlyCssModules = allModules.filter { module ->
-                module.sourceType == com.webtoapp.core.extension.ModuleSourceType.CHROME_EXTENSION &&
-                module.chromeExtId.isNotEmpty() &&
+            val moduleRunAt = com.webtoapp.core.extension.ModuleRunTime.valueOf(currentRunAt.name)
+            val earlyCssModules = resolveAllChromeContentScripts().filter { module ->
                 module.cssCode.isNotBlank() &&
-                module.runAt != currentRunAt &&
+                module.runAt != moduleRunAt &&
                 module.matchesUrl(url)
             }
             if (earlyCssModules.isEmpty()) return
@@ -5916,9 +5648,9 @@ class WebViewManager(
         }
     }
 
-    private fun injectUserscriptModules(
+    private fun injectUserscriptPlugins(
         webView: WebView,
-        modules: List<com.webtoapp.core.extension.ExtensionModule>
+        userscripts: List<com.webtoapp.core.plugin.PluginSession.Resolved>
     ) {
         try {
             ensureUserscriptBootstrap(webView)
@@ -5927,41 +5659,45 @@ class WebViewManager(
             var injectedCount = 0
             var skippedCount = 0
 
-            for (module in modules) {
-                val moduleKey = buildUserscriptInjectionKey(module)
+            for (resolved in userscripts) {
+                val plugin = resolved.plugin
+                val moduleKey = "${plugin.id}:${plugin.versionName.ifBlank { "0" }}:${plugin.runAt.name}"
                 if (!injectedKeys.add(moduleKey)) {
                     skippedCount += 1
                     AppLogger.d(
                         "WebViewManager",
-                        "Skip duplicate userscript injection: ${module.name} key=$moduleKey"
+                        "Skip duplicate userscript injection: ${plugin.name} key=$moduleKey"
                     )
                     continue
                 }
 
                 val scriptInfo = mapOf(
-                    "name" to module.name,
-                    "version" to module.version.name,
-                    "description" to module.description,
-                    "author" to (module.author?.name ?: ""),
-                    "namespace" to module.id
+                    "name" to plugin.name,
+                    "version" to plugin.versionName,
+                    "description" to plugin.description,
+                    "author" to plugin.authorName,
+                    "namespace" to plugin.id
                 )
 
-                val resolvedResources = module.resources.mapValues { (name, url) ->
+                val resolvedResources = plugin.resources.mapValues { (name, url) ->
                     extensionFileManager.getCachedResource(name, url) ?: url
                 }
 
-                // The polyfill carries a random storage alias, not the raw module id: the
+                // The polyfill carries a random storage alias, not the raw plugin id: the
                 // bridge object is reachable from every frame, so raw ids would let any
                 // embedded content read/write another script's GM storage.
                 val polyfill = com.webtoapp.core.extension.GreasemonkeyBridge.generatePolyfillScript(
-                    scriptId = gmBridge?.storageAliasFor(module.id) ?: module.id,
-                    grants = module.gmGrants,
+                    scriptId = gmBridge?.storageAliasFor(plugin.id) ?: plugin.id,
+                    grants = plugin.gmGrants,
                     scriptInfo = scriptInfo,
                     resources = resolvedResources
                 )
 
-                val requireBlocks = module.requireUrls.mapNotNull { url ->
-                    extensionFileManager.getCachedRequire(url)?.let { requireCode ->
+                // Embedded payloads carry require bodies inline; the host
+                // resolves them lazily from the extension file cache.
+                val requireBlocks = plugin.requireUrls.mapNotNull { url ->
+                    (resolved.requireContents[url]
+                        ?: extensionFileManager.getCachedRequire(url))?.let { requireCode ->
                         url to requireCode
                     }
                 }
@@ -5969,20 +5705,20 @@ class WebViewManager(
                 val totalRequireChars = requireBlocks.sumOf { it.second.length }
                 AppLogger.d(
                     "WebViewManager",
-                    "Userscript payload: name=${module.name}, body=${module.code.length}, requires=${requireBlocks.size}, requireChars=$totalRequireChars"
+                    "Userscript payload: name=${plugin.name}, body=${resolved.mainJs.length}, requires=${requireBlocks.size}, requireChars=$totalRequireChars"
                 )
 
-                webView.evaluateJavascript(buildUserscriptPolyfillEval(module.id, polyfill), null)
+                webView.evaluateJavascript(buildUserscriptPolyfillEval(plugin.id, polyfill), null)
 
                 requireBlocks.forEachIndexed { index, (_, requireCode) ->
                     webView.evaluateJavascript(
-                        buildUserscriptRequireEval(module.name, module.id, index, requireCode),
+                        buildUserscriptRequireEval(plugin.name, plugin.id, index, requireCode),
                         null
                     )
                 }
 
-                if (module.code.isNotBlank()) {
-                    webView.evaluateJavascript(buildUserscriptModuleEval(module.name, module.id, module.code), null)
+                if (resolved.mainJs.isNotBlank()) {
+                    webView.evaluateJavascript(buildUserscriptModuleEval(plugin.name, plugin.id, resolved.mainJs), null)
                 }
 
                 injectedCount += 1
@@ -5990,10 +5726,10 @@ class WebViewManager(
 
             AppLogger.d(
                 "WebViewManager",
-                "Injected $injectedCount userscript module(s); skipped $skippedCount duplicate(s)"
+                "Injected $injectedCount userscript plugin(s); skipped $skippedCount duplicate(s)"
             )
         } catch (e: Exception) {
-            AppLogger.e("WebViewManager", "Userscript module injection failed", e)
+            AppLogger.e("WebViewManager", "Userscript plugin injection failed", e)
         }
     }
 
@@ -6008,20 +5744,6 @@ class WebViewManager(
             })();
         """.trimIndent()
         webView.evaluateJavascript(bootstrap, null)
-    }
-
-    private fun buildUserscriptInjectionKey(
-        module: com.webtoapp.core.extension.ExtensionModule
-    ): String {
-        val version = module.version.name.ifBlank { "0" }
-        return "${module.id}:$version:${module.runAt.name}"
-    }
-
-    private fun buildEmbeddedUserscriptInjectionKey(
-        module: com.webtoapp.core.shell.EmbeddedShellModule
-    ): String {
-        val version = module.versionName.ifBlank { "0" }
-        return "${module.id}:$version:${module.runAt}"
     }
 
     private fun buildUserscriptPolyfillEval(
@@ -6098,256 +5820,6 @@ class WebViewManager(
             .replace("\u2029", "\\u2029")
     }
 
-    private fun injectEmbeddedUserscriptModules(
-        webView: WebView,
-        modules: List<com.webtoapp.core.shell.EmbeddedShellModule>
-    ) {
-        try {
-            ensureUserscriptBootstrap(webView)
-
-            val injectedKeys = userscriptInjectionState.getOrPut(webView) { mutableSetOf() }
-            var injectedCount = 0
-            var skippedCount = 0
-
-            for (module in modules) {
-                val moduleKey = buildEmbeddedUserscriptInjectionKey(module)
-                if (!injectedKeys.add(moduleKey)) {
-                    skippedCount += 1
-                    AppLogger.d(
-                        "WebViewManager",
-                        "Skip duplicate embedded userscript injection: ${module.name} key=$moduleKey"
-                    )
-                    continue
-                }
-
-                val scriptInfo = mapOf(
-                    "name" to module.name,
-                    "version" to module.versionName,
-                    "description" to module.description,
-                    "author" to module.authorName,
-                    "namespace" to module.id
-                )
-
-                val polyfill = com.webtoapp.core.extension.GreasemonkeyBridge.generatePolyfillScript(
-                    scriptId = gmBridge?.storageAliasFor(module.id) ?: module.id,
-                    grants = module.gmGrants,
-                    scriptInfo = scriptInfo,
-                    resources = module.resources
-                )
-
-                val requireBlocks = module.requireUrls.mapNotNull { url ->
-                    module.requireContents[url]?.let { requireCode ->
-                        url to requireCode
-                    }
-                }
-
-                AppLogger.d(
-                    "WebViewManager",
-                    "Embedded userscript payload: name=${module.name}, body=${module.code.length}, requires=${requireBlocks.size}, declaredRequires=${module.requireUrls.size}"
-                )
-
-                webView.evaluateJavascript(buildUserscriptPolyfillEval(module.id, polyfill), null)
-
-                requireBlocks.forEachIndexed { index, (_, requireCode) ->
-                    webView.evaluateJavascript(
-                        buildUserscriptRequireEval(module.name, module.id, index, requireCode),
-                        null
-                    )
-                }
-
-                if (module.code.isNotBlank()) {
-                    webView.evaluateJavascript(
-                        buildUserscriptModuleEval(module.name, module.id, module.code),
-                        null
-                    )
-                }
-
-                injectedCount += 1
-            }
-
-            AppLogger.d(
-                "WebViewManager",
-                "Injected $injectedCount embedded userscript module(s); skipped $skippedCount duplicate(s)"
-            )
-        } catch (e: Exception) {
-            AppLogger.e("WebViewManager", "Embedded userscript module injection failed", e)
-        }
-    }
-
-    private fun injectCustomModules(
-        webView: WebView,
-        modules: List<com.webtoapp.core.extension.ExtensionModule>
-    ) {
-        try {
-            val injectionCode = modules.joinToString("\n\n") { module ->
-                """
-                // ========== ${module.name} (${module.version.name}) ==========
-                (function() {
-                    try {
-                        ${module.generateExecutableCode()}
-                    } catch(__moduleError__) {
-                        console.error('[WebToApp Module Error] ${module.name}:', __moduleError__);
-                    }
-                })();
-                """.trimIndent()
-            }
-
-            if (injectionCode.isNotBlank()) {
-                webView.evaluateJavascript(injectionCode, null)
-                AppLogger.d("WebViewManager", "Injected ${modules.size} custom module(s)")
-            }
-        } catch (e: Exception) {
-            AppLogger.e("WebViewManager", "Custom module injection failed", e)
-        }
-    }
-
-    private fun registerAllModulesInPanel(
-        webView: WebView,
-        allModules: List<com.webtoapp.core.extension.ExtensionModule>,
-        url: String
-    ) {
-        try {
-            if (allModules.isEmpty()) return
-
-            val chromeModules = allModules.filter { module ->
-                module.sourceType == com.webtoapp.core.extension.ModuleSourceType.CHROME_EXTENSION &&
-                module.chromeExtId.isNotEmpty()
-            }
-
-            val nonChromeModules = allModules.filter { module ->
-                module.sourceType != com.webtoapp.core.extension.ModuleSourceType.CHROME_EXTENSION &&
-                module.shouldRegisterInPanel()
-            }
-
-            if (chromeModules.isEmpty() && nonChromeModules.isEmpty()) return
-
-            val registeredExtIds = mutableSetOf<String>()
-            val regBuilder = StringBuilder()
-
-            for (module in chromeModules) {
-                val extId = module.chromeExtId.ifBlank { module.id }
-                if (extId in registeredExtIds) continue
-                registeredExtIds.add(extId)
-
-                val extModules = chromeModules.filter {
-                    (it.chromeExtId.ifBlank { it.id }) == extId
-                }
-
-                val jsName = module.name.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
-                val jsDesc = (module.description).replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
-                val jsVersion = module.version.name.replace("\\", "\\\\").replace("'", "\\'")
-                val jsAuthor = (module.author?.name ?: "").replace("\\", "\\\\").replace("'", "\\'")
-
-                val iconHtml = if (module.icon.isNotBlank()) {
-                    module.icon.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "")
-                } else ""
-
-                val urlPatterns = extModules.flatMap { it.urlMatches }
-                    .filter { !it.exclude }
-                    .map { it.pattern.replace("\\", "\\\\").replace("'", "\\'") }
-                    .distinct()
-                val urlMatchesJs = urlPatterns.joinToString(",") { "'$it'" }
-
-                val perms = extModules.flatMap { it.permissions }
-                    .map { it.name }
-                    .distinct()
-                val permsJs = perms.joinToString(",") { "'$it'" }
-                val jsPopupPath = module.popupPath.replace("\\", "\\\\").replace("'", "\\'")
-                val jsOptionsPagePath = module.optionsPagePath.replace("\\", "\\\\").replace("'", "\\'")
-
-                val matchesPage = extModules.any { it.matchesUrl(url) }
-
-                regBuilder.appendLine("""
-                    (function() {
-                        function _reg() {
-                            if (typeof __WTA_MODULE_UI__ === 'undefined') { setTimeout(_reg, 100); return; }
-                            __WTA_MODULE_UI__.register({
-                                id: '$extId',
-                                name: '$jsName',
-                                description: '$jsDesc',
-                                version: '$jsVersion',
-                                author: '$jsAuthor',
-                                icon: '$iconHtml',
-                                sourceType: 'CHROME_EXTENSION',
-                                active: $matchesPage,
-                                urlMatches: [${urlMatchesJs}],
-                                permissions: [${permsJs}],
-                                world: '${module.world}',
-                                runAt: '${module.runAt.name}',
-                                runMode: '${module.runMode.name}',
-                                popupPath: '$jsPopupPath',
-                                optionsPagePath: '$jsOptionsPagePath',
-                                onAction: function(container) {
-                                    var html = '';
-                                    if ('$jsPopupPath') {
-                                        html += '<button style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--wta-outline);background:var(--wta-accent-soft);color:var(--wta-on-surface);font-weight:600;cursor:pointer;margin-bottom:10px" onclick="if(window.__WTA_EXT_ACTIONS__)window.__WTA_EXT_ACTIONS__.openPopup(\\'$extId\\', \\'$jsPopupPath\\')">Open popup</button>';
-                                    }
-                                    if ('$jsOptionsPagePath') {
-                                        html += '<button style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--wta-outline);background:var(--wta-accent-soft);color:var(--wta-on-surface-variant);font-weight:600;cursor:pointer" onclick="if(window.__WTA_EXT_ACTIONS__)window.__WTA_EXT_ACTIONS__.openOptions(\\'$extId\\', \\'$jsOptionsPagePath\\')">Open options</button>';
-                                    }
-                                    container.innerHTML = html;
-                                }
-                            });
-                        }
-                        setTimeout(_reg, 50);
-                    })();
-                """.trimIndent())
-            }
-
-            for (module in nonChromeModules) {
-                val jsName = module.name.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
-                val jsDesc = (module.description).replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n")
-                val jsVersion = module.version.name.replace("\\", "\\\\").replace("'", "\\'")
-                val jsAuthor = (module.author?.name ?: "").replace("\\", "\\\\").replace("'", "\\'")
-                val iconHtml = if (module.icon.isNotBlank()) {
-                    module.icon.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "")
-                } else ""
-                val matchesPage = module.matchesUrl(url)
-                val jsModuleId = module.id.replace("\\", "\\\\").replace("'", "\\'")
-                val jsPanelHtml = if (module.panelHtml.isNotBlank()) {
-                    "'" + module.panelHtml.replace("\\", "\\\\").replace("'", "\\'").replace("\n", "\\n") + "'"
-                } else {
-                    "_ex ? _ex.panelHtml : undefined"
-                }
-
-                regBuilder.appendLine("""
-                    (function() {
-                        function _reg() {
-                            if (typeof __WTA_MODULE_UI__ === 'undefined') { setTimeout(_reg, 100); return; }
-                            var _p = window.__WTA_PANEL__;
-                            var _ex = _p && _p.modules ? _p.modules.find(function(m) { return m.id === '$jsModuleId'; }) : null;
-                            __WTA_MODULE_UI__.register({
-                                id: '$jsModuleId',
-                                name: '$jsName',
-                                description: '$jsDesc',
-                                version: '$jsVersion',
-                                author: '$jsAuthor',
-                                icon: '$iconHtml',
-                                sourceType: '${module.sourceType.name}',
-                                active: $matchesPage,
-                                urlMatches: [],
-                                permissions: [],
-                                world: '${module.world}',
-                                runAt: '${module.runAt.name}',
-                                runMode: '${module.runMode.name}',
-                                onAction: _ex ? _ex.onAction : undefined,
-                                panelHtml: $jsPanelHtml
-                            });
-                        }
-                        setTimeout(_reg, 50);
-                    })();
-                """.trimIndent())
-            }
-
-            if (regBuilder.isNotBlank()) {
-                webView.evaluateJavascript(regBuilder.toString(), null)
-                AppLogger.d("WebViewManager", "Registered ${registeredExtIds.size} Chrome ext(s) + ${nonChromeModules.size} module(s) in panel")
-            }
-        } catch (e: Exception) {
-            AppLogger.e("WebViewManager", "Panel registration failed", e)
-        }
-    }
-
     internal fun getNotificationPolyfillScript(): String = NotificationPolyfillHolder.SCRIPT
 
     private fun loadDeclarativeNetRequestRules(extId: String, manifestJson: String) {
@@ -6382,11 +5854,49 @@ class WebViewManager(
         }
     }
 
+    /** Popup managers created for the unified panel host, keyed by extension id. */
+    private val chromePanelManagers =
+        java.util.concurrent.ConcurrentHashMap<String, com.webtoapp.core.extension.ExtensionPopupManager>()
+
+    /**
+     * Builds a chrome-extension:// popup WebView for the unified plugin panel
+     * host. The companion [ExtensionPopupManager] is kept so the panel host can
+     * destroy it when the panel closes.
+     */
+    private fun createChromePanelWebView(url: String): WebView? {
+        val activity = context as? Activity ?: return null
+        if (!com.webtoapp.core.extension.ExtensionResourceInterceptor.isExtensionResourceUrl(url)) return null
+        val extId = url.removePrefix("chrome-extension://").substringBefore('/')
+        val pagePath = url.removePrefix("chrome-extension://").substringAfter('/', "")
+        if (extId.isBlank() || pagePath.isBlank()) return null
+        val plugin = getActivePluginsForCurrentApp().firstOrNull {
+            it.kind == com.webtoapp.core.plugin.PluginKind.CHROME_EXTENSION && it.chromeExtId == extId
+        } ?: return null
+        val manager = com.webtoapp.core.extension.ExtensionPopupManager(
+            context = activity,
+            extensionId = extId,
+            popupPath = pagePath,
+            runtime = extensionRuntimes[extId],
+            targetWebViewProvider = { managedWebViews.keys.firstOrNull() },
+            manifestJson = plugin.manifestJson.ifBlank { "{}" },
+            openPopupHandler = { nextExtId, nextPath -> showChromeExtensionPage(nextExtId, nextPath) },
+            openOptionsPageHandler = { nextExtId, nextPath -> showChromeExtensionPage(nextExtId, nextPath) }
+        )
+        chromePanelManagers[extId] = manager
+        return manager.createPopupWebView()
+    }
+
+    /** Destroy popup WebViews owned by the unified panel host. */
+    private fun destroyChromePanelWebViews() {
+        chromePanelManagers.values.forEach { it.destroy() }
+        chromePanelManagers.clear()
+    }
+
     private fun showChromeExtensionPage(extId: String, pagePath: String) {
         if (pagePath.isBlank()) return
         val activity = context as? Activity ?: return
-        val primaryModule = getActiveModulesForCurrentApp().firstOrNull {
-            it.sourceType == com.webtoapp.core.extension.ModuleSourceType.CHROME_EXTENSION &&
+        val primaryPlugin = getActivePluginsForCurrentApp().firstOrNull {
+            it.kind == com.webtoapp.core.plugin.PluginKind.CHROME_EXTENSION &&
                 it.chromeExtId == extId
         } ?: return
 
@@ -6399,7 +5909,7 @@ class WebViewManager(
                 popupPath = pagePath,
                 runtime = extensionRuntimes[extId],
                 targetWebViewProvider = { managedWebViews.keys.firstOrNull() },
-                manifestJson = primaryModule.manifestJson.ifBlank { "{}" },
+                manifestJson = primaryPlugin.manifestJson.ifBlank { "{}" },
                 openPopupHandler = { nextExtId, nextPath -> showChromeExtensionPage(nextExtId, nextPath) },
                 openOptionsPageHandler = { nextExtId, nextPath -> showChromeExtensionPage(nextExtId, nextPath) }
             )

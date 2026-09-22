@@ -439,13 +439,11 @@ fun CreateAppScreen(
             }
 
             item {
-                com.webtoapp.ui.components.ExtensionModuleCard(
-                    enabled = editState.extensionModuleEnabled,
-                    selectedModuleIds = editState.extensionModuleIds,
-                    extensionFabIcon = editState.extensionFabIcon,
-                    onEnabledChange = { viewModel.updateEditState { copy(extensionModuleEnabled = it) } },
-                    onModuleIdsChange = { viewModel.updateEditState { copy(extensionModuleIds = it) } },
-                    onFabIconChange = { viewModel.updateEditState { copy(extensionFabIcon = it) } }
+                com.webtoapp.ui.components.PluginPickerCard(
+                    enabled = editState.pluginsEnabled,
+                    selectedPluginIds = editState.pluginIds,
+                    onEnabledChange = { viewModel.updateEditState { copy(pluginsEnabled = it) } },
+                    onPluginIdsChange = { viewModel.updateEditState { copy(pluginIds = it) } }
                 )
             }
 

@@ -1,0 +1,18 @@
+{
+  "id": "wta-web-tint",
+  "name": "Web Tint",
+  "version": "1.0.0",
+  "description": "Visual filter overlay for any page. Includes night shift (amber blue-light filter), grayscale, high contrast, invert colors, and custom color tint. Adjustable intensity and color temperature. A superset of the former Night Shift module.",
+  "author": "shiaho",
+  "homepage": "https://github.com/shiaho777",
+  "icon": "palette",
+  "matches": [
+    "*"
+  ],
+  "runAt": "document_start",
+  "permissions": [
+    "STORAGE"
+  ],
+  "toolbar": true,
+  "legacyCompat": true
+}

@@ -54,21 +54,6 @@ private fun cachedRegex(pattern: String, ignoreCase: Boolean): Regex? {
     }
 }
 
-private fun String.escapeForJsSingleQuote(): String =
-    this.replace("\\", "\\\\")
-        .replace("'", "\\'")
-        .replace("\n", "\\n")
-        .replace("\r", "\\r")
-        .replace("\u2028", "\\u2028")
-        .replace("\u2029", "\\u2029")
-
-private fun String.escapeForJsTemplate(): String =
-    this.replace("\\", "\\\\")
-        .replace("`", "\\`")
-        .replace("\${", "\\\${")
-        .replace("\n", "\\n")
-        .replace("\r", "\\r")
-
 enum class ModuleCategory(val icon: String) {
     CONTENT_FILTER("block"),
     CONTENT_ENHANCE("auto_awesome"),
@@ -120,31 +105,6 @@ enum class ModuleCategory(val icon: String) {
         OTHER -> Strings.catOther
     }
 
-    fun getDescription(): String = when (this) {
-        CONTENT_FILTER -> Strings.catContentFilterDesc
-        CONTENT_ENHANCE -> Strings.catContentEnhanceDesc
-        STYLE_MODIFIER -> Strings.catStyleModifierDesc
-        THEME -> Strings.catThemeDesc
-        FUNCTION_ENHANCE -> Strings.catFunctionEnhanceDesc
-        AUTOMATION -> Strings.catAutomationDesc
-        NAVIGATION -> Strings.catNavigationDesc
-        DATA_EXTRACT -> Strings.catDataExtractDesc
-        DATA_SAVE -> Strings.catDataSaveDesc
-        INTERACTION -> Strings.catInteractionDesc
-        ACCESSIBILITY -> Strings.catAccessibilityDesc
-        MEDIA -> Strings.catMediaDesc
-        VIDEO -> Strings.catVideoDesc
-        IMAGE -> Strings.catImageDesc
-        AUDIO -> Strings.catAudioDesc
-        SECURITY -> Strings.catSecurityDesc
-        ANTI_TRACKING -> Strings.catAntiTrackingDesc
-        SOCIAL -> Strings.catSocialDesc
-        SHOPPING -> Strings.catShoppingDesc
-        READING -> Strings.catReadingDesc
-        TRANSLATE -> Strings.catTranslateDesc
-        DEVELOPER -> Strings.catDeveloperDesc
-        OTHER -> Strings.catOtherDesc
-    }
 }
 
 enum class ModuleRunTime(val jsEvent: String) {
@@ -153,61 +113,6 @@ enum class ModuleRunTime(val jsEvent: String) {
     DOCUMENT_IDLE("load"),
     CONTEXT_MENU("contextmenu"),
     BEFORE_UNLOAD("beforeunload");
-
-    fun getDisplayName(): String = when (this) {
-        DOCUMENT_START -> Strings.runTimeDocStart
-        DOCUMENT_END -> Strings.runTimeDocEnd
-        DOCUMENT_IDLE -> Strings.runTimeDocIdle
-        CONTEXT_MENU -> Strings.runTimeContextMenu
-        BEFORE_UNLOAD -> Strings.runTimeBeforeUnload
-    }
-
-    fun getDescription(): String = when (this) {
-        DOCUMENT_START -> Strings.runTimeDocStartDesc
-        DOCUMENT_END -> Strings.runTimeDocEndDesc
-        DOCUMENT_IDLE -> Strings.runTimeDocIdleDesc
-        CONTEXT_MENU -> Strings.runTimeContextMenuDesc
-        BEFORE_UNLOAD -> Strings.runTimeBeforeUnloadDesc
-    }
-}
-
-enum class ModuleTrigger {
-    AUTO,
-    MANUAL,
-    INTERVAL,
-    MUTATION,
-    SCROLL,
-    CLICK,
-    HOVER,
-    FOCUS,
-    INPUT,
-    VISIBILITY;
-
-    val displayName: String get() = when (this) {
-        AUTO -> Strings.triggerAuto
-        MANUAL -> Strings.triggerManual
-        INTERVAL -> Strings.triggerInterval
-        MUTATION -> Strings.triggerMutation
-        SCROLL -> Strings.triggerScroll
-        CLICK -> Strings.triggerClick
-        HOVER -> Strings.triggerHover
-        FOCUS -> Strings.triggerFocus
-        INPUT -> Strings.triggerInput
-        VISIBILITY -> Strings.triggerVisibility
-    }
-
-    val description: String get() = when (this) {
-        AUTO -> Strings.triggerAutoDesc
-        MANUAL -> Strings.triggerManualDesc
-        INTERVAL -> Strings.triggerIntervalDesc
-        MUTATION -> Strings.triggerMutationDesc
-        SCROLL -> Strings.triggerScrollDesc
-        CLICK -> Strings.triggerClickDesc
-        HOVER -> Strings.triggerHoverDesc
-        FOCUS -> Strings.triggerFocusDesc
-        INPUT -> Strings.triggerInputDesc
-        VISIBILITY -> Strings.triggerVisibilityDesc
-    }
 }
 
 enum class ModulePermission(val dangerous: Boolean = false) {
@@ -243,73 +148,6 @@ enum class ModulePermission(val dangerous: Boolean = false) {
     HISTORY,
     NAVIGATION;
 
-    val displayName: String get() = when (this) {
-        DOM_ACCESS -> Strings.permDomAccess
-        DOM_OBSERVE -> Strings.permDomObserve
-        CSS_INJECT -> Strings.permCssInject
-        STORAGE -> Strings.permStorage
-        COOKIE -> Strings.permCookie
-        INDEXED_DB -> Strings.permIndexedDb
-        CACHE -> Strings.permCache
-        NETWORK -> Strings.permNetwork
-        WEBSOCKET -> Strings.permWebsocket
-        FETCH_INTERCEPT -> Strings.permFetchIntercept
-        CLIPBOARD -> Strings.permClipboard
-        NOTIFICATION -> Strings.permNotification
-        ALERT -> Strings.permAlert
-        KEYBOARD -> Strings.permKeyboard
-        MOUSE -> Strings.permMouse
-        TOUCH -> Strings.permTouch
-        LOCATION -> Strings.permLocation
-        CAMERA -> Strings.permCamera
-        MICROPHONE -> Strings.permMicrophone
-        DEVICE_INFO -> Strings.permDeviceInfo
-        MEDIA -> Strings.permMedia
-        FULLSCREEN -> Strings.permFullscreen
-        PICTURE_IN_PICTURE -> Strings.permPip
-        SCREEN_CAPTURE -> Strings.permScreenCapture
-        DOWNLOAD -> Strings.permDownload
-        FILE_ACCESS -> Strings.permFileAccess
-        EVAL -> Strings.permEval
-        IFRAME -> Strings.permIframe
-        WINDOW_OPEN -> Strings.permWindowOpen
-        HISTORY -> Strings.permHistory
-        NAVIGATION -> Strings.permNavigation
-    }
-
-    val description: String get() = when (this) {
-        DOM_ACCESS -> Strings.permDomAccessDesc
-        DOM_OBSERVE -> Strings.permDomObserveDesc
-        CSS_INJECT -> Strings.permCssInjectDesc
-        STORAGE -> Strings.permStorageDesc
-        COOKIE -> Strings.permCookieDesc
-        INDEXED_DB -> Strings.permIndexedDbDesc
-        CACHE -> Strings.permCacheDesc
-        NETWORK -> Strings.permNetworkDesc
-        WEBSOCKET -> Strings.permWebsocketDesc
-        FETCH_INTERCEPT -> Strings.permFetchInterceptDesc
-        CLIPBOARD -> Strings.permClipboardDesc
-        NOTIFICATION -> Strings.permNotificationDesc
-        ALERT -> Strings.permAlertDesc
-        KEYBOARD -> Strings.permKeyboardDesc
-        MOUSE -> Strings.permMouseDesc
-        TOUCH -> Strings.permTouchDesc
-        LOCATION -> Strings.permLocationDesc
-        CAMERA -> Strings.permCameraDesc
-        MICROPHONE -> Strings.permMicrophoneDesc
-        DEVICE_INFO -> Strings.permDeviceInfoDesc
-        MEDIA -> Strings.permMediaDesc
-        FULLSCREEN -> Strings.permFullscreenDesc
-        PICTURE_IN_PICTURE -> Strings.permPipDesc
-        SCREEN_CAPTURE -> Strings.permScreenCaptureDesc
-        DOWNLOAD -> Strings.permDownloadDesc
-        FILE_ACCESS -> Strings.permFileAccessDesc
-        EVAL -> Strings.permEvalDesc
-        IFRAME -> Strings.permIframeDesc
-        WINDOW_OPEN -> Strings.permWindowOpenDesc
-        HISTORY -> Strings.permHistoryDesc
-        NAVIGATION -> Strings.permNavigationDesc
-    }
 }
 
 enum class ConfigItemType {
@@ -320,55 +158,6 @@ enum class ConfigItemType {
     RANGE, DATE, TIME, DATETIME,
     FILE, IMAGE;
 
-    val displayName: String get() = when (this) {
-        TEXT -> Strings.configTypeText
-        TEXTAREA -> Strings.configTypeTextarea
-        NUMBER -> Strings.configTypeNumber
-        BOOLEAN -> Strings.configTypeBoolean
-        SELECT -> Strings.configTypeSelect
-        MULTI_SELECT -> Strings.configTypeMultiSelect
-        RADIO -> Strings.configTypeRadio
-        CHECKBOX -> Strings.configTypeCheckbox
-        COLOR -> Strings.configTypeColor
-        URL -> Strings.configTypeUrl
-        EMAIL -> Strings.configTypeEmail
-        PASSWORD -> Strings.configTypePassword
-        REGEX -> Strings.configTypeRegex
-        CSS_SELECTOR -> Strings.configTypeCssSelector
-        JAVASCRIPT -> Strings.configTypeJavascript
-        JSON -> Strings.configTypeJson
-        RANGE -> Strings.configTypeRange
-        DATE -> Strings.configTypeDate
-        TIME -> Strings.configTypeTime
-        DATETIME -> Strings.configTypeDatetime
-        FILE -> Strings.configTypeFile
-        IMAGE -> Strings.configTypeImage
-    }
-
-    val description: String get() = when (this) {
-        TEXT -> Strings.configTypeTextDesc
-        TEXTAREA -> Strings.configTypeTextareaDesc
-        NUMBER -> Strings.configTypeNumberDesc
-        BOOLEAN -> Strings.configTypeBooleanDesc
-        SELECT -> Strings.configTypeSelectDesc
-        MULTI_SELECT -> Strings.configTypeMultiSelectDesc
-        RADIO -> Strings.configTypeRadioDesc
-        CHECKBOX -> Strings.configTypeCheckboxDesc
-        COLOR -> Strings.configTypeColorDesc
-        URL -> Strings.configTypeUrlDesc
-        EMAIL -> Strings.configTypeEmailDesc
-        PASSWORD -> Strings.configTypePasswordDesc
-        REGEX -> Strings.configTypeRegexDesc
-        CSS_SELECTOR -> Strings.configTypeCssSelectorDesc
-        JAVASCRIPT -> Strings.configTypeJavascriptDesc
-        JSON -> Strings.configTypeJsonDesc
-        RANGE -> Strings.configTypeRangeDesc
-        DATE -> Strings.configTypeDateDesc
-        TIME -> Strings.configTypeTimeDesc
-        DATETIME -> Strings.configTypeDatetimeDesc
-        FILE -> Strings.configTypeFileDesc
-        IMAGE -> Strings.configTypeImageDesc
-    }
 }
 
 data class ModuleConfigItem(
@@ -391,29 +180,6 @@ data class ModuleConfigItem(
     @SerializedName("validation")
     val validation: String? = null
 )
-
-enum class ModuleUiType {
-    FLOATING_BUTTON
-}
-
-data class ModuleUiConfig(
-    @SerializedName("type")
-    val type: ModuleUiType = ModuleUiType.FLOATING_BUTTON,
-
-    @SerializedName("autoHide")
-    val autoHide: Boolean = false,
-    @SerializedName("autoHideDelay")
-    val autoHideDelay: Int = 3000,
-    @SerializedName("initiallyHidden")
-    val initiallyHidden: Boolean = false,
-    @SerializedName("showOnlyOnMatch")
-    val showOnlyOnMatch: Boolean = true
-) {
-    companion object {
-
-        val DEFAULT = ModuleUiConfig()
-    }
-}
 
 data class ModuleAuthor(
     @SerializedName("name")
@@ -455,20 +221,6 @@ enum class ModuleRunMode {
     INTERACTIVE,
     AUTO;
 
-    fun getDisplayName(): String = when (this) {
-        INTERACTIVE -> Strings.runModeInteractive
-        AUTO -> Strings.runModeAuto
-    }
-
-    fun getDescription(): String = when (this) {
-        INTERACTIVE -> Strings.runModeInteractiveDesc
-        AUTO -> Strings.runModeAutoDesc
-    }
-
-    fun getIcon(): String = when (this) {
-        INTERACTIVE -> "desktop_windows"
-        AUTO -> "bolt"
-    }
 }
 
 data class ExtensionModule(
@@ -523,9 +275,6 @@ data class ExtensionModule(
     @SerializedName("builtIn")
     val builtIn: Boolean = false,
 
-    @SerializedName("uiConfig")
-    val uiConfig: ModuleUiConfig = ModuleUiConfig.DEFAULT,
-
     @SerializedName("runMode")
     val runMode: ModuleRunMode = ModuleRunMode.INTERACTIVE,
 
@@ -566,30 +315,6 @@ data class ExtensionModule(
     companion object {
         private val gson get() = GsonProvider.gson
 
-        private const val SHARE_CODE_PREFIX_V1 = "WTA1:"
-        private const val SHARE_CODE_PREFIX_V0 = ""
-        /**
-         * Compact share frame (issue #768). V1 carries the full Gson payload; V2
-         * carries only entries that differ from a fresh [ExtensionModule] default
-         * (id/timestamps are always excluded — import regenerates them), so the
-         * same module compresses ~40-60% smaller before gzip and fits bigger
-         * modules into a single QR code. Decode keeps reading every generation.
-         */
-        private const val SHARE_CODE_PREFIX_V2 = "WTA2:"
-
-        /** JSON keys never carried in a share payload (regenerated on import). */
-        private val shareExcludedKeys = setOf("id", "createdAt", "updatedAt")
-
-        /**
-         * Physical single-QR ceiling in bytes: version 40, ECC-L, byte mode.
-         * Lives here (rather than QrCodeUtils, which is host-only and excluded
-         * from the shell sync) so [toShareCode] stays compilable in generated
-         * APKs. ASCII payloads such as Base64 share codes are 1 byte/char.
-         */
-        const val QR_SINGLE_CODE_MAX_BYTES = 2953
-
-        /** Diff baseline: `name` is the only parameter without a default. */
-        private val shareDefaultsInstance = ExtensionModule(name = "")
 
         fun fromJson(json: String): ExtensionModule? {
             return try {
@@ -597,98 +322,6 @@ data class ExtensionModule(
             } catch (e: Exception) {
                 null
             }
-        }
-
-        fun fromShareCode(shareCode: String): ExtensionModule? {
-            return try {
-                val json = when {
-
-                    shareCode.startsWith(SHARE_CODE_PREFIX_V2) -> {
-                        val compressed = android.util.Base64.decode(
-                            shareCode.removePrefix(SHARE_CODE_PREFIX_V2),
-                            android.util.Base64.DEFAULT
-                        )
-                        expandShareJson(decompressGzip(compressed))
-                    }
-
-                    shareCode.startsWith(SHARE_CODE_PREFIX_V1) -> {
-                        val compressed = android.util.Base64.decode(
-                            shareCode.removePrefix(SHARE_CODE_PREFIX_V1),
-                            android.util.Base64.DEFAULT
-                        )
-                        decompressGzip(compressed)
-                    }
-
-                    else -> {
-                        String(android.util.Base64.decode(shareCode, android.util.Base64.DEFAULT))
-                    }
-                }
-                fromJson(json)
-            } catch (e: Exception) {
-                null
-            }
-        }
-
-        /**
-         * Merges a compact V2 payload onto a fresh default instance. A plain
-         * [fromJson] would leave Java defaults (false/0) in omitted primitive
-         * fields instead of the declared Kotlin defaults (e.g. enabled=true),
-         * so the merge must happen before parsing.
-         */
-        private fun expandShareJson(compactJson: String): String {
-            val base = gson.toJsonTree(shareDefaultsInstance).asJsonObject
-            val compact = gson.fromJson(compactJson, com.google.gson.JsonObject::class.java)
-            for ((key, value) in compact.entrySet()) {
-                base.add(key, value)
-            }
-            return gson.toJson(base)
-        }
-
-        /**
-         * Emits only payload entries that differ from a fresh default instance
-         * (deep-compared, so partially customized nested objects are kept whole).
-         */
-        private fun compactShareJson(module: ExtensionModule): String {
-            val full = gson.toJsonTree(module).asJsonObject
-            val defaults = gson.toJsonTree(shareDefaultsInstance).asJsonObject
-            val out = com.google.gson.JsonObject()
-            for ((key, value) in full.entrySet()) {
-                if (key in shareExcludedKeys) continue
-                if (value == defaults.get(key)) continue
-                out.add(key, value)
-            }
-            return gson.toJson(out)
-        }
-
-        private fun decompressGzip(compressed: ByteArray): String {
-            java.util.zip.GZIPInputStream(java.io.ByteArrayInputStream(compressed)).use { gzip ->
-                return gzip.bufferedReader().readText()
-            }
-        }
-
-        private fun compressGzip(data: String): ByteArray {
-            val bos = java.io.ByteArrayOutputStream()
-            java.util.zip.GZIPOutputStream(bos).use { gzip ->
-                gzip.write(data.toByteArray())
-            }
-            return bos.toByteArray()
-        }
-
-        /**
-         * Same gzip framing as [compressGzip] (decoders are unaffected) but with
-         * the deflater at maximum strength. `def` is protected in
-         * [java.util.zip.DeflaterOutputStream], hence the anonymous subclass.
-         */
-        private fun compressGzipBest(data: String): ByteArray {
-            val bos = java.io.ByteArrayOutputStream()
-            object : java.util.zip.GZIPOutputStream(bos) {
-                init {
-                    def.setLevel(java.util.zip.Deflater.BEST_COMPRESSION)
-                }
-            }.use { gzip ->
-                gzip.write(data.toByteArray())
-            }
-            return bos.toByteArray()
         }
     }
 
@@ -717,7 +350,6 @@ data class ExtensionModule(
         configItems = (configItems as List<ModuleConfigItem>?) ?: emptyList(),
         configValues = (configValues as Map<String, String>?) ?: emptyMap(),
         dependencies = (dependencies as List<String>?) ?: emptyList(),
-        uiConfig = (uiConfig as ModuleUiConfig?) ?: ModuleUiConfig.DEFAULT,
         runMode = (runMode as ModuleRunMode?) ?: ModuleRunMode.INTERACTIVE,
         sourceType = (sourceType as ModuleSourceType?) ?: ModuleSourceType.CUSTOM,
         chromeExtId = (chromeExtId as String?) ?: "",
@@ -733,29 +365,6 @@ data class ExtensionModule(
         resources = (resources as Map<String, String>?) ?: emptyMap(),
     )
 
-    fun toJson(): String = gson.toJson(this)
-
-    fun toShareCode(): String {
-        // Prefer V1 while it fits a single QR code so older app versions can
-        // still read the share; V2 is only emitted when V1 would not fit.
-        val v1 = toShareCodeV1()
-        if (v1.toByteArray(Charsets.UTF_8).size <= QR_SINGLE_CODE_MAX_BYTES) return v1
-        return toShareCodeV2()
-    }
-
-    fun toShareCodeV1(): String {
-        val compressed = compressGzip(toJson())
-        return SHARE_CODE_PREFIX_V1 + android.util.Base64.encodeToString(compressed, android.util.Base64.NO_WRAP)
-    }
-
-    fun toShareCodeV2(): String {
-        val compressed = compressGzipBest(compactShareJson(this))
-        return SHARE_CODE_PREFIX_V2 + android.util.Base64.encodeToString(compressed, android.util.Base64.NO_WRAP)
-    }
-
-    fun toShareCodeLegacy(): String {
-        return android.util.Base64.encodeToString(toJson().toByteArray(), android.util.Base64.NO_WRAP)
-    }
 
     fun matchesUrl(url: String): Boolean {
         if (urlMatches.isEmpty()) return true
@@ -781,7 +390,6 @@ data class ExtensionModule(
         return if (rule.isRegex) {
             safeRegexMatch(rule.pattern, url)
         } else {
-
             val pattern = rule.pattern
             if (pattern == "*" || pattern == "<all_urls>") return true
 
@@ -791,17 +399,14 @@ data class ExtensionModule(
                 while (i < pattern.length) {
                     val c = pattern[i]
                     when {
-
                         c == '*' && pattern.startsWith("*://", i) -> {
                             append("(https?|ftp|file)://")
                             i += 4
                         }
-
                         c == '*' -> {
                             append(".*")
                             i++
                         }
-
                         c in ".+?^\${}()|[]\\/" -> {
                             append("\\")
                             append(c)
@@ -820,485 +425,8 @@ data class ExtensionModule(
                     ?: return url.contains(pattern, ignoreCase = true)
                 compiled.matches(url)
             } catch (e: Exception) {
-
                 url.contains(pattern, ignoreCase = true)
             }
         }
-    }
-
-    @Transient
-    @Volatile
-    private var _cachedExecutableCode: String? = null
-
-    fun shouldRegisterInPanel(): Boolean {
-        return !(
-            (sourceType == ModuleSourceType.USERSCRIPT || sourceType == ModuleSourceType.GREASYFORK) &&
-                runMode == ModuleRunMode.AUTO &&
-                configItems.isEmpty()
-        )
-    }
-
-    fun generateExecutableCode(): String {
-        _cachedExecutableCode?.let { return it }
-        val configJson = gson.toJson(configValues)
-        val uiConfigJson = gson.toJson(mapOf(
-            "type" to uiConfig.type.name,
-            "autoHide" to uiConfig.autoHide,
-            "autoHideDelay" to uiConfig.autoHideDelay,
-            "initiallyHidden" to uiConfig.initiallyHidden,
-            "showOnlyOnMatch" to uiConfig.showOnlyOnMatch
-        ))
-        val runModeStr = runMode.name
-        val urlMatchesJson = gson.toJson(urlMatches)
-
-        val effectiveCode = if (codeFiles.isNotEmpty()) {
-
-            val entryNames = setOf("main.js", "index.js", "app.js", "script.js", "content.js")
-            val sortedFiles = codeFiles.entries.sortedWith(
-                compareByDescending<Map.Entry<String, String>> { it.key.substringAfterLast('/').lowercase() in entryNames }
-                    .thenBy { it.key }
-            )
-            sortedFiles.joinToString("\n\n") { (path, content) ->
-                "// ========== $path ==========\n$content"
-            }
-        } else {
-            code
-        }
-
-        return """
-            (function() {
-                'use strict';
-                // Module配置
-                const __MODULE_CONFIG__ = $configJson;
-                const __MODULE_UI_CONFIG__ = $uiConfigJson;
-                const __MODULE_RUN_MODE__ = '$runModeStr';
-                // URL匹配规则（与 matchesUrl 语义一致）：面板据此显示 Active/Inactive
-                const __MODULE_URL_MATCHES__ = $urlMatchesJson;
-                function __moduleMatchesUrl__() {
-                    try {
-                        var href = location.href;
-                        if (!__MODULE_URL_MATCHES__ || __MODULE_URL_MATCHES__.length === 0) return true;
-                        function __escapeReChar__(c) {
-                            return '.+?^${'$'}()|[]/'.indexOf(c) !== -1 ? '\\' + c : c;
-                        }
-                        function __ruleToRegExp__(rule) {
-                            var p = rule.pattern;
-                            if (rule.isRegex) return new RegExp(p, 'i');
-                            if (p === '*' || p === '<all_urls>') return null;
-                            var re = '^';
-                            var i = 0;
-                            while (i < p.length) {
-                                var c = p[i];
-                                if (c === '*' && p.startsWith('*://', i)) { re += '(https?|ftp|file)://'; i += 4; }
-                                else if (c === '*') { re += '.*'; i++; }
-                                else { re += __escapeReChar__(c); i++; }
-                            }
-                            re += '${'$'}';
-                            return new RegExp(re, 'i');
-                        }
-                        var excludes = __MODULE_URL_MATCHES__.filter(function(r) { return r.exclude; });
-                        for (var j = 0; j < excludes.length; j++) {
-                            var er = __ruleToRegExp__(excludes[j]);
-                            if (er && er.test(href)) return false;
-                        }
-                        var includes = __MODULE_URL_MATCHES__.filter(function(r) { return !r.exclude; });
-                        if (includes.length === 0) return true;
-                        for (var k = 0; k < includes.length; k++) {
-                            var ir = __ruleToRegExp__(includes[k]);
-                            if (!ir || ir.test(href)) return true;
-                        }
-                        return false;
-                    } catch (e) { return true; }
-                }
-                const __MODULE_INFO__ = {
-                    id: '${id.escapeForJsSingleQuote()}',
-                    name: '${name.escapeForJsSingleQuote()}',
-                    icon: '${icon.escapeForJsSingleQuote()}',
-                    version: '${version.name}',
-                    uiConfig: __MODULE_UI_CONFIG__,
-                    runMode: __MODULE_RUN_MODE__
-                };
-                ${if (panelHtml.isNotBlank()) "const __MODULE_PANEL_HTML__ = `${panelHtml.escapeForJsTemplate()}`;" else "const __MODULE_PANEL_HTML__ = '';"}
-
-                // Configure访问函数
-                function getConfig(key, defaultValue) {
-                    return __MODULE_CONFIG__[key] !== undefined ? __MODULE_CONFIG__[key] : defaultValue;
-                }
-
-                // CSS 注入
-                ${if (cssCode.isNotBlank()) """
-                (function() {
-                    const style = document.createElement('style');
-                    style.id = 'ext-module-${id}';
-                    style.textContent = `${cssCode.escapeForJsTemplate()}`;
-                    (document.head || document.documentElement).appendChild(style);
-                })();
-                """ else ""}
-
-                // User代码
-                try {
-                    $effectiveCode
-                } catch(e) {
-                    console.error('[ExtModule: ${name.escapeForJsSingleQuote()}] Error:', e);
-                }
-
-                // 自动注册模块到面板系统（使用配置的 uiConfig）
-                // 内置模块自带 register() 调用，跳过自动注册避免覆盖 onAction
-                ${if (shouldRegisterInPanel() && !builtIn) """
-                (function __autoRegister__() {
-                    if (typeof __WTA_MODULE_UI__ === 'undefined') {
-                        setTimeout(__autoRegister__, 100);
-                        return;
-                    }
-                    // 等待面板完全初始化后再检查，避免面板未就绪时误判为"未注册"
-                    var panel = window.__WTA_PANEL__;
-                    if (!panel || !panel._initialized) {
-                        setTimeout(__autoRegister__, 100);
-                        return;
-                    }
-                    // 检查用户代码是否已经注册过（带 uiConfig.type、onAction 或 panelHtml 均视为有效注册）
-                    if (panel.modules) {
-                        var existing = panel.modules.find(function(m) { return m.id === __MODULE_INFO__.id; });
-                        if (existing && ((existing.uiConfig && existing.uiConfig.type) || existing.onAction || existing.panelHtml)) {
-                            return;
-                        }
-                    }
-                    __WTA_MODULE_UI__.register({
-                        id: __MODULE_INFO__.id,
-                        name: __MODULE_INFO__.name,
-                        icon: __MODULE_INFO__.icon,
-                        uiConfig: __MODULE_UI_CONFIG__,
-                        runMode: __MODULE_RUN_MODE__,
-                        active: __moduleMatchesUrl__(),
-                        urlMatches: __MODULE_URL_MATCHES__,
-                        panelHtml: __MODULE_PANEL_HTML__ || undefined
-                    });
-                })();
-                """ else ""}
-            })();
-        """.trimIndent().also { _cachedExecutableCode = it }
-    }
-
-    fun validate(): List<String> {
-        val errors = mutableListOf<String>()
-
-        if (name.isBlank()) errors.add(Strings.validateNameEmpty)
-        if (code.isBlank() && cssCode.isBlank() && codeFiles.isEmpty()) errors.add(Strings.validateCodeEmpty)
-
-        configItems.forEach { item ->
-            if (item.required && configValues[item.key].isNullOrBlank()) {
-                errors.add(Strings.validateConfigRequired.replace("%s", item.name))
-            }
-        }
-
-        return errors
-    }
-}
-
-data class ModulePackage(
-    @SerializedName("name")
-    val name: String,
-    @SerializedName("description")
-    val description: String = "",
-    @SerializedName("author")
-    val author: ModuleAuthor? = null,
-    @SerializedName("modules")
-    val modules: List<ExtensionModule>,
-    @SerializedName("version")
-    val version: String = "1.0.0",
-    @SerializedName("createdAt")
-    val createdAt: Long = System.currentTimeMillis()
-) {
-    companion object {
-        private val gson get() = GsonProvider.gson
-
-        fun fromJson(json: String): ModulePackage? {
-            return try {
-                gson.fromJson(json, ModulePackage::class.java)
-            } catch (e: Exception) {
-                null
-            }
-        }
-    }
-
-    fun toJson(): String = gson.toJson(this)
-}
-
-object ModuleCategoryGroups {
-
-    val groups = listOf(
-        CategoryGroup(
-            name = Strings.categoryGroupContent,
-            icon = "edit_note",
-            categories = listOf(
-                ModuleCategory.CONTENT_FILTER,
-                ModuleCategory.CONTENT_ENHANCE,
-                ModuleCategory.READING
-            )
-        ),
-        CategoryGroup(
-            name = Strings.categoryGroupAppearance,
-            icon = "palette",
-            categories = listOf(
-                ModuleCategory.STYLE_MODIFIER,
-                ModuleCategory.THEME
-            )
-        ),
-        CategoryGroup(
-            name = Strings.categoryGroupFunction,
-            icon = "bolt",
-            categories = listOf(
-                ModuleCategory.FUNCTION_ENHANCE,
-                ModuleCategory.AUTOMATION,
-                ModuleCategory.NAVIGATION,
-                ModuleCategory.INTERACTION
-            )
-        ),
-        CategoryGroup(
-            name = Strings.categoryGroupData,
-            icon = "analytics",
-            categories = listOf(
-                ModuleCategory.DATA_EXTRACT,
-                ModuleCategory.DATA_SAVE,
-                ModuleCategory.TRANSLATE
-            )
-        ),
-        CategoryGroup(
-            name = Strings.categoryGroupMedia,
-            icon = "movie",
-            categories = listOf(
-                ModuleCategory.MEDIA,
-                ModuleCategory.VIDEO,
-                ModuleCategory.IMAGE,
-                ModuleCategory.AUDIO
-            )
-        ),
-        CategoryGroup(
-            name = Strings.categoryGroupSecurity,
-            icon = "lock",
-            categories = listOf(
-                ModuleCategory.SECURITY,
-                ModuleCategory.ANTI_TRACKING
-            )
-        ),
-        CategoryGroup(
-            name = Strings.categoryGroupLife,
-            icon = "build",
-            categories = listOf(
-                ModuleCategory.SOCIAL,
-                ModuleCategory.SHOPPING,
-                ModuleCategory.ACCESSIBILITY
-            )
-        ),
-        CategoryGroup(
-            name = Strings.categoryGroupDeveloper,
-            icon = "computer",
-            categories = listOf(
-                ModuleCategory.DEVELOPER
-            )
-        ),
-        CategoryGroup(
-            name = Strings.categoryGroupOther,
-            icon = "package",
-            categories = listOf(
-                ModuleCategory.OTHER
-            )
-        )
-    )
-
-    fun getGroupForCategory(category: ModuleCategory): CategoryGroup? {
-        return groups.find { it.categories.contains(category) }
-    }
-}
-
-data class CategoryGroup(
-    val name: String,
-    val icon: String,
-    val categories: List<ModuleCategory>
-)
-
-object ModulePermissionGroups {
-
-    val groups = listOf(
-        PermissionGroup(
-            name = Strings.permGroupBasic,
-            permissions = listOf(
-                ModulePermission.DOM_ACCESS,
-                ModulePermission.DOM_OBSERVE,
-                ModulePermission.CSS_INJECT
-            )
-        ),
-        PermissionGroup(
-            name = Strings.permGroupStorage,
-            permissions = listOf(
-                ModulePermission.STORAGE,
-                ModulePermission.COOKIE,
-                ModulePermission.INDEXED_DB,
-                ModulePermission.CACHE
-            )
-        ),
-        PermissionGroup(
-            name = Strings.permGroupNetwork,
-            permissions = listOf(
-                ModulePermission.NETWORK,
-                ModulePermission.WEBSOCKET,
-                ModulePermission.FETCH_INTERCEPT
-            )
-        ),
-        PermissionGroup(
-            name = Strings.permGroupInteraction,
-            permissions = listOf(
-                ModulePermission.CLIPBOARD,
-                ModulePermission.NOTIFICATION,
-                ModulePermission.ALERT,
-                ModulePermission.KEYBOARD,
-                ModulePermission.MOUSE,
-                ModulePermission.TOUCH
-            )
-        ),
-        PermissionGroup(
-            name = Strings.permGroupDevice,
-            permissions = listOf(
-                ModulePermission.LOCATION,
-                ModulePermission.CAMERA,
-                ModulePermission.MICROPHONE,
-                ModulePermission.DEVICE_INFO
-            )
-        ),
-        PermissionGroup(
-            name = Strings.permGroupMediaPerm,
-            permissions = listOf(
-                ModulePermission.MEDIA,
-                ModulePermission.FULLSCREEN,
-                ModulePermission.PICTURE_IN_PICTURE,
-                ModulePermission.SCREEN_CAPTURE
-            )
-        ),
-        PermissionGroup(
-            name = Strings.permGroupFile,
-            permissions = listOf(
-                ModulePermission.DOWNLOAD,
-                ModulePermission.FILE_ACCESS
-            )
-        ),
-        PermissionGroup(
-            name = Strings.permGroupAdvanced,
-            permissions = listOf(
-                ModulePermission.EVAL,
-                ModulePermission.IFRAME,
-                ModulePermission.WINDOW_OPEN,
-                ModulePermission.HISTORY,
-                ModulePermission.NAVIGATION
-            )
-        )
-    )
-}
-
-data class PermissionGroup(
-    val name: String,
-    val permissions: List<ModulePermission>
-)
-
-object ModulePresets {
-
-    fun createElementBlocker(
-        name: String,
-        selectors: List<String>,
-        description: String = Strings.presetBlockElements
-    ): ExtensionModule {
-        return ExtensionModule(
-            name = name,
-            description = description,
-            icon = "block",
-            category = ModuleCategory.CONTENT_FILTER,
-            tags = listOf(Strings.tagBlock, Strings.tagHideElement),
-            runAt = ModuleRunTime.DOCUMENT_END,
-            permissions = listOf(ModulePermission.DOM_ACCESS, ModulePermission.DOM_OBSERVE),
-            code = """
-                const selectors = ${selectors.joinToString(",", "[", "]") { "\"$it\"" }};
-                function hide() {
-                    selectors.forEach(s => {
-                        document.querySelectorAll(s).forEach(el => el.style.display = 'none');
-                    });
-                }
-                hide();
-                var observerTarget = document.body || document.documentElement;
-                if (observerTarget instanceof Node) {
-                    new MutationObserver(hide).observe(observerTarget, { childList: true, subtree: true });
-                }
-            """.trimIndent()
-        )
-    }
-
-    fun createStyleInjector(
-        name: String,
-        cssCode: String,
-        description: String = Strings.presetInjectStyle
-    ): ExtensionModule {
-        return ExtensionModule(
-            name = name,
-            description = description,
-            icon = "palette",
-            category = ModuleCategory.STYLE_MODIFIER,
-            tags = listOf(Strings.tagStyleCss, "CSS"),
-            runAt = ModuleRunTime.DOCUMENT_START,
-            permissions = listOf(ModulePermission.CSS_INJECT),
-            cssCode = cssCode
-        )
-    }
-
-    fun createAutoClicker(
-        name: String,
-        selector: String,
-        delay: Int = 1000,
-        description: String = Strings.presetAutoClick
-    ): ExtensionModule {
-        return ExtensionModule(
-            name = name,
-            description = description,
-            icon = "mouse",
-            category = ModuleCategory.AUTOMATION,
-            tags = listOf(Strings.tagAuto, Strings.tagClickAction),
-            runAt = ModuleRunTime.DOCUMENT_END,
-            permissions = listOf(ModulePermission.DOM_ACCESS),
-            code = """
-                setTimeout(() => {
-                    const el = document.querySelector('$selector');
-                    if (el) el.click();
-                }, $delay);
-            """.trimIndent()
-        )
-    }
-
-    fun createFloatingButton(
-        name: String,
-        buttonText: String,
-        onClick: String,
-        position: String = "bottom-right",
-        description: String = Strings.presetFloatingButton
-    ): ExtensionModule {
-        val positionStyle = when (position) {
-            "bottom-left" -> "bottom: 80px; left: 20px;"
-            "top-right" -> "top: 80px; right: 20px;"
-            "top-left" -> "top: 80px; left: 20px;"
-            else -> "bottom: 80px; right: 20px;"
-        }
-
-        return ExtensionModule(
-            name = name,
-            description = description,
-            icon = "radio_button",
-            category = ModuleCategory.FUNCTION_ENHANCE,
-            tags = listOf(Strings.tagButton, Strings.tagFloatingWidget),
-            runAt = ModuleRunTime.DOCUMENT_END,
-            permissions = listOf(ModulePermission.DOM_ACCESS),
-            code = """
-                const btn = document.createElement('div');
-                btn.textContent = '$buttonText';
-                btn.style.cssText = 'position:fixed;$positionStyle;z-index:99999;padding:12px 20px;background:rgba(0,0,0,0.8);color:white;border-radius:25px;cursor:pointer;font-size:14px;box-shadow:0 2px 10px rgba(0,0,0,0.3);';
-                btn.onclick = () => { $onClick };
-                document.body.appendChild(btn);
-            """.trimIndent()
-        )
     }
 }

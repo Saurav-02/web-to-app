@@ -175,16 +175,16 @@ object StringsB {
     }
 
     val searchModulesHint: String get() = when (Strings.lang) {
-        AppLanguage.CHINESE -> "搜索模块名称、描述或标签..."
-        AppLanguage.ENGLISH -> "Search module name, description or tags..."
-        AppLanguage.ARABIC -> "البحث عن اسم الوحدة أو الوصف أو العلامات..."
-        AppLanguage.PORTUGUESE -> "Pesquisar nome, descrição ou tags do módulo..."
-        AppLanguage.SPANISH -> "Buscar nombre, descripción o etiquetas del módulo..."
-        AppLanguage.FRENCH -> "Rechercher nom, description ou tags du module..."
-        AppLanguage.GERMAN -> "Modulname, -beschreibung oder -tags suchen..."
-        AppLanguage.RUSSIAN -> "Поиск по имени, описанию или тегам модуля..."
-        AppLanguage.JAPANESE -> "モジュール名、説明、タグを検索..."
-        AppLanguage.KOREAN -> "모듈 이름, 설명, 태그 검색..."
+        AppLanguage.CHINESE -> "搜索名称或描述..."
+        AppLanguage.ENGLISH -> "Search name or description..."
+        AppLanguage.ARABIC -> "البحث عن الاسم أو الوصف..."
+        AppLanguage.PORTUGUESE -> "Pesquisar nome ou descrição..."
+        AppLanguage.SPANISH -> "Buscar nombre o descripción..."
+        AppLanguage.FRENCH -> "Rechercher nom ou description..."
+        AppLanguage.GERMAN -> "Name oder Beschreibung suchen..."
+        AppLanguage.RUSSIAN -> "Поиск по имени или описанию..."
+        AppLanguage.JAPANESE -> "名前または説明を検索..."
+        AppLanguage.KOREAN -> "이름 또는 설명 검색..."
     }
 
     val testModule: String get() = when (Strings.lang) {

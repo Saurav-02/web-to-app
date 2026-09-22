@@ -31,7 +31,7 @@ fun MoreScreen(
     onOpenBrowserKernel: () -> Unit = {},
     onOpenHostsAdBlock: () -> Unit = {},
     onOpenAppModifier: () -> Unit = {},
-    onOpenExtensionModules: () -> Unit = {},
+    onOpenPlugins: () -> Unit = {},
     onOpenLinuxEnvironment: () -> Unit = {},
     onOpenRuntimeDeps: () -> Unit = {},
     onOpenPortManager: () -> Unit = {},
@@ -91,9 +91,9 @@ fun MoreScreen(
                 WtaSection(title = Strings.moreSectionDevTools) {
                     WtaSettingCard {
                         MoreMenuItem(
-                            title = Strings.menuExtensionModules,
+                            title = Strings.pluginsTitle,
                             icon = painterResource(R.drawable.ic_sidebar_extensions),
-                            onClick = onOpenExtensionModules
+                            onClick = onOpenPlugins
                         )
                         WtaSectionDivider()
                         MoreMenuItem(

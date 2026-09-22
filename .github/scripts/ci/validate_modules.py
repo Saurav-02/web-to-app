@@ -463,7 +463,9 @@ def _validate_folder_layout(report: Report, folder: Path) -> None:
         report.error(where, "missing required `main.js`")
 
     # Flag stray files. The runtime ignores them, so they only bloat the repo.
-    expected = {"module.json", "main.js", "style.css"}
+    # `plugin.json`/`panel.html` are the plugin-package format (the new
+    # protocol); `module.json` remains while older clients still read it.
+    expected = {"module.json", "plugin.json", "main.js", "style.css", "panel.html"}
     for child in folder.iterdir():
         if child.name in expected or child.name in ALLOWED_EXTRA_FILES:
             continue
@@ -602,6 +604,49 @@ def _validate_main_js(report: Report, folder: Path) -> None:
             pass
 
 
+def _validate_plugin_json(
+    report: Report,
+    folder: Path,
+    plugin: dict[str, Any],
+    module_manifest: dict[str, Any] | None,
+) -> None:
+    """Validate a per-module `plugin.json` (the HCJ package manifest)."""
+    where = f"modules/{folder.name}/plugin.json"
+
+    for required in ("id", "name"):
+        if not _is_str(plugin.get(required)) or not str(plugin[required]).strip():
+            report.error(where, f"`{required}` is required and must be a non-empty string")
+
+    matches = plugin.get("matches")
+    if matches is not None:
+        if not isinstance(matches, list) or not all(_is_str(m) for m in matches):
+            report.error(where, "`matches` must be a list of match-pattern strings")
+
+    run_at = plugin.get("runAt")
+    if run_at is not None and run_at not in ("document_start", "document_end", "document_idle"):
+        report.error(where, f"`runAt` must be document_start/document_end/document_idle, got {run_at!r}")
+
+    perms = plugin.get("permissions")
+    if perms is not None:
+        if not isinstance(perms, list) or not all(_is_str(p) for p in perms):
+            report.error(where, "`permissions` must be a list of strings")
+        else:
+            allowed = {"STORAGE", "FETCH", "NOTIFY", "BADGE", "CLIPBOARD", "DOWNLOAD"}
+            for p in perms:
+                if p not in allowed:
+                    report.warning(where, f"unknown permission {p!r} (allowed: {sorted(allowed)})")
+
+    # Cross-format drift guard: identity/version must agree with module.json.
+    if isinstance(module_manifest, dict):
+        if plugin.get("id") != module_manifest.get("id"):
+            report.error(where, "`id` does not match module.json `id`")
+        if plugin.get("name") != module_manifest.get("name"):
+            report.error(where, "`name` does not match module.json `name`")
+        mod_version = (module_manifest.get("version") or {}).get("name")
+        if _is_str(mod_version) and plugin.get("version") != mod_version:
+            report.error(where, "`version` does not match module.json `version.name`")
+
+
 # ───────────────────────── entry point ─────────────────────────────────
 
 def _load_json(report: Report, path: Path, where: str) -> dict[str, Any] | None:
@@ -661,6 +706,14 @@ def main(repo_root: Path) -> int:
             entry = entries_by_path.get(folder.name)
             if entry:
                 _validate_cross_consistency(report, entry, manifest, folder)
+
+        # plugin.json is the package manifest new clients install. It must
+        # not drift from module.json while both are published.
+        plugin_path = folder / "plugin.json"
+        if plugin_path.is_file():
+            plugin_manifest = _load_json(report, plugin_path, f"modules/{folder.name}/plugin.json")
+            if isinstance(plugin_manifest, dict):
+                _validate_plugin_json(report, folder, plugin_manifest, manifest)
 
     print(report.render())
     return 0 if report.ok() else 1

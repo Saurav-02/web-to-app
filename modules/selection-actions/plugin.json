@@ -1,0 +1,19 @@
+{
+  "id": "wta-selection-actions",
+  "name": "Selection Actions",
+  "version": "1.0.0",
+  "description": "A floating action bar that appears when you select text on a page. Search (5 engines), copy, open as URL, translate, or share. Fully configurable — choose which actions appear and which search engine to use. A superset of the former Floating Search module.",
+  "author": "shiaho",
+  "homepage": "https://github.com/shiaho777",
+  "icon": "text_select_start",
+  "matches": [
+    "*"
+  ],
+  "runAt": "document_end",
+  "permissions": [
+    "CLIPBOARD",
+    "STORAGE"
+  ],
+  "toolbar": true,
+  "legacyCompat": true
+}

@@ -122,7 +122,7 @@ class NativeBridge(
         fun getApiDocumentation(): String = """
 ## NativeBridge API 文档
 
-扩展模块可以通过 `window.NativeBridge` 调用以下原生能力：
+插件可以通过 `window.NativeBridge` 调用以下原生能力：
 
 ### 基础功能
 

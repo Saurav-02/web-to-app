@@ -83,6 +83,8 @@ class DataBackupManager(private val context: Context) {
 
             "extension_modules",
             "extensions",
+            "plugins",
+            "plugin_config",
             "html_projects",
             "splash_media",
             "website_icons",
@@ -133,7 +135,8 @@ class DataBackupManager(private val context: Context) {
             "isolation_prefs",
             "chrome_extension_storage",
             "chrome_extension_content_scripts",
-            "gallery_positions"
+            "gallery_positions",
+            "plugin_host_prefs"
         )
 
         /**
@@ -661,7 +664,7 @@ class DataBackupManager(private val context: Context) {
             // outgoing instance's startup load, and cancelling it only helps if it happens
             // before the restored file lands. With the old order the load could still be
             // mid-migration and rewrite modules.json on top of the bytes just restored.
-            com.webtoapp.core.extension.ExtensionManager.release()
+            com.webtoapp.core.plugin.PluginStore.release()
 
             if (modulesJsonBytes != null || builtInStatesJsonBytes != null) {
                 val extensionDir = File(context.filesDir, "extension_modules").apply { mkdirs() }
@@ -669,10 +672,12 @@ class DataBackupManager(private val context: Context) {
                 builtInStatesJsonBytes?.let { File(extensionDir, "builtin_states.json").writeBytes(it) }
             }
 
-            com.webtoapp.core.extension.ExtensionManager.getInstance(context)
-            AppLogger.i(TAG, "扩展模块配置已恢复并重新加载")
+            // Re-init: restored legacy modules.json is converted by PluginMigrator,
+            // restored plugins/ + plugin_state.json are picked up directly.
+            com.webtoapp.core.plugin.PluginStore.getInstance(context)
+            AppLogger.i(TAG, "插件数据已恢复并重新加载")
         }.onFailure { e ->
-            AppLogger.w(TAG, "恢复扩展模块配置失败", e)
+            AppLogger.w(TAG, "恢复插件配置失败", e)
         }
     }
 
@@ -837,6 +842,12 @@ class DataBackupManager(private val context: Context) {
                 files = files
             )
         }
+
+        // Plugin index/overlay lives as a loose file in filesDir root; it rides
+        // the generic local/files restore path (resolveSafeChild → filesDir).
+        File(context.filesDir, com.webtoapp.core.plugin.PluginStore.STATE_FILE)
+            .takeIf { it.isFile && it.canRead() }
+            ?.let { files["$LOCAL_FILES_DIR${it.name}"] = it }
 
         val externalFilesDir = context.getExternalFilesDir(null)
         if (externalFilesDir != null) {

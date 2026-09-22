@@ -24,7 +24,7 @@ data class ApkConfig(
     val gallery: GalleryBlock = GalleryBlock(),
     val bgm: BgmBlock = BgmBlock(),
     val translate: TranslateBlock = TranslateBlock(),
-    val extension: ExtensionBlock = ExtensionBlock(),
+    val plugin: PluginBlock = PluginBlock(),
     val autoStart: AutoStartBlock = AutoStartBlock(),
     val optionalServices: OptionalServicesBlock = OptionalServicesBlock(),
     val disguise: DisguiseBlock = DisguiseBlock(),
@@ -319,10 +319,11 @@ data class ApkConfig(
     val translateTargetLanguage: String get() = translate.targetLanguage
     val translateShowButton: Boolean get() = translate.showButton
 
-    val extensionEnabled: Boolean get() = extension.enabled
-    val extensionModuleIds: List<String> get() = extension.moduleIds
-    val embeddedExtensionModules: List<EmbeddedExtensionModule> get() = extension.embeddedModules
-    val extensionFabIcon: String get() = extension.fabIcon
+    val pluginsEnabled: Boolean get() = plugin.enabled
+    val pluginIds: List<String> get() = plugin.pluginIds
+    val embeddedPlugins: List<EmbeddedPlugin> get() = plugin.embeddedPlugins
+    val pluginEntryStyle: String get() = plugin.entryStyle
+    val pluginPanelStyle: String get() = plugin.panelStyle
 
     val autoStartEnabled: Boolean get() = autoStart.enabled
     val bootStartEnabled: Boolean get() = autoStart.bootStartEnabled
@@ -783,11 +784,12 @@ data class TranslateBlock(
     val showButton: Boolean = true
 )
 
-data class ExtensionBlock(
+data class PluginBlock(
     val enabled: Boolean = false,
-    val moduleIds: List<String> = emptyList(),
-    val embeddedModules: List<EmbeddedExtensionModule> = emptyList(),
-    val fabIcon: String = ""
+    val pluginIds: List<String> = emptyList(),
+    val embeddedPlugins: List<EmbeddedPlugin> = emptyList(),
+    val entryStyle: String = "TOOLBAR",
+    val panelStyle: String = "BOTTOM_SHEET"
 )
 
 data class AutoStartBlock(
@@ -950,42 +952,44 @@ data class GalleryShellItemConfig(
     val thumbnailPath: String? = null
 )
 
-data class EmbeddedExtensionModule(
+/**
+ * Self-contained plugin payload embedded in the export config — the generated
+ * APK runs plugins without the host's plugin store. Field names mirror
+ * [com.webtoapp.core.plugin.Plugin] so shell-side conversion is mechanical.
+ */
+data class EmbeddedPlugin(
     val id: String,
     val name: String,
+    val kind: String = "HCJ",
     val description: String = "",
-    val icon: String = "package",
-    val category: String = "OTHER",
+    val icon: String = "",
     val versionName: String = "1.0.0",
     val authorName: String = "",
-    val code: String = "",
-    val cssCode: String = "",
+    val matches: List<EmbeddedMatchPattern> = emptyList(),
     val runAt: String = "DOCUMENT_END",
-    val sourceType: String = "CUSTOM",
-    val runMode: String = "INTERACTIVE",
-    val uiConfig: EmbeddedExtensionModuleUiConfig = EmbeddedExtensionModuleUiConfig(),
-    val urlMatches: List<EmbeddedUrlMatchRule> = emptyList(),
-    val configValues: Map<String, String> = emptyMap(),
-    val configItemCount: Int = 0,
+    val permissions: List<String> = emptyList(),
+    val toolbar: Boolean = true,
+    val pinned: Boolean = false,
+    val hasPanel: Boolean = false,
+    val mainJs: String = "",
+    val css: String = "",
+    val panelHtml: String = "",
     val gmGrants: List<String> = emptyList(),
     val requireUrls: List<String> = emptyList(),
     val requireContents: Map<String, String> = emptyMap(),
     val resources: Map<String, String> = emptyMap(),
-    val noframes: Boolean = false,
+    val chromeExtId: String = "",
+    val manifestJson: String = "",
+    val backgroundScript: String = "",
+    val popupPath: String = "",
+    val optionsPagePath: String = "",
+    val legacyCompat: Boolean = false,
     val enabled: Boolean = true
 )
 
-data class EmbeddedExtensionModuleUiConfig(
-    val type: String = "FLOATING_BUTTON",
-    val autoHide: Boolean = false,
-    val autoHideDelay: Int = 3000,
-    val initiallyHidden: Boolean = false,
-    val showOnlyOnMatch: Boolean = true
-)
-
-data class EmbeddedUrlMatchRule(
+data class EmbeddedMatchPattern(
     val pattern: String,
-    val isRegex: Boolean = false,
+    val regex: Boolean = false,
     val exclude: Boolean = false
 )
 

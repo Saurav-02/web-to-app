@@ -8,7 +8,7 @@ type Lang = 'en' | 'zh'
 
 const t = {
   en: {
-    nav: { guide: 'Guide', developer: 'Developer', extensions: 'Extensions' },
+    nav: { guide: 'Guide', developer: 'Developer', extensions: 'Plugins' },
     cc: {
       title: 'Common Config',
       basicInfo: 'Basic Info',
@@ -33,7 +33,7 @@ const t = {
       bgm: 'Background Music',
       announcement: 'Popup Announcement',
       translate: 'Auto Translation',
-      extensionModules: 'Extension Modules',
+      extensionModules: 'Plugins',
       adBlocking: 'Ad Blocking',
       customDns: 'Custom DNS',
       deviceDisguise: 'Device Disguise',
@@ -85,7 +85,7 @@ const t = {
       moreSystem: 'System',
       agent: 'Agent',
       aiSettings: 'AI Settings',
-      extensionModules: 'Extension Modules',
+      extensionModules: 'Plugins',
       appModifier: 'App Modifier',
       linuxEnvironment: 'Linux Environment',
       runtimeManagement: 'Runtime Management',
@@ -120,8 +120,8 @@ const t = {
     ext: {
       title: 'Extension Authoring',
       overview: 'Overview',
-      jsModule: 'JS Modules',
-      cssModule: 'CSS Modules',
+      jsModule: 'HCJ Plugins',
+      cssModule: 'CSS Plugins',
       userscript: 'Userscripts',
       chromeMv3: 'Chrome MV3 Extensions',
       apiRef: 'API Reference',
@@ -129,7 +129,7 @@ const t = {
     }
   },
   zh: {
-    nav: { guide: '使用手册', developer: '开发者', extensions: '扩展开发' },
+    nav: { guide: '使用手册', developer: '开发者', extensions: '插件' },
     cc: {
       title: '通用配置',
       basicInfo: '基本信息',
@@ -154,7 +154,7 @@ const t = {
       bgm: '背景音乐',
       announcement: '弹窗公告',
       translate: '网页自动翻译',
-      extensionModules: '拓展模块',
+      extensionModules: '插件',
       adBlocking: '广告拦截',
       customDns: '自定义DNS',
       deviceDisguise: '设备伪装',
@@ -206,7 +206,7 @@ const t = {
       moreSystem: '系统',
       agent: 'Agent',
       aiSettings: 'AI 设置',
-      extensionModules: '扩展模块',
+      extensionModules: '插件',
       appModifier: '应用修改器',
       linuxEnvironment: 'Linux 环境',
       runtimeManagement: '运行时管理',
@@ -241,8 +241,8 @@ const t = {
     ext: {
       title: '扩展开发',
       overview: '总览',
-      jsModule: 'JS 模块',
-      cssModule: 'CSS 模块',
+      jsModule: 'HCJ 插件',
+      cssModule: 'CSS 插件',
       userscript: '油猴脚本',
       chromeMv3: 'Chrome MV3 扩展',
       apiRef: 'API 参考',

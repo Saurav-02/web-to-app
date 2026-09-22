@@ -1,42 +1,40 @@
-# CSS Modules
+# CSS Plugins
 
-A CSS module is a pure style override — theming, restyling, or a dark mode for a site. It uses the same `module.json` manifest as a [JS module](/extensions/js-module), but the substance is the stylesheet.
+A CSS plugin is a pure style override — theming, restyling, or a dark mode for a site. It uses the same `plugin.json` manifest as an [HCJ plugin](/extensions/js-module), but the substance is the stylesheet.
 
 ## File layout
 
 ```
 my-theme/
-├── module.json    # required
+├── plugin.json    # required
 ├── main.js        # required — can be a near-empty stub
 ├── style.css      # the actual styles
 └── icon.png       # optional
 ```
 
 ::: info A `main.js` is still required
-Even a pure CSS module needs a `main.js` (it can be a minimal stub). Set `runAt` to `DOCUMENT_START` so your styles apply as early as possible and avoid a flash of unstyled content.
+Even a pure CSS plugin needs a `main.js` (it can be a minimal stub). Set `runAt` to `document_start` so your styles apply as early as possible and avoid a flash of unstyled content.
 :::
 
-## `module.json`
+## `plugin.json`
 
 ```json
 {
   "id": "dark-reader-lite",
   "name": "Dark Reader Lite",
   "description": "A simple dark theme",
-  "category": "THEME",
-  "runAt": "DOCUMENT_START",
-  "urlMatches": [
-    { "pattern": "*://news.ycombinator.com/*" }
-  ],
-  "permissions": ["CSS_INJECT"]
+  "icon": "dark_mode",
+  "runAt": "document_start",
+  "matches": ["*://news.ycombinator.com/*"],
+  "permissions": []
 }
 ```
 
-Use `category: "STYLE_MODIFIER"` or `"THEME"`. The market's `hasCss` flag must be `true` and a `style.css` must be present — the validator checks that these agree.
+CSS injection needs no permission — it's part of the package.
 
 ## How CSS is injected
 
-When a module has CSS (`cssCode` / `style.css`), it is injected as a `<style id="ext-module-<id>">` element before the JS runs. Your `main.js` can still manipulate the DOM if needed.
+`style.css` is injected as a `<style id="hcj-css-<id>">` element at document-start, before the page paints and before `main.js` runs. It is idempotent per plugin per document — re-navigations won't stack duplicates.
 
 ## Example `style.css`
 
@@ -53,4 +51,4 @@ a {
 }
 ```
 
-See the built-in `web-tint` module under [`modules/`](https://github.com/shiaho777/web-to-app/tree/main/modules) for a working `DOCUMENT_START` style module.
+See the built-in `web-tint` package under [`modules/`](https://github.com/shiaho777/web-to-app/tree/main/modules) for a working `document_start` style plugin.

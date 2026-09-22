@@ -81,11 +81,6 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
-    private val extensionManager: com.webtoapp.core.extension.ExtensionManager by lazy {
-        org.koin.java.KoinJavaComponent.get(
-            com.webtoapp.core.extension.ExtensionManager::class.java
-        )
-    }
     private val extensionFiles by lazy {
         com.webtoapp.core.extension.ExtensionFileManager(ctx)
     }
@@ -93,7 +88,6 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
         com.webtoapp.core.agent.export.SaveSessionAsModuleUseCase(
             context = ctx,
             files = files,
-            extensionManager = extensionManager,
             extensionFiles = extensionFiles
         )
     }
@@ -1136,10 +1130,10 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
             val categories = categoryRepository.allCategories.first()
                 .sortedBy { it.sortOrder }
                 .map { ContextCategoryItem(it.id, it.name, it.icon) }
-            val mgr = com.webtoapp.core.extension.ExtensionManager.getInstance(ctx)
-            mgr.awaitLoaded()
-            val modules = mgr.getAllModules()
-                .map { ContextModuleItem(it.id, it.name, it.sourceType.name) }
+            val store = com.webtoapp.core.plugin.PluginStore.getInstance(ctx)
+            store.awaitLoaded()
+            val modules = store.getAllPlugins()
+                .map { ContextModuleItem(it.id, it.name, it.kind.name) }
             _ui.update {
                 it.copy(
                     contextPickerOpen = true,
@@ -1193,15 +1187,20 @@ class AgentViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
         if (config.contextModuleIdsSafe.isNotEmpty()) {
-            val mgr = com.webtoapp.core.extension.ExtensionManager.getInstance(ctx)
-            mgr.awaitLoaded()
+            val store = com.webtoapp.core.plugin.PluginStore.getInstance(ctx)
+            store.awaitLoaded()
             sb.appendLine()
-            sb.appendLine("## Modules")
+            sb.appendLine("## Plugins")
             config.contextModuleIdsSafe.forEach { id ->
-                val module = mgr.getModuleById(id)?.let { mgr.ensureCodeLoaded(it) } ?: return@forEach
+                val plugin = store.getPlugin(id) ?: return@forEach
                 sb.appendLine()
-                sb.appendLine("### Module id=${module.id} name=\"${module.name}\" type=${module.sourceType}")
-                sb.appendLine(com.webtoapp.util.GsonProvider.gson.toJson(module))
+                sb.appendLine("### Plugin id=${plugin.id} name=\"${plugin.name}\" kind=${plugin.kind}")
+                sb.appendLine(com.webtoapp.util.GsonProvider.gson.toJson(plugin))
+                val files = store.readPackageFiles(plugin.id)
+                files.forEach { (rel, content) ->
+                    sb.appendLine("--- $rel ---")
+                    sb.appendLine(content)
+                }
             }
         }
         return sb.toString().trimEnd()

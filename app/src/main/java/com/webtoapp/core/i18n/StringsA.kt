@@ -8264,18 +8264,6 @@ object StringsA {
         AppLanguage.KOREAN -> "Go 바이너리 / 빌드 산출물"
     }
 
-    val extensionFabIconLabel: String get() = when (Strings.lang) {
-        AppLanguage.CHINESE -> "悬浮按钮图标"
-        AppLanguage.ENGLISH -> "FAB Icon"
-        AppLanguage.ARABIC -> "أيقونة الزر العائم"
-        AppLanguage.PORTUGUESE -> "Ícone do FAB"
-        AppLanguage.SPANISH -> "Icono del FAB"
-        AppLanguage.FRENCH -> "Icône du FAB"
-        AppLanguage.GERMAN -> "FAB-Symbol"
-        AppLanguage.RUSSIAN -> "Иконка FAB"
-        AppLanguage.JAPANESE -> "FABアイコン"
-        AppLanguage.KOREAN -> "FAB 아이콘"
-    }
 
     val fabIconFromGallery: String get() = when (Strings.lang) {
         AppLanguage.CHINESE -> "相册"

@@ -1,16 +1,16 @@
-# Extension Modules
+# Plugins
 
-Attaches extensions (JS/CSS modules, userscripts, MV3 Chrome extensions) to the app.
+Attaches plugins (HCJ packages, userscripts, MV3 Chrome extensions) to the app.
 
-**Where:** the **Extension modules** card in the [Edit Common Config](/guide/app-actions/edit-common-config/) editor.
+**Where:** the **Plugins** card in the [Edit Common Config](/guide/app-actions/edit-common-config/) editor.
 
 ## Options
 
-- **Enable** — turn extensions on for this app (`extensionEnabled`).
-- **Selected modules** — choose which installed modules run in this app (`extensionModuleIds`).
-- **FAB icon** — the floating-button icon for the extension panel (`extensionFabIcon`).
+- **Enable** — turn plugins on for this app.
+- **Selected plugins** — choose which installed plugins run in this app.
+- **Host style** — where plugin entries live (toolbar / floating handle / menu) and how panels open (bottom sheet / floating window / fullscreen).
 
 ## Notes
 
-- Manage and create extensions in [Extension Modules](/guide/more-features/extension-modules).
-- To author extensions, see [Extension Authoring](/extensions/).
+- Manage and create plugins in [Plugins](/guide/more-features/extension-modules).
+- To author plugins, see [Plugin Authoring](/extensions/).

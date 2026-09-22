@@ -49,7 +49,7 @@ class AppStartupManager(
         backgroundServicesStartup.shutdown()
         PortManager.releaseAll()
         com.webtoapp.util.OfflineManager.release()
-        com.webtoapp.core.extension.ExtensionManager.release()
+        com.webtoapp.core.plugin.PluginStore.release()
         com.webtoapp.util.DownloadNotificationManager.release()
         com.webtoapp.core.crypto.AesCryptoEngine.clearKeyCache()
         runtimeWarmupStartup.shutdown()

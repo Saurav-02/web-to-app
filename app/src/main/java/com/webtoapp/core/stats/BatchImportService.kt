@@ -223,8 +223,8 @@ class BatchImportService(
             adBlockEnabled = app.adBlockEnabled,
             adBlockRules = app.adBlockRules,
             adBlockSubscriptions = app.adBlockSubscriptions,
-            extensionModuleIds = app.extensionModuleIds,
-            extensionEnabled = app.extensionEnabled,
+            extensionModuleIds = app.pluginIds,
+            extensionEnabled = app.pluginsEnabled,
             splashEnabled = app.splashEnabled,
             bgmEnabled = app.bgmEnabled,
             translateEnabled = app.translateEnabled
@@ -248,8 +248,8 @@ class BatchImportService(
             adBlockEnabled = template.adBlockEnabled,
             adBlockRules = template.adBlockRules,
             adBlockSubscriptions = template.adBlockSubscriptions,
-            extensionModuleIds = template.extensionModuleIds,
-            extensionEnabled = template.extensionEnabled || template.extensionModuleIds.isNotEmpty()
+            pluginIds = template.extensionModuleIds,
+            pluginsEnabled = template.extensionEnabled || template.extensionModuleIds.isNotEmpty()
         )
         return repository.createWebApp(app)
     }

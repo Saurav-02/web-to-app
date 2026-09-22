@@ -53,11 +53,13 @@ object EngineViewFactory {
         webViewManager: WebViewManager,
         callbacks: WebViewCallbacks,
         adBlocker: AdBlocker,
-        extensionModuleIds: List<String> = emptyList(),
-        embeddedExtensionModules: List<com.webtoapp.core.shell.EmbeddedShellModule> = emptyList(),
-        extensionFabIcon: String = "",
-        allowGlobalModuleFallback: Boolean = false,
-        extensionEnabled: Boolean = true,
+        pluginPayloads: List<com.webtoapp.core.plugin.PluginSession.Resolved> = emptyList(),
+        pluginsEnabled: Boolean = true,
+        pluginEntryStyle: com.webtoapp.core.plugin.PluginEntryStyle =
+            com.webtoapp.core.plugin.PluginEntryStyle.TOOLBAR,
+        pluginPanelStyle: com.webtoapp.core.plugin.PluginPanelStyle =
+            com.webtoapp.core.plugin.PluginPanelStyle.BOTTOM_SHEET,
+        expectLatePluginPayloads: Boolean = false,
         browserDisguiseConfig: com.webtoapp.core.appearance.BrowserDisguiseConfig? = null,
         deviceDisguiseConfig: com.webtoapp.core.appearance.DeviceDisguiseConfig? = null,
         /**
@@ -99,11 +101,11 @@ object EngineViewFactory {
                 this,
                 config,
                 callbacks,
-                extensionModuleIds,
-                embeddedExtensionModules,
-                extensionFabIcon,
-                allowGlobalModuleFallback = allowGlobalModuleFallback,
-                extensionEnabled = extensionEnabled,
+                pluginPayloads,
+                pluginsEnabled = pluginsEnabled,
+                pluginEntryStyle = pluginEntryStyle,
+                pluginPanelStyle = pluginPanelStyle,
+                expectLatePluginPayloads = expectLatePluginPayloads,
                 browserDisguiseConfig = browserDisguiseConfig,
                 deviceDisguiseConfig = deviceDisguiseConfig
             )

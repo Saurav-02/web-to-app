@@ -645,7 +645,7 @@ class MainViewModel(
         val payload = state.toDraftPayload(
             normalizedUrl = normalizeUrl(state.url, state.appType),
             iconPath = iconPath,
-            extensionModuleIds = state.extensionModuleIds,
+            pluginIds = state.pluginIds,
             currentThemeType = currentThemeType,
             externalizedWebViewConfig = externalizedConfig,
         )

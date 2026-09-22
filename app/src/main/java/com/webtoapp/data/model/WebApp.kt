@@ -1,5 +1,6 @@
 package com.webtoapp.data.model
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -114,8 +115,18 @@ data class WebApp(
     val translateEnabled: Boolean = false,
     val translateConfig: TranslateConfig? = null,
 
-    val extensionEnabled: Boolean = false,
-    val extensionModuleIds: List<String> = emptyList(),
+    // Plugin attachments. Column names keep the legacy `extension*` spelling so
+    // existing databases migrate without a schema change.
+    @ColumnInfo(name = "extensionEnabled")
+    val pluginsEnabled: Boolean = false,
+    @ColumnInfo(name = "extensionModuleIds")
+    val pluginIds: List<String> = emptyList(),
+    /**
+     * Retired: the old injected floating-button icon. Plugin entries are now
+     * native (toolbar/menu/floating handle). The column stays so shipped v45
+     * databases open without a schema bump — Room verifies the table shape.
+     */
+    @Deprecated("Plugin entries are native; the injected FAB no longer exists.")
     val extensionFabIcon: String? = null,
 
     val autoStartConfig: AutoStartConfig? = null,

@@ -88,7 +88,7 @@ object PlayPolicyChecker {
             )
         }
 
-        if (webApp.extensionEnabled && webApp.extensionModuleIds.isNotEmpty()) {
+        if (webApp.pluginsEnabled && webApp.pluginIds.isNotEmpty()) {
             violations.add(
                 Violation(
                     ruleId = "EXTENSION_MODULES_ENABLED",

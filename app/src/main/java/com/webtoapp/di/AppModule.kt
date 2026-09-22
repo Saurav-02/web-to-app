@@ -4,7 +4,6 @@ import com.webtoapp.core.activation.ActivationManager
 import com.webtoapp.core.adblock.AdBlocker
 import com.webtoapp.core.announcement.AnnouncementManager
 import com.webtoapp.core.crypto.KeyManager
-import com.webtoapp.core.extension.ExtensionManager
 import com.webtoapp.core.shell.ShellModeManager
 import com.webtoapp.core.stats.AppStatsRepository
 import com.webtoapp.core.stats.AppUsageTracker
@@ -39,7 +38,6 @@ val managerModule = module {
     single { AdBlocker() }
     single { ShellModeManager(androidContext()) }
     single { KeyManager.getInstance(androidContext()) }
-    single { ExtensionManager.getInstance(androidContext()) }
     single { AppUsageTracker(get()) }
     single { AppHealthMonitor.getInstance(androidContext(), get()) }
     single { WebsiteScreenshotService.getInstance(androidContext()) }

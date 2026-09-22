@@ -1,16 +1,16 @@
-# 拓展模块
+# 插件
 
-为应用附加扩展(JS/CSS 模块、油猴脚本、MV3 Chrome 扩展)。
+为应用附加插件（HCJ 包、油猴脚本、MV3 Chrome 扩展）。
 
-**位置:**[编辑通用配置](/zh/guide/app-actions/edit-common-config/)编辑器中的 **拓展模块** 卡片。
+**位置:**[编辑通用配置](/zh/guide/app-actions/edit-common-config/)编辑器中的 **插件** 卡片。
 
 ## 选项
 
-- **启用** —— 为此应用打开扩展(`extensionEnabled`)。
-- **所选模块** —— 选择在此应用中运行哪些已安装的模块(`extensionModuleIds`)。
-- **FAB 图标** —— 扩展面板的浮动按钮图标(`extensionFabIcon`)。
+- **启用** —— 为此应用打开插件。
+- **所选插件** —— 选择在此应用中运行哪些已安装的插件。
+- **宿主形态** —— 插件入口的位置（工具栏/悬浮句柄/菜单）与面板的打开方式（底部抽屉/悬浮窗/全屏）。
 
 ## 说明
 
-- 在[扩展模块](/zh/guide/more-features/extension-modules)中管理和创建扩展。
-- 编写扩展见[扩展开发](/zh/extensions/)。
+- 在[插件](/zh/guide/more-features/extension-modules)中管理和创建插件。
+- 编写插件见[插件开发](/zh/extensions/)。

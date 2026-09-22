@@ -37,8 +37,8 @@ class EditStateMapperTest {
             ),
             announcement = Announcement(title = "Notice", content = "hello"),
             webViewConfig = WebViewConfig(hideToolbar = true),
-            extensionEnabled = true,
-            extensionModuleIds = listOf("mod-1"),
+            pluginsEnabled = true,
+            pluginIds = listOf("mod-1"),
         )
 
         val editState = webApp.toEditState()
@@ -46,12 +46,12 @@ class EditStateMapperTest {
         assertThat(editState.name).isEqualTo("Sample")
         assertThat(editState.iconUri).isEqualTo(Uri.parse("file:///icon.png"))
         assertThat(editState.splashMediaUri).isEqualTo(Uri.parse("file:///splash.png"))
-        assertThat(editState.extensionModuleIds).containsExactly("mod-1")
+        assertThat(editState.pluginIds).containsExactly("mod-1")
 
         val payload = editState.toDraftPayload(
             normalizedUrl = "https://example.com",
             iconPath = "file:///icon.png",
-            extensionModuleIds = editState.extensionModuleIds,
+            pluginIds = editState.pluginIds,
             currentThemeType = "AURORA",
             externalizedWebViewConfig = editState.webViewConfig,
         )
@@ -60,7 +60,7 @@ class EditStateMapperTest {
 
         assertThat(rebuilt.name).isEqualTo("Sample")
         assertThat(rebuilt.url).isEqualTo("https://example.com")
-        assertThat(rebuilt.extensionModuleIds).containsExactly("mod-1")
+        assertThat(rebuilt.pluginIds).containsExactly("mod-1")
     }
 
     @Test
@@ -73,7 +73,7 @@ class EditStateMapperTest {
         val payload = state.toDraftPayload(
             normalizedUrl = "https://example.com",
             iconPath = null,
-            extensionModuleIds = emptySet(),
+            pluginIds = emptySet(),
             currentThemeType = "AURORA",
             externalizedWebViewConfig = state.webViewConfig,
         )

@@ -511,10 +511,10 @@ class ApkBuilder(private val context: Context) {
             val config = webApp.toApkConfigWithModules(packageName, context)
             logger.logKeyValue("versionCode", config.versionCode)
             logger.logKeyValue("versionName", config.versionName)
-            logger.logKeyValue("embeddedExtensionModules.size", config.embeddedExtensionModules.size)
+            logger.logKeyValue("embeddedPlugins.size", config.embeddedPlugins.size)
 
-            config.embeddedExtensionModules.forEachIndexed { index, module ->
-                logger.log("  embeddedModule[$index]: id=${module.id}, name=${module.name}, enabled=${module.enabled}, runAt=${module.runAt}, codeLength=${module.code.length}")
+            config.embeddedPlugins.forEachIndexed { index, plugin ->
+                logger.log("  embeddedPlugin[$index]: id=${plugin.id}, name=${plugin.name}, kind=${plugin.kind}, enabled=${plugin.enabled}, runAt=${plugin.runAt}, jsLength=${plugin.mainJs.length}")
             }
 
             onProgress(10, "Checking template...")
@@ -4069,7 +4069,7 @@ fun WebApp.toApkConfig(packageName: String, context: android.content.Context? = 
         gallery = buildGalleryBlock(),
         bgm = buildBgmBlock(),
         translate = buildTranslateBlock(),
-        extension = buildExtensionBlock(),
+        plugin = buildPluginBlock(context),
         autoStart = buildAutoStartBlock(),
         optionalServices = buildOptionalServicesBlock(),
         disguise = buildDisguiseBlock(),
@@ -4654,12 +4654,16 @@ private fun WebApp.buildTranslateBlock(): TranslateBlock = TranslateBlock(
     showButton = translateConfig?.showFloatingButton ?: true
 )
 
-private fun WebApp.buildExtensionBlock(): ExtensionBlock = ExtensionBlock(
-    enabled = extensionEnabled,
-    moduleIds = extensionModuleIds,
-    embeddedModules = emptyList(),
-    fabIcon = extensionFabIcon ?: ""
-)
+private fun WebApp.buildPluginBlock(context: android.content.Context?): PluginBlock {
+    val prefs = context?.let { com.webtoapp.core.plugin.PluginPrefs(it) }
+    return PluginBlock(
+        enabled = pluginsEnabled,
+        pluginIds = pluginIds,
+        embeddedPlugins = emptyList(),
+        entryStyle = prefs?.entryStyle?.name ?: com.webtoapp.core.plugin.PluginEntryStyle.TOOLBAR.name,
+        panelStyle = prefs?.panelStyle?.name ?: com.webtoapp.core.plugin.PluginPanelStyle.BOTTOM_SHEET.name
+    )
+}
 
 private fun WebApp.buildAutoStartBlock(): AutoStartBlock = AutoStartBlock(
     enabled = false,
@@ -5233,107 +5237,78 @@ fun WebApp.toApkConfigWithModules(packageName: String, context: android.content.
     val baseConfig = toApkConfig(packageName, context)
     val extensionFileManager = com.webtoapp.core.extension.ExtensionFileManager(context)
 
-    val embeddedModules = if (extensionModuleIds.isNotEmpty()) {
+    val embeddedPlugins = if (pluginIds.isNotEmpty()) {
         try {
-            val extensionManager = com.webtoapp.core.extension.ExtensionManager.getInstance(context)
+            val pluginStore = com.webtoapp.core.plugin.PluginStore.getInstance(context)
 
             kotlinx.coroutines.runBlocking {
                 kotlinx.coroutines.withTimeoutOrNull(5000L) {
-                    extensionManager.awaitLoaded()
+                    pluginStore.awaitLoaded()
                 }
             }
 
-            val resolvedModules = extensionManager.getModulesByIds(extensionModuleIds)
+            val resolvedPlugins = pluginStore.getPluginsByIds(pluginIds).filter { it.enabled }
 
-            if (resolvedModules.size < extensionModuleIds.size) {
-                val foundIds = resolvedModules.map { it.id }.toSet()
-                val missingIds = extensionModuleIds.filter { it !in foundIds }
+            if (resolvedPlugins.size < pluginIds.size) {
+                val foundIds = resolvedPlugins.map { it.id }.toSet()
+                val missingIds = pluginIds.filter { it !in foundIds }
                 AppLogger.w(
                     "ApkBuilder",
-                    "Extension module resolution: requested ${extensionModuleIds.size}, found ${resolvedModules.size}. " +
+                    "Plugin resolution: requested ${pluginIds.size}, found ${resolvedPlugins.size}. " +
                         "Missing IDs (will NOT be embedded in APK): $missingIds"
                 )
             }
 
-            resolvedModules.map { module ->
+            resolvedPlugins.map { plugin ->
+                val code = pluginStore.loadPackageCode(plugin)
                 val resolvedRequireContents = linkedMapOf<String, String>()
-                module.requireUrls.forEach { url ->
+                plugin.requireUrls.forEach { url ->
                     extensionFileManager.getCachedRequire(url)?.let { resolvedRequireContents[url] = it }
                 }
 
                 val resolvedResources = linkedMapOf<String, String>()
-                module.resources.forEach { (name, url) ->
+                plugin.resources.forEach { (name, url) ->
                     resolvedResources[name] = extensionFileManager.getCachedResource(name, url) ?: url
                 }
 
-                val resolvedCode: String
-                val resolvedCss: String
-                if (module.codeFiles.isNotEmpty()) {
-                    val entryNames = setOf("main.js", "index.js", "app.js", "init.js", "bundle.js", "dist.js")
-                    val jsFiles = module.codeFiles.entries
-                        .filter { it.key.endsWith(".js", true) }
-                        .sortedWith(compareByDescending<Map.Entry<String, String>> {
-                            it.key.substringAfterLast("/") in entryNames
-                        }.thenBy { it.key })
-                    val cssFiles = module.codeFiles.entries
-                        .filter { it.key.endsWith(".css", true) }
-                    resolvedCode = jsFiles.joinToString("\n\n") { (path, content) ->
-                        "// === $path ===\n$content"
-                    }
-                    resolvedCss = if (cssFiles.isNotEmpty()) {
-                        val baseCss = module.cssCode
-                        val mergedCss = cssFiles.joinToString("\n\n") { (path, content) ->
-                            "/* === $path === */\n$content"
-                        }
-                        if (baseCss.isNotBlank()) "$baseCss\n\n$mergedCss" else mergedCss
-                    } else {
-                        module.cssCode
-                    }
-                } else {
-                    resolvedCode = module.code
-                    resolvedCss = module.cssCode
-                }
-
-                EmbeddedExtensionModule(
-                    id = module.id,
-                    name = module.name,
-                    description = module.description,
-                    icon = module.icon,
-                    category = module.category.name,
-                    versionName = module.version.name,
-                    authorName = module.author?.name.orEmpty(),
-                    code = resolvedCode,
-                    cssCode = resolvedCss,
-                    runAt = module.runAt.name,
-                    sourceType = module.sourceType.name,
-                    runMode = module.runMode.name,
-                    uiConfig = EmbeddedExtensionModuleUiConfig(
-                        type = module.uiConfig.type.name,
-                        autoHide = module.uiConfig.autoHide,
-                        autoHideDelay = module.uiConfig.autoHideDelay,
-                        initiallyHidden = module.uiConfig.initiallyHidden,
-                        showOnlyOnMatch = module.uiConfig.showOnlyOnMatch
-                    ),
-                    urlMatches = module.urlMatches.map { rule ->
-                        EmbeddedUrlMatchRule(
+                EmbeddedPlugin(
+                    id = plugin.id,
+                    name = plugin.name,
+                    kind = plugin.kind.name,
+                    description = plugin.description,
+                    icon = plugin.icon,
+                    versionName = plugin.versionName,
+                    authorName = plugin.authorName,
+                    matches = plugin.matches.map { rule ->
+                        EmbeddedMatchPattern(
                             pattern = rule.pattern,
-                            isRegex = rule.isRegex,
+                            regex = rule.isRegex,
                             exclude = rule.exclude
                         )
                     },
-                    configValues = module.configValues,
-                    configItemCount = module.configItems.size,
-                    gmGrants = module.gmGrants,
-                    requireUrls = module.requireUrls,
+                    runAt = plugin.runAt.name,
+                    permissions = plugin.permissions.map { it.name },
+                    toolbar = plugin.showInToolbar,
+                    pinned = plugin.pinned,
+                    hasPanel = code.panelHtml.isNotBlank(),
+                    mainJs = code.mainJs,
+                    css = code.css,
+                    panelHtml = code.panelHtml,
+                    gmGrants = plugin.gmGrants,
+                    requireUrls = plugin.requireUrls,
                     requireContents = resolvedRequireContents,
                     resources = resolvedResources,
-                    noframes = module.noframes,
-
+                    chromeExtId = plugin.chromeExtId,
+                    manifestJson = plugin.manifestJson,
+                    backgroundScript = plugin.backgroundScript,
+                    popupPath = plugin.popupPath,
+                    optionsPagePath = plugin.optionsPagePath,
+                    legacyCompat = plugin.legacyCompat,
                     enabled = true
                 )
             }
         } catch (e: Exception) {
-            AppLogger.e("ApkBuilder", "Failed to get extension module data", e)
+            AppLogger.e("ApkBuilder", "Failed to resolve plugin data", e)
             emptyList()
         }
     } else {
@@ -5341,7 +5316,7 @@ fun WebApp.toApkConfigWithModules(packageName: String, context: android.content.
     }
 
     return baseConfig.copy(
-        extension = baseConfig.extension.copy(embeddedModules = embeddedModules)
+        plugin = baseConfig.plugin.copy(embeddedPlugins = embeddedPlugins)
     )
 }
 

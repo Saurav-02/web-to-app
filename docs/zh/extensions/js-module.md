@@ -1,137 +1,108 @@
-# JS 模块
+# HCJ 插件
 
-JS 模块是能力最强的原生扩展格式:一个清单、一个脚本、可选 CSS、一个配置 UI,以及一个可选的浮动面板 —— 全部打包在一起。
+HCJ 插件是原生格式：把普通的 **HTML + CSS + JavaScript** 打成一个文件夹。没有自定义 DSL——会写油猴脚本就会写 HCJ 插件；需要界面时写真正的 HTML，而不是学一套表单 Schema。
 
-## 文件布局
+## 文件结构
 
 ```
-my-module/
-├── module.json    # 必需 —— 清单
+my-plugin/
+├── plugin.json    # 必需 —— 清单
 ├── main.js        # 必需 —— 在 WebView 中运行
-├── style.css      # 可选 —— 当 hasCss / cssCode 存在时自动注入
-└── icon.png       # 可选 —— ≤256KB;png/svg/webp/jpg/jpeg
+├── style.css      # 可选 —— document-start 自动注入
+├── panel.html     # 可选 —— 插件自己的界面
+├── icon.png       # 可选 —— ≤256KB；png/svg/webp/jpg/jpeg
+└── files/         # 可选的额外包文件
 ```
 
-## `module.json` schema
+## `plugin.json` 清单
 
 ```json
 {
-  "id": "my-module",
-  "name": "My Module",
-  "description": "它做什么",
+  "id": "my-plugin",
+  "name": "My Plugin",
+  "version": "1.0.0",
+  "description": "做什么的",
+  "author": "You",
+  "homepage": "https://example.com",
   "icon": "star",
-  "category": "CONTENT_ENHANCE",
-  "tags": ["demo"],
-  "version": { "code": 1, "name": "1.0.0", "changelog": "首次发布" },
-  "author": { "name": "You", "url": "https://example.com" },
-  "runAt": "DOCUMENT_END",
-  "urlMatches": [
-    { "pattern": "*://example.com/*", "isRegex": false, "exclude": false }
-  ],
-  "permissions": ["DOM_ACCESS", "STORAGE"],
-  "configItems": [
-    {
-      "key": "greeting",
-      "name": "问候语",
-      "type": "TEXT",
-      "defaultValue": "Hello",
-      "required": true
-    }
-  ]
+  "matches": ["*://example.com/*"],
+  "excludeMatches": [],
+  "runAt": "document_end",
+  "permissions": ["STORAGE"],
+  "toolbar": true
 }
 ```
 
-::: warning `version` 是一个对象
-`version` 有 `code`(整数)、`name`(semver 字符串)和 `changelog`。不要在 `module.json` 里把它写成纯字符串。
-:::
-
-### 字段参考
+### 字段说明
 
 | 字段 | 说明 |
 | --- | --- |
 | `id` | 全局唯一。 |
-| `icon` | Material Icons 名称(如 `star`、`package`)。 |
-| `category` | 取值之一:`CONTENT_FILTER`、`CONTENT_ENHANCE`、`STYLE_MODIFIER`、`THEME`、`FUNCTION_ENHANCE`、`AUTOMATION`、`NAVIGATION`、`DATA_EXTRACT`、`DATA_SAVE`、`INTERACTION`、`ACCESSIBILITY`、`MEDIA`、`VIDEO`、`IMAGE`、`AUDIO`、`SECURITY`、`ANTI_TRACKING`、`SOCIAL`、`SHOPPING`、`READING`、`TRANSLATE`、`DEVELOPER`、`OTHER`。 |
-| `runAt` | `DOCUMENT_START`、`DOCUMENT_END`(默认)、`DOCUMENT_IDLE`、`CONTEXT_MENU`、`BEFORE_UNLOAD`。 |
-| `urlMatches[]` | `{pattern, isRegex=false, exclude=false}`。见 [URL 匹配](#url-匹配)。 |
-| `permissions[]` | 仅展示用;运行时**不**据此沙箱化。危险项(如 `CAMERA`、`LOCATION`、`EVAL`、`FILE_ACCESS`)会受到额外审核。 |
-| `configItems[]` | 用户可配置字段;见[配置项](#配置项)。 |
+| `name` | 显示名（必填）。 |
+| `version` | 语义化版本字符串。 |
+| `author` / `homepage` | 署名。 |
+| `icon` | Material 图标名或包内图标文件名。 |
+| `matches` | Chrome 风格 glob；`/pattern/` 表示正则。默认 `["*"]`。 |
+| `excludeMatches` | 同语法；优先级高于 `matches`。 |
+| `runAt` | `document_start`、`document_end`（默认）、`document_idle`。 |
+| `permissions` | `hcj.*` 能力门禁：`STORAGE`（配置 KV）、`FETCH`（跨域）、`NOTIFY`、`BADGE`、`CLIPBOARD`、`DOWNLOAD`。页面 DOM 访问无需权限。 |
+| `toolbar` | 是否在插件宿主面显示入口，默认 `true`。 |
+| `preferredEntry` | 建议的入口形态（`toolbar`/`floating_handle`/`menu`）；用户的选择优先。 |
 
 ## URL 匹配
 
-- **`isRegex: false`**(默认)—— Chrome 风格 glob。`*` 匹配任意字符;`*://` 展开为 `(https?|ftp|file)://`;`*` 或 `<all_urls>` 匹配一切。若 glob 无法匹配则回退为子串 `contains`。
-- **`isRegex: true`** —— Java 正则,带 **200ms 超时**;超时算作不匹配。
-- **`exclude: true`** —— 从结果集中移除匹配的 URL。
+- **Glob**（默认）—— Chrome 风格。`*` 匹配任意；`*://` 展开为 `(https?|ftp|file)://`；单独的 `*` 匹配所有。
+- **正则** —— 用斜杠包裹：`"/example\\.com\\/article\\/\\d+/"`，200ms 超时，超时按不匹配处理。
+- **`excludeMatches`** —— 把命中的 URL 从结果中排除。
 
-## `main.js` 契约
+## `main.js` 合约
 
-你的代码被包在一个带 `try/catch` 的 IIFE 中(错误写入 `console.error`,绝不破坏页面)。以下全局可用:
-
-| 全局 | 值 |
-| --- | --- |
-| `__MODULE_INFO__` | `{id, name, icon, version, uiConfig, runMode}` |
-| `__MODULE_CONFIG__` | 解析后的配置对象 |
-| `__MODULE_UI_CONFIG__` | UI 配置 |
-| `__MODULE_RUN_MODE__` | `'INTERACTIVE'` 或 `'AUTO'` |
-| `__MODULE_PANEL_HTML__` | 你的 `panelHtml`(若有) |
-| `getConfig(key, defaultValue)` | 读取配置值的便捷访问器 |
+代码被包进 IIFE，并注入一个作用域化的 `hcj` API 对象（异常进 `console.error`，不会影响页面）：
 
 ```js
 // main.js
-const greeting = getConfig('greeting', 'Hello')
+const greeting = hcj.config.get('greeting', 'Hello')
 const banner = document.createElement('div')
 banner.textContent = greeting
 banner.style.cssText = 'position:fixed;top:0;left:0;z-index:99999;padding:8px;background:#2563eb;color:#fff'
 document.body.appendChild(banner)
 ```
 
-::: warning 禁止顶层 `return`
-因为你的代码被包在 IIFE 里,顶层 `return` 语句是非法的,会被市场校验器拒绝。
+| API | 说明 |
+| --- | --- |
+| `hcj.id` / `hcj.manifest` / `hcj.lang` | 插件 id、清单摘要、应用语言 |
+| `hcj.config.get/set/remove/all` | 持久化 KV——需要 `STORAGE` |
+| `hcj.fetch(url, opts)` | 经宿主的跨域请求——需要 `FETCH`，返回 Promise |
+| `hcj.notify(title, body)` | 系统通知——需要 `NOTIFY` |
+| `hcj.badge(text, color)` | 工具栏角标——需要 `BADGE` |
+| `hcj.panel.open()` / `close()` | 打开/关闭本插件的 `panel.html` |
+| `hcj.panel.send(msg)` / `hcj.panel.onMessage(fn)` | 页面 ↔ 面板消息 |
+| `hcj.on('action', fn)` | 用户点击插件入口时触发（无 `panel.html` 的插件） |
+| `hcj.emit(evt, data)` | 给自己的 handler 发自定义事件 |
+| `hcj.log(msg)` | 写宿主日志 |
+
+::: warning 不要有顶层 `return`
+代码被包在 IIFE 里，顶层 `return` 是语法错误，市场校验器会直接拒绝。
 :::
 
-## 配置项
+## 面板（`panel.html`）
 
-`configItems[]` 为用户构建设置 UI。每一项:
+面板是插件自己的页面，由用户选定的宿主承载（底部抽屉/悬浮窗/全屏）。面板脚本运行前，会先注入镜像版 `hcjPanel` 对象：
 
-```json
-{
-  "key": "speedLevel",
-  "name": "速度",
-  "description": "滚动速度倍数",
-  "type": "NUMBER",
-  "defaultValue": "3",
-  "options": [],
-  "required": false,
-  "placeholder": "",
-  "validation": ""
-}
+```html
+<script>
+  hcjPanel.onMessage((msg) => { /* 页面 → 面板 */ })
+  hcjPanel.send({ type: 'refresh' })        // 面板 → 页面
+  const theme = hcjPanel.config.get('theme', 'auto')
+  hcjPanel.config.set('theme', 'dark')
+  hcjPanel.close()
+</script>
 ```
 
-支持的 `type` 取值:`TEXT`、`TEXTAREA`、`NUMBER`、`BOOLEAN`、`SELECT`、`MULTI_SELECT`、`RADIO`、`CHECKBOX`、`COLOR`、`URL`、`EMAIL`、`PASSWORD`、`REGEX`、`CSS_SELECTOR`、`JAVASCRIPT`、`JSON`、`RANGE`、`DATE`、`TIME`、`DATETIME`、`FILE`、`IMAGE`。
+**设置界面完全由你写。** 在 `panel.html` 里用普通 HTML/CSS/JS 做表单，用 `hcjPanel.config` 持久化；页面侧可以重读配置，或监听 `hcj.panel.onMessage` 实时应用变更。
 
-用 `getConfig(key, defaultValue)` 读取值。
+## 油猴互通
 
-## 交互面板
+`.user.js` 可直接导入：`==UserScript==` 块会被转换成 `plugin.json`（`@match`/`@include` → `matches`，`@grant` → `permissions`，`@run-at` → `runAt`），`GM_*` 调用继续走油猴运行时。`.hcj` 文件就是 zip 压缩的插件包，用于分享。
 
-要一个浮动 UI,提供 `panelHtml` 并注册一个面板按钮:
-
-```js
-window.__WTA_MODULE_UI__.register({
-  id: __MODULE_INFO__.id,
-  name: __MODULE_INFO__.name,
-  icon: __MODULE_INFO__.icon
-})
-```
-
-在 `panelHtml` 内部,使用绑定到 `window.__wta_module_action_<name>` 处理器的 `data-wta-action` 属性,并用 `var(--wta-*)` 主题变量做样式,使你的面板与应用主题一致。
-
-## 多文件模块
-
-`codeFiles` 是一个 `Map<文件名, 源码>`。入口点从 `main.js`、`index.js`、`app.js`、`script.js` 或 `content.js` 自动识别。
-
-## 打包与分享
-
-- 模块导出扩展名:`.wtamod`;模块打包:`.wtapkg`。
-- 分享码前缀:`WTA1:`(全量 gzip + Base64)或 `WTA2:`(差异载荷 + 极限压缩,V1 装不进一个二维码时发射),可通过二维码分享。解码兼容 V2、V1 和远古裸 Base64。
-
-完整可工作的示例见 [`modules/`](https://github.com/shiaho777/web-to-app/tree/main/modules) 下内置的 `hello-world` 和 `auto-scroll` 模块。
+完整示例见内置插件包 [`app/src/main/assets/plugins/`](https://github.com/shiaho777/web-to-app/tree/main/app/src/main/assets/plugins) 和市场包 [`modules/`](https://github.com/shiaho777/web-to-app/tree/main/modules)。

@@ -22,7 +22,7 @@ data class DraftBuildPayload(
     val translateConfig: com.webtoapp.data.model.TranslateConfig?,
     val currentThemeType: String,
     val externalizedWebViewConfig: com.webtoapp.data.model.WebViewConfig,
-    val extensionModuleIds: List<String>,
+    val pluginIds: List<String>,
 )
 
 private fun ActivationDialogConfig?.normalize(): ActivationDialogConfig? {
@@ -51,7 +51,7 @@ private fun com.webtoapp.data.model.RemoteActivationConfig?.normalize(): com.web
 fun EditState.toDraftPayload(
     normalizedUrl: String,
     iconPath: String?,
-    extensionModuleIds: Set<String>,
+    pluginIds: Set<String>,
     currentThemeType: String,
     externalizedWebViewConfig: com.webtoapp.data.model.WebViewConfig,
 ): DraftBuildPayload {
@@ -82,7 +82,7 @@ fun EditState.toDraftPayload(
         translateConfig = resolvedTranslateConfig,
         currentThemeType = currentThemeType,
         externalizedWebViewConfig = externalizedWebViewConfig,
-        extensionModuleIds = extensionModuleIds.toList(),
+        pluginIds = pluginIds.toList(),
     )
 }
 
@@ -124,9 +124,8 @@ fun WebApp?.applyDraft(
         themeType = payload.currentThemeType,
         translateEnabled = editState.translateEnabled,
         translateConfig = payload.translateConfig,
-        extensionModuleIds = payload.extensionModuleIds,
-        extensionEnabled = editState.extensionModuleEnabled,
-        extensionFabIcon = editState.extensionFabIcon.ifBlank { null },
+        pluginIds = payload.pluginIds,
+        pluginsEnabled = editState.pluginsEnabled,
         autoStartConfig = editState.autoStartConfig,
         deviceDisguiseConfig = editState.deviceDisguiseConfig,
     ) ?: WebApp(
@@ -157,9 +156,8 @@ fun WebApp?.applyDraft(
         themeType = payload.currentThemeType,
         translateEnabled = editState.translateEnabled,
         translateConfig = payload.translateConfig,
-        extensionModuleIds = payload.extensionModuleIds,
-        extensionEnabled = editState.extensionModuleEnabled,
-        extensionFabIcon = editState.extensionFabIcon.ifBlank { null },
+        pluginIds = payload.pluginIds,
+        pluginsEnabled = editState.pluginsEnabled,
         autoStartConfig = editState.autoStartConfig,
         deviceDisguiseConfig = editState.deviceDisguiseConfig,
         categoryId = overrides.categoryId,

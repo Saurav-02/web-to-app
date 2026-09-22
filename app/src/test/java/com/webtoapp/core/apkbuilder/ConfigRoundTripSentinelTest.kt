@@ -273,12 +273,12 @@ class ConfigRoundTripSentinelTest {
     @Test
     fun `extension fields round-trip`() {
         val app = baseApp().copy(
-            extensionEnabled = true,
-            extensionModuleIds = listOf("sen-mod-1", "sen-mod-2")
+            pluginsEnabled = true,
+            pluginIds = listOf("sen-mod-1", "sen-mod-2")
         )
         val shell = roundTrip(app)
-        assertThat(shell.extensionEnabled).isTrue()
-        assertThat(shell.extensionModuleIds).containsExactly("sen-mod-1", "sen-mod-2").inOrder()
+        assertThat(shell.pluginsEnabled).isTrue()
+        assertThat(shell.pluginIds).containsExactly("sen-mod-1", "sen-mod-2").inOrder()
     }
 
     @Test

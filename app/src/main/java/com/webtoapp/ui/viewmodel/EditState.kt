@@ -53,9 +53,8 @@ data class EditState(
     val themeType: String = "AURORA",
     val translateEnabled: Boolean = false,
     val translateConfig: TranslateConfig = TranslateConfig(),
-    val extensionModuleEnabled: Boolean = false,
-    val extensionModuleIds: Set<String> = emptySet(),
-    val extensionFabIcon: String = "",
+    val pluginsEnabled: Boolean = false,
+    val pluginIds: Set<String> = emptySet(),
     val autoStartConfig: AutoStartConfig? = null,
     val deviceDisguiseConfig: DeviceDisguiseConfig = DeviceDisguiseConfig(),
 )
@@ -93,9 +92,8 @@ fun WebApp.toEditState(): EditState {
         themeType = synced.themeType,
         translateEnabled = synced.translateEnabled,
         translateConfig = synced.translateConfig ?: TranslateConfig(),
-        extensionModuleEnabled = synced.extensionEnabled,
-        extensionModuleIds = synced.extensionModuleIds.toSet(),
-        extensionFabIcon = synced.extensionFabIcon ?: "",
+        pluginsEnabled = synced.pluginsEnabled,
+        pluginIds = synced.pluginIds.toSet(),
         autoStartConfig = synced.autoStartConfig,
         deviceDisguiseConfig = synced.deviceDisguiseConfig ?: DeviceDisguiseConfig(),
     )

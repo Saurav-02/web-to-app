@@ -6,6 +6,25 @@
 - 🟡 **部分** —— 可用但有注意事项(见说明)。
 - ⬜ **桩** —— 存在但返回默认值 / no-op。
 
+## HCJ `hcj.*`（页面侧）
+
+| API | 状态 | 说明 |
+| --- | --- | --- |
+| `hcj.config.get` / `set` / `remove` / `all` | ✅ | 持久化 KV，需 `STORAGE` 权限 |
+| `hcj.fetch` | ✅ | 经 OkHttp 跨域，需 `FETCH`；返回 Promise |
+| `hcj.notify` | ✅ | 系统通知，需 `NOTIFY` |
+| `hcj.badge` | ✅ | 工具栏角标，需 `BADGE` |
+| `hcj.panel.open` / `close` / `send` / `onMessage` | ✅ | 由用户选定的面板宿主承载 |
+| `hcj.on('action')` / `hcj.emit` | ✅ | 入口点击 / 自定义事件 |
+| `hcj.id` / `hcj.manifest` / `hcj.lang` | ✅ | |
+
+## `hcjPanel.*`（面板侧）
+
+| API | 状态 | 说明 |
+| --- | --- | --- |
+| `hcjPanel.config.*` | ✅ | 与页面侧同一个 KV 存储 |
+| `hcjPanel.send` / `hcjPanel.onMessage` / `hcjPanel.close` | ✅ | 面板 ↔ 页面通道与关闭 |
+
 ## 油猴脚本 `GM_*`
 
 | API | 状态 | 说明 |

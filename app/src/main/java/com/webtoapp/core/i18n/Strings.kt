@@ -657,7 +657,6 @@ object Strings {
     val runtimePhp: String get() = StringsA.runtimePhp
     val runtimePython: String get() = StringsA.runtimePython
     val runtimeGoBinary: String get() = StringsA.runtimeGoBinary
-    val extensionFabIconLabel: String get() = StringsA.extensionFabIconLabel
     val fabIconFromGallery: String get() = StringsA.fabIconFromGallery
     val fabIconSelected: String get() = StringsA.fabIconSelected
     val fabIconPreviewTitle: String get() = StringsA.fabIconPreviewTitle
@@ -5166,6 +5165,61 @@ object Strings {
     val openWithHint: String get() = StringsE.openWithHint
     val perAppSigningTitle: String get() = StringsE.perAppSigningTitle
     val perAppSigningHint: String get() = StringsE.perAppSigningHint
+
+    // Plugins (unified HCJ / userscript / Chrome surface)
+    val pluginsTitle: String get() = StringsE.pluginsTitle
+    val searchPlugins: String get() = StringsE.searchPlugins
+    val pluginKindHcj: String get() = StringsE.pluginKindHcj
+    val pluginKindUserscript: String get() = StringsE.pluginKindUserscript
+    val pluginKindChrome: String get() = StringsE.pluginKindChrome
+    val pluginSectionInstalled: String get() = StringsE.pluginSectionInstalled
+    val pluginSectionBuiltIn: String get() = StringsE.pluginSectionBuiltIn
+    val pluginsEmpty: String get() = StringsE.pluginsEmpty
+    val pluginsEmptyHint: String get() = StringsE.pluginsEmptyHint
+    val pluginImport: String get() = StringsE.pluginImport
+    val pluginNew: String get() = StringsE.pluginNew
+    val pluginHostStyle: String get() = StringsE.pluginHostStyle
+    val pluginEntryStyle: String get() = StringsE.pluginEntryStyle
+    val pluginPanelStyleLabel: String get() = StringsE.pluginPanelStyleLabel
+    val entryStyleToolbar: String get() = StringsE.entryStyleToolbar
+    val entryStyleMenu: String get() = StringsE.entryStyleMenu
+    val entryStyleFloating: String get() = StringsE.entryStyleFloating
+    val panelStyleSheet: String get() = StringsE.panelStyleSheet
+    val panelStyleWindow: String get() = StringsE.panelStyleWindow
+    val panelStyleFullscreen: String get() = StringsE.panelStyleFullscreen
+    val pluginPin: String get() = StringsE.pluginPin
+    val pluginUnpin: String get() = StringsE.pluginUnpin
+    val pluginExportHcj: String get() = StringsE.pluginExportHcj
+    val pluginDeleteConfirmTitle: String get() = StringsE.pluginDeleteConfirmTitle
+    fun pluginImportSuccess(name: String): String = StringsE.pluginImportSuccess(name)
+    val pluginEditorEdit: String get() = StringsE.pluginEditorEdit
+    val pluginTabInfo: String get() = StringsE.pluginTabInfo
+    val pluginTabPanel: String get() = StringsE.pluginTabPanel
+    val pluginFieldName: String get() = StringsE.pluginFieldName
+    val pluginFieldId: String get() = StringsE.pluginFieldId
+    val pluginFieldVersion: String get() = StringsE.pluginFieldVersion
+    val pluginFieldMatches: String get() = StringsE.pluginFieldMatches
+    val pluginFieldMatchesHint: String get() = StringsE.pluginFieldMatchesHint
+    val pluginFieldExcludes: String get() = StringsE.pluginFieldExcludes
+    val pluginFieldRunAt: String get() = StringsE.pluginFieldRunAt
+    val runAtStart: String get() = StringsE.runAtStart
+    val runAtEnd: String get() = StringsE.runAtEnd
+    val runAtIdle: String get() = StringsE.runAtIdle
+    val pluginFieldPermissions: String get() = StringsE.pluginFieldPermissions
+    val pluginPermStorage: String get() = StringsE.pluginPermStorage
+    val pluginPermFetch: String get() = StringsE.pluginPermFetch
+    val pluginPermNotify: String get() = StringsE.pluginPermNotify
+    val pluginPermBadge: String get() = StringsE.pluginPermBadge
+    val pluginPermClipboard: String get() = StringsE.pluginPermClipboard
+    val pluginPermDownload: String get() = StringsE.pluginPermDownload
+    val pluginShowEntry: String get() = StringsE.pluginShowEntry
+    val pluginNameRequired: String get() = StringsE.pluginNameRequired
+    val pluginScriptTab: String get() = StringsE.pluginScriptTab
+    val pluginAttachEmpty: String get() = StringsE.pluginAttachEmpty
+    val pluginAttachHint: String get() = StringsE.pluginAttachHint
+    val pluginAdd: String get() = StringsE.pluginAdd
+    val pluginSelectTitle: String get() = StringsE.pluginSelectTitle
+    fun pluginSelectedCount(count: Int): String = StringsE.pluginSelectedCount(count)
 }
 
 
@@ -5180,7 +5234,6 @@ fun InitializeLanguage() {
         Strings.setLanguage(language)
 
         try {
-            com.webtoapp.core.extension.ExtensionManager.getInstance(context).reloadBuiltInModules()
         } catch (e: Exception) {
 
         }

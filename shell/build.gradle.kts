@@ -203,6 +203,7 @@ val syncShellRuntimeSources by tasks.registering(Sync::class) {
         "**/ui/theme/**",
         "**/ui/shared/**",
         "**/ui/design/**",
+        "**/ui/plugin/**",
 
         "**/core/shell/**",
         "**/core/activation/**",
@@ -219,6 +220,7 @@ val syncShellRuntimeSources by tasks.registering(Sync::class) {
         "**/core/perf/**",
         "**/core/port/**",
         "**/core/extension/**",
+        "**/core/plugin/**",
         "**/core/notification/**",
         "**/core/bgm/**",
         "**/core/engine/**",
@@ -281,6 +283,14 @@ val syncShellRuntimeSources by tasks.registering(Sync::class) {
         "**/core/extension/ModuleTemplates.kt",
         "**/core/extension/DebugTestPages.kt",
         "**/core/extension/ModulePreset.kt",
+
+        // Host-side plugin management: packages, import and legacy migration
+        // only exist where the store exists. Generated APKs run embedded
+        // payloads, never a store.
+        "**/core/plugin/PluginStore.kt",
+        "**/core/plugin/PluginImporter.kt",
+        "**/core/plugin/PluginMigrator.kt",
+        "**/core/plugin/PluginPrefs.kt",
 
         // Strings.kt / StringsA-E.kt carry the full 10-language editor surface
         // (~4.3 MB source, mostly editor-only text). Shell gets reduced copies
