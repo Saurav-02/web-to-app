@@ -32,8 +32,8 @@ schema, field rules, reviewer checklist, and CI validation details. The short
 version here is only meant to help you pick the right contribution lane:
 
 1. Fork the repo.
-2. Add `modules/<your-module>/module.json` and `main.js` (plus `style.css` if
-   you need CSS).
+2. Add `modules/<your-plugin>/plugin.json` and `main.js` (plus `style.css` /
+   `panel.html` if you need them).
 3. Add an entry to `modules/registry.json`.
 4. Open a PR.
 
@@ -279,13 +279,13 @@ CI 校验细节的主文档是 [`modules/README.md`](../modules/README.md)。这
 留一个极简入口，方便你先判断自己是不是走这条贡献路线：
 
 1. Fork 本仓库
-2. 新建 `modules/<你的模块>/module.json` 和 `main.js`（需要 CSS 时再加
-   `style.css`）
+2. 新建 `modules/<你的插件>/plugin.json` 和 `main.js`（需要时再加
+   `style.css` / `panel.html`）
 3. 在 `modules/registry.json` 里加一行索引
 4. 提 PR
 
 市场**没有后端**。客户端读取 `registry.json` 和 `submissions.json`，只有已合
-并的模块才会在市场出现。模块改动会经过 CI 的
+并的插件才会在市场出现。插件改动会经过 CI 的
 `.github/scripts/ci/validate_modules.py` 校验，提 PR 前建议先本地跑：
 
 ```bash

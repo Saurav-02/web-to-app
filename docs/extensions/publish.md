@@ -53,7 +53,7 @@ The app fetches both `registry.json` and `submissions.json` and **only shows plu
 
    The registry keeps its legacy field names (`runAt` in upper-snake, `urlMatches` objects, `hasCss`) so older clients keep working — `plugin.json` uses the new field names (`document_end`, `matches`).
 
-3. Keep `plugin.json` and `registry.json` consistent — `id`, `name`, and `version` must agree. If a legacy `module.json` is also present, it must match too. CI enforces all of this.
+3. Keep `plugin.json` and `registry.json` consistent — `id`, `name`, and `version` must agree. The retired `module.json` format is rejected by CI.
 
 4. Open a pull request. CI runs the validator automatically.
 
@@ -61,9 +61,9 @@ The app fetches both `registry.json` and `submissions.json` and **only shows plu
 
 `python3 .github/scripts/ci/validate_modules.py` checks:
 
-- JSON validity and required fields (`plugin.json`, `module.json`, `registry.json`)
+- JSON validity and required fields (`plugin.json`, `registry.json`)
 - Allowed values (`runAt`, `permissions`, registry enums)
-- `plugin.json` ↔ `module.json` ↔ `registry.json` consistency (`id` / `name` / `version`)
+- `plugin.json` ↔ `registry.json` consistency (`id` / `name` / `version`)
 - kebab-case folder names; no orphan or ghost entries; no duplicate `id`/`path`
 - Required files present; `hasCss` agrees with the presence of `style.css`
 - `iconUrl` size/extension limits

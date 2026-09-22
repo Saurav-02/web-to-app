@@ -294,23 +294,23 @@ WebToApp ships a built-in AI agent (open from **⋮ → Agent**) that can operat
 
 ---
 
-## Module market
+## Plugin market
 
-WebToApp has a GitHub-backed module market for community JS/CSS extension modules. The catalog is just files in this repository, so contributions use a normal pull-request flow.
+WebToApp has a GitHub-backed plugin market for community HTML/CSS/JS plugins. The catalog is just files in this repository, so contributions use a normal pull-request flow.
 
 ```
 modules/
 ├── registry.json        # app-facing catalog
 ├── submissions.json     # CI-generated PR / contributor metadata
 ├── README.md            # contributor guide
-└── <module-folder>/     # each module
+└── <plugin-folder>/     # each plugin (plugin.json + main.js + …)
 ```
 
-The app fetches both `registry.json` and `submissions.json` and only shows modules present in both, keeping the in-app catalog aligned with actually-merged PRs. The submissions file also records every contributor per module, so the catalog shows stacked avatars and a contributors leaderboard. Catalog files and module icons route through a global mirror first, with `raw.githubusercontent.com` and jsDelivr as automatic fallbacks, so the store loads fast everywhere (including mainland China).
+The app fetches both `registry.json` and `submissions.json` and only shows plugins present in both, keeping the in-app catalog aligned with actually-merged PRs. The submissions file also records every contributor per plugin, so the catalog shows stacked avatars and a contributors leaderboard. Catalog files and plugin icons route through a global mirror first, with `raw.githubusercontent.com` and jsDelivr as automatic fallbacks, so the store loads fast everywhere (including mainland China).
 
-- Users open **Extension Modules** and tap the storefront icon.
+- Users open **Plugins** and tap the storefront icon.
 - Contributors add a folder under `modules/`, update `registry.json`, and open a PR.
-- The default client cache is one hour, so merged modules propagate without an app update.
+- The default client cache is one hour, so merged plugins propagate without an app update.
 
 The high-level architecture lives here; the canonical submission rules, field schemas, reviewer checklist, and CI validation details live in [`modules/README.md`](modules/README.md).
 

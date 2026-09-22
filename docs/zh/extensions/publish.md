@@ -53,7 +53,7 @@ App 同时拉取 `registry.json` 和 `submissions.json`，**只展示两边都�
 
    注册表保留旧字段名（大写下划线的 `runAt`、对象形式的 `urlMatches`、`hasCss`），保证旧客户端可用——`plugin.json` 用新字段名（`document_end`、`matches`）。
 
-3. 保持 `plugin.json` 与 `registry.json` 一致——`id`、`name`、`version` 必须相同；若同时有旧 `module.json` 也要一致。CI 会强制校验。
+3. 保持 `plugin.json` 与 `registry.json` 一致——`id`、`name`、`version` 必须相同。已退役的 `module.json` 格式会被 CI 拒绝。
 
 4. 提 PR，CI 自动跑校验。
 
@@ -61,9 +61,9 @@ App 同时拉取 `registry.json` 和 `submissions.json`，**只展示两边都�
 
 `python3 .github/scripts/ci/validate_modules.py` 检查：
 
-- JSON 合法性与必填字段（`plugin.json`、`module.json`、`registry.json`）
+- JSON 合法性与必填字段（`plugin.json`、`registry.json`）
 - 枚举取值（`runAt`、`permissions`、registry 枚举）
-- `plugin.json` ↔ `module.json` ↔ `registry.json` 一致性（`id`/`name`/`version`）
+- `plugin.json` ↔ `registry.json` 一致性（`id`/`name`/`version`）
 - kebab-case 文件夹名；无孤儿/幽灵条目；`id`/`path` 不重复
 - 必需文件齐全；`hasCss` 与 `style.css` 是否存在一致
 - `iconUrl` 大小/扩展名限制

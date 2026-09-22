@@ -26,7 +26,6 @@ modules/
     ├── main.js                ← plugin source (required)
     ├── style.css              ← optional CSS, auto-injected at document-start
     ├── panel.html             ← optional plugin UI (hosted in a sheet/window)
-    ├── module.json            ← legacy manifest (kept for older clients)
     └── icon.png               ← optional 256 KB-max icon (also .svg/.webp/.jpg)
 ```
 
@@ -42,10 +41,9 @@ that's how we guarantee the catalog only shows plugins whose PR has
 actually been merged. Tapping **Install** downloads the package files and
 hands them to the plugin store. The registry is cached for one hour.
 
-> **Compatibility:** new clients read `plugin.json`. `module.json` is the
-> retired self-developed module format kept so older app versions can still
-> install — keep both in sync (CI enforces `id` / `name` / `version`
-> agreement). New submissions may ship `plugin.json` alone.
+> **Compatibility:** the catalog is `plugin.json`-only. The retired
+> self-developed `module.json` format was removed from the market together
+> with its old submissions — CI rejects it.
 
 ---
 
@@ -157,7 +155,7 @@ python3 .github/scripts/ci/validate_modules.py
 
 ## Reviewer checklist
 
-- `plugin.json` parses and `id`/`name`/`version` match `module.json` (if present) and `registry.json`.
+- `plugin.json` parses and `id`/`name`/`version` match `registry.json`.
 - `main.js` has no top-level `return`, no obfuscation, no remote-code fetch+eval.
 - `permissions` only lists what the code actually calls.
 - Icons stay under 256 KB; `iconUrl` relative paths point at allowed filenames.
@@ -181,7 +179,6 @@ modules/
     ├── main.js                ← 插件源码（必需）
     ├── style.css              ← 可选 CSS，document-start 自动注入
     ├── panel.html             ← 可选插件界面（抽屉/浮窗/全屏宿主）
-    ├── module.json            ← 旧格式清单（为旧客户端保留）
     └── icon.png               ← 可选图标，≤256 KB（.svg/.webp/.jpg 亦可）
 ```
 
@@ -228,14 +225,12 @@ DSL。`main.js` 像油猴脚本一样注入页面，`style.css` 自动注入，`
 
 ### 兼容性说明
 
-新客户端读取 `plugin.json`；`module.json` 是已退役的自研模块格式，仅为
-旧版本 App 保留——两者必须保持一致（CI 强制校验 `id`/`name`/`version`）。
-新投稿可以只提交 `plugin.json`。
+目录只接受 `plugin.json` 格式。已退役的自研 `module.json` 格式连同旧
+投稿一起从市场移除——CI 会直接拒绝。
 
 ### 审核 Checklist
 
-- `plugin.json` 可解析，`id`/`name`/`version` 与 `module.json`（若有）及
-  `registry.json` 一致。
+- `plugin.json` 可解析，`id`/`name`/`version` 与 `registry.json` 一致。
 - `main.js` 无顶层 `return`、无混淆、无远程拉取代码 eval。
 - `permissions` 只声明实际调用的能力。
 - 图标 ≤256 KB；`iconUrl` 相对路径指向允许的文件名。

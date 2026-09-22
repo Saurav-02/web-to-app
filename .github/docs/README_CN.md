@@ -294,23 +294,23 @@ WebToApp 内置了一个 AI Agent(从 **⋮ → Agent** 打开),可以通过自�
 
 ---
 
-## 模块市场
+## 插件市场
 
-WebToApp 有一个由 GitHub 驱动的模块市场,用来分发社区贡献的 JS/CSS 扩展模块。目录本质上就是这个仓库里的文件,所以贡献流程就是普通 PR。
+WebToApp 有一个由 GitHub 驱动的插件市场,用来分发社区贡献的 HTML/CSS/JS 插件。目录本质上就是这个仓库里的文件,所以贡献流程就是普通 PR。
 
 ```
 modules/
 ├── registry.json        # App 读取的目录
 ├── submissions.json     # CI 生成的 PR / 贡献者元数据
 ├── README.md            # 贡献者指南
-└── <模块文件夹>/         # 每个模块
+└── <插件文件夹>/         # 每个插件(plugin.json + main.js + …)
 ```
 
-App 会同时拉取 `registry.json` 和 `submissions.json`,只展示两边都存在的模块,保证应用内市场和已经合并的 PR 对齐。submissions 文件还会记录每个模块的全部贡献者,因此应用内会以叠加头像的形式展示所有参与过该模块的人,并按贡献模块数排出贡献者榜单。目录文件和模块图标会优先走全球镜像加速,raw.githubusercontent.com 和 jsDelivr 作为自动回退,因此商店在全球(含中国大陆)都能快速加载。
+App 会同时拉取 `registry.json` 和 `submissions.json`,只展示两边都存在的插件,保证应用内市场和已经合并的 PR 对齐。submissions 文件还会记录每个插件的全部贡献者,因此应用内会以叠加头像的形式展示所有参与过该插件的人,并按贡献插件数排出贡献者榜单。目录文件和插件图标会优先走全球镜像加速,raw.githubusercontent.com 和 jsDelivr 作为自动回退,因此商店在全球(含中国大陆)都能快速加载。
 
-- 用户打开 **扩展模块** 页面,点击右上角商店图标即可安装。
+- 用户打开 **插件** 页面,点击右上角商店图标即可安装。
 - 贡献者在 `modules/` 下添加文件夹,更新 `registry.json`,然后提交 PR。
-- 客户端默认缓存 1 小时,模块合并后不需要发新版 App。
+- 客户端默认缓存 1 小时,插件合并后不需要发新版 App。
 
 这里保留的是模块市场的高层说明;真正的投稿规则、字段 schema、审核 Checklist 和 CI 校验细节统一写在 [`modules/README.md`](../../modules/README.md)。
 
