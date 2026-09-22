@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Extension
-import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -268,15 +267,6 @@ private fun PluginSelectorDialog(
                                     overflow = TextOverflow.Ellipsis
                                 )
                             }
-                        }
-                        if (plugin.builtIn) {
-                            Icon(
-                                Icons.Outlined.PushPin,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
                         }
                         Icon(
                             Icons.Filled.Check,

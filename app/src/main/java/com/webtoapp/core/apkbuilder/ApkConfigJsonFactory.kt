@@ -591,7 +591,6 @@ internal object ApkConfigJsonFactory {
         "runAt" to runAt,
         "permissions" to permissions,
         "toolbar" to toolbar,
-        "pinned" to pinned,
         "hasPanel" to hasPanel,
         "mainJs" to mainJs,
         "css" to css,
@@ -605,8 +604,7 @@ internal object ApkConfigJsonFactory {
         "backgroundScript" to backgroundScript,
         "popupPath" to popupPath,
         "optionsPagePath" to optionsPagePath,
-        "legacyCompat" to legacyCompat,
-        "enabled" to enabled
+        "legacyCompat" to legacyCompat
     )
 }
 

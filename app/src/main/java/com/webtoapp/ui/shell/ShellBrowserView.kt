@@ -71,7 +71,6 @@ fun ShellBrowserAndroidView(
                         callbacks = webViewCallbacks,
                         adBlocker = WebToAppApplication.adBlock,
                         pluginPayloads = config.embeddedPlugins
-                            .filter { it.enabled }
                             .map { it.toResolved() },
                         pluginsEnabled = config.pluginsEnabled,
                         pluginEntryStyle = com.webtoapp.core.plugin.PluginEntryStyle.parse(config.pluginEntryStyle),

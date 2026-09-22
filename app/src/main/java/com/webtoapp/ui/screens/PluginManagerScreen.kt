@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,12 +21,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.webtoapp.core.extension.ChromeExtensionParser
 import com.webtoapp.core.extension.ExtensionFileManager
@@ -200,6 +205,26 @@ fun PluginManagerScreen(
                 val shownInstalled = installed.filter(::matches)
                 val shownBuiltIns = builtIns.filter(::matches)
 
+                // Working copies while a drag is in flight; store order wins
+                // whenever no drag is active.
+                var installedWorking by remember { mutableStateOf(shownInstalled) }
+                var builtinWorking by remember { mutableStateOf(shownBuiltIns) }
+                val dragState = remember { PluginDragState() }
+                LaunchedEffect(shownInstalled) {
+                    if (dragState.itemKey == null) installedWorking = shownInstalled
+                }
+                LaunchedEffect(shownBuiltIns) {
+                    if (dragState.itemKey == null) builtinWorking = shownBuiltIns
+                }
+                val spacingPx = with(LocalDensity.current) { 10.dp.toPx() }
+                val latestInstalled = rememberUpdatedState(installedWorking)
+                val latestBuiltIns = rememberUpdatedState(builtinWorking)
+
+                fun persistOrder(builtIn: Boolean) {
+                    val ids = (if (builtIn) latestBuiltIns else latestInstalled).value.map { it.id }
+                    scope.launch { store.reorder(ids, builtIn) }
+                }
+
                 if (!isLoading && shownInstalled.isEmpty() && shownBuiltIns.isEmpty()) {
                     WtaFullEmptyState(
                         icon = Icons.Outlined.Extension,
@@ -213,15 +238,27 @@ fun PluginManagerScreen(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        if (shownInstalled.isNotEmpty()) {
+                        if (installedWorking.isNotEmpty()) {
                             item(key = "hdr_installed") {
                                 PluginSectionHeader(Strings.pluginSectionInstalled)
                             }
-                            items(shownInstalled, key = { it.id }) { plugin ->
+                            items(installedWorking, key = { "i:" + it.id }) { plugin ->
+                                val itemKey = "i:" + plugin.id
                                 PluginRow(
                                     plugin = plugin,
-                                    onToggle = { scope.launch { store.toggleEnabled(plugin.id) } },
-                                    onPin = { scope.launch { store.setPinned(plugin.id, !plugin.pinned) } },
+                                    isDragging = dragState.itemKey == itemKey,
+                                    modifier = Modifier
+                                        .animateItem()
+                                        .pluginReorderable(
+                                            itemKey = itemKey,
+                                            itemId = plugin.id,
+                                            dragState = dragState,
+                                            spacingPx = spacingPx,
+                                            currentList = { latestInstalled.value },
+                                            onReorder = { installedWorking = it },
+                                            onPersist = { persistOrder(builtIn = false) },
+                                            onCancel = { installedWorking = shownInstalled }
+                                        ),
                                     onEdit = if (plugin.isScriptPlugin) {
                                         { onNavigateToEditor(plugin.id) }
                                     } else null,
@@ -236,15 +273,27 @@ fun PluginManagerScreen(
                                 )
                             }
                         }
-                        if (shownBuiltIns.isNotEmpty()) {
+                        if (builtinWorking.isNotEmpty()) {
                             item(key = "hdr_builtin") {
                                 PluginSectionHeader(Strings.pluginSectionBuiltIn)
                             }
-                            items(shownBuiltIns, key = { it.id }) { plugin ->
+                            items(builtinWorking, key = { "b:" + it.id }) { plugin ->
+                                val itemKey = "b:" + plugin.id
                                 PluginRow(
                                     plugin = plugin,
-                                    onToggle = { scope.launch { store.toggleEnabled(plugin.id) } },
-                                    onPin = { scope.launch { store.setPinned(plugin.id, !plugin.pinned) } },
+                                    isDragging = dragState.itemKey == itemKey,
+                                    modifier = Modifier
+                                        .animateItem()
+                                        .pluginReorderable(
+                                            itemKey = itemKey,
+                                            itemId = plugin.id,
+                                            dragState = dragState,
+                                            spacingPx = spacingPx,
+                                            currentList = { latestBuiltIns.value },
+                                            onReorder = { builtinWorking = it },
+                                            onPersist = { persistOrder(builtIn = true) },
+                                            onCancel = { builtinWorking = shownBuiltIns }
+                                        ),
                                     onEdit = null,
                                     onExport = null,
                                     onDelete = null
@@ -393,36 +442,94 @@ private fun PluginSectionHeader(title: String) {
     )
 }
 
+/** Shared long-press drag state for the plugin lists. */
+private class PluginDragState {
+    var itemKey by mutableStateOf<String?>(null)
+    var offsetPx by mutableFloatStateOf(0f)
+    var rowHeightPx by mutableIntStateOf(0)
+}
+
+/** Long-press then drag vertically to reorder within one list section. */
+private fun Modifier.pluginReorderable(
+    itemKey: String,
+    itemId: String,
+    dragState: PluginDragState,
+    spacingPx: Float,
+    currentList: () -> List<Plugin>,
+    onReorder: (List<Plugin>) -> Unit,
+    onPersist: () -> Unit,
+    onCancel: () -> Unit
+): Modifier = this
+    .zIndex(if (dragState.itemKey == itemKey) 1f else 0f)
+    .graphicsLayer { translationY = if (dragState.itemKey == itemKey) dragState.offsetPx else 0f }
+    .onSizeChanged { dragState.rowHeightPx = it.height }
+    .pointerInput(itemKey) {
+        detectDragGesturesAfterLongPress(
+            onDragStart = {
+                dragState.itemKey = itemKey
+                dragState.offsetPx = 0f
+            },
+            onDragEnd = {
+                onPersist()
+                dragState.itemKey = null
+                dragState.offsetPx = 0f
+            },
+            onDragCancel = {
+                onCancel()
+                dragState.itemKey = null
+                dragState.offsetPx = 0f
+            }
+        ) { change, amount ->
+            change.consume()
+            val rowH = dragState.rowHeightPx
+            if (rowH <= 0) return@detectDragGesturesAfterLongPress
+            val rowAndGap = rowH + spacingPx
+            dragState.offsetPx += amount.y
+            val moved = (dragState.offsetPx / rowAndGap).toInt()
+            if (moved != 0) {
+                val list = currentList()
+                val cur = list.indexOfFirst { it.id == itemId }
+                val target = (cur + moved).coerceIn(0, list.lastIndex)
+                if (cur >= 0 && target != cur) {
+                    val m = list.toMutableList()
+                    m.add(target, m.removeAt(cur))
+                    onReorder(m)
+                    dragState.offsetPx -= moved * rowAndGap
+                }
+            }
+            val idx = currentList().indexOfFirst { it.id == itemId }
+            val clamp = rowAndGap * 0.5f
+            if (idx == 0 && dragState.offsetPx < -clamp) dragState.offsetPx = -clamp
+            if (idx == currentList().lastIndex && dragState.offsetPx > clamp) dragState.offsetPx = clamp
+        }
+    }
+
 @Composable
 private fun PluginRow(
     plugin: Plugin,
-    onToggle: () -> Unit,
-    onPin: () -> Unit,
+    isDragging: Boolean,
+    modifier: Modifier = Modifier,
     onEdit: (() -> Unit)?,
     onExport: (() -> Unit)?,
     onDelete: (() -> Unit)?
 ) {
-    WtaCard(contentPadding = PaddingValues(12.dp)) {
+    WtaCard(
+        contentPadding = PaddingValues(12.dp),
+        modifier = modifier
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(RoundedCornerShape(WtaRadius.Control))
-                    .background(
-                        Brush.linearGradient(
-                            listOf(
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
-                            )
-                        )
-                    ),
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     pluginIcon(plugin.icon),
                     contentDescription = null,
                     modifier = Modifier.size(22.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))
@@ -448,15 +555,6 @@ private fun PluginRow(
                             modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
                         )
                     }
-                    if (plugin.pinned) {
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            Icons.Filled.PushPin,
-                            contentDescription = null,
-                            modifier = Modifier.size(12.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
                 }
                 if (plugin.description.isNotBlank()) {
                     Text(
@@ -468,41 +566,37 @@ private fun PluginRow(
                     )
                 }
             }
-            WtaSwitch(checked = plugin.enabled, onCheckedChange = { onToggle() })
-            Box {
-                var rowMenu by remember { mutableStateOf(false) }
-                IconButton(onClick = { rowMenu = true }) {
-                    Icon(Icons.Outlined.MoreVert, contentDescription = Strings.more, modifier = Modifier.size(20.dp))
-                }
-                DropdownMenu(expanded = rowMenu, onDismissRequest = { rowMenu = false }) {
-                    onEdit?.let { edit ->
-                        DropdownMenuItem(
-                            text = { Text(Strings.edit) },
-                            onClick = { rowMenu = false; edit() },
-                            leadingIcon = { Icon(Icons.Default.Edit, null, Modifier.size(20.dp)) }
-                        )
+            if (onEdit != null || onExport != null || onDelete != null) {
+                Box {
+                    var rowMenu by remember { mutableStateOf(false) }
+                    IconButton(onClick = { rowMenu = true }) {
+                        Icon(Icons.Outlined.MoreVert, contentDescription = Strings.more, modifier = Modifier.size(20.dp))
                     }
-                    DropdownMenuItem(
-                        text = { Text(if (plugin.pinned) Strings.pluginUnpin else Strings.pluginPin) },
-                        onClick = { rowMenu = false; onPin() },
-                        leadingIcon = { Icon(Icons.Default.PushPin, null, Modifier.size(20.dp)) }
-                    )
-                    onExport?.let { export ->
-                        DropdownMenuItem(
-                            text = { Text(Strings.pluginExportHcj) },
-                            onClick = { rowMenu = false; export() },
-                            leadingIcon = { Icon(Icons.Default.Share, null, Modifier.size(20.dp)) }
-                        )
-                    }
-                    onDelete?.let { del ->
-                        WtaDivider()
-                        DropdownMenuItem(
-                            text = { Text(Strings.delete, color = MaterialTheme.colorScheme.error) },
-                            onClick = { rowMenu = false; del() },
-                            leadingIcon = {
-                                Icon(Icons.Default.Delete, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
-                            }
-                        )
+                    DropdownMenu(expanded = rowMenu, onDismissRequest = { rowMenu = false }) {
+                        onEdit?.let { edit ->
+                            DropdownMenuItem(
+                                text = { Text(Strings.edit) },
+                                onClick = { rowMenu = false; edit() },
+                                leadingIcon = { Icon(Icons.Default.Edit, null, Modifier.size(20.dp)) }
+                            )
+                        }
+                        onExport?.let { export ->
+                            DropdownMenuItem(
+                                text = { Text(Strings.pluginExportHcj) },
+                                onClick = { rowMenu = false; export() },
+                                leadingIcon = { Icon(Icons.Default.Share, null, Modifier.size(20.dp)) }
+                            )
+                        }
+                        onDelete?.let { del ->
+                            WtaDivider()
+                            DropdownMenuItem(
+                                text = { Text(Strings.delete, color = MaterialTheme.colorScheme.error) },
+                                onClick = { rowMenu = false; del() },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Delete, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
+                                }
+                            )
+                        }
                     }
                 }
             }

@@ -969,7 +969,6 @@ data class EmbeddedPlugin(
     val runAt: String = "DOCUMENT_END",
     val permissions: List<String> = emptyList(),
     val toolbar: Boolean = true,
-    val pinned: Boolean = false,
     val hasPanel: Boolean = false,
     val mainJs: String = "",
     val css: String = "",
@@ -983,8 +982,7 @@ data class EmbeddedPlugin(
     val backgroundScript: String = "",
     val popupPath: String = "",
     val optionsPagePath: String = "",
-    val legacyCompat: Boolean = false,
-    val enabled: Boolean = true
+    val legacyCompat: Boolean = false
 )
 
 data class EmbeddedMatchPattern(

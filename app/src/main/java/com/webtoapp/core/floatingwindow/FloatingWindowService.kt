@@ -430,7 +430,6 @@ class FloatingWindowService : Service() {
                 config = webViewConfig,
                 callbacks = callbacks,
                 pluginPayloads = shellConfig.embeddedPlugins
-                    .filter { it.enabled }
                     .map { it.toResolved() },
                 pluginsEnabled = shellConfig.pluginsEnabled,
                 pluginEntryStyle = com.webtoapp.core.plugin.PluginEntryStyle.parse(shellConfig.pluginEntryStyle),

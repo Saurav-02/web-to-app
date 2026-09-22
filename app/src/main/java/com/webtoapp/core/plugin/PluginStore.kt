@@ -33,14 +33,14 @@ import java.io.File
  *   <id>/panel.html      optional — hosted by the plugin panel surface
  *   <id>/icon.*          optional package icon
  *   <id>/files/...       optional extra files (migrated multi-file modules)
- * files/plugin_state.json   per-plugin state overlay {id: {enabled, pinned}} + order
+ * files/plugin_state.json   list order + chrome-extension records
  * ```
  *
  * CHROME_EXTENSION records live in the state file only; their content stays in
  * the extension engine's own directory (`ExtensionFileManager`).
  *
- * Built-in HCJ packages ship read-only in `assets/plugins/`; their enabled
- * state lives in the same state overlay.
+ * Built-in HCJ packages ship read-only in `assets/plugins/`. There is no
+ * enable/pin state — a plugin runs where the app's config attaches it.
  */
 @Suppress("StaticFieldLeak")
 class PluginStore private constructor(private val context: Context) {
@@ -126,13 +126,7 @@ class PluginStore private constructor(private val context: Context) {
 
     private data class StateOverlay(
         val order: MutableList<String> = mutableListOf(),
-        val states: MutableMap<String, PluginState> = mutableMapOf(),
         val chromeRecords: MutableList<Plugin> = mutableListOf()
-    )
-
-    private data class PluginState(
-        val enabled: Boolean = true,
-        val pinned: Boolean = false
     )
 
     private fun readOverlay(): StateOverlay {
@@ -141,13 +135,6 @@ class PluginStore private constructor(private val context: Context) {
             val obj = JsonParser.parseString(stateFile.readText()).asJsonObject
             val overlay = StateOverlay()
             obj.getAsJsonArray("order")?.forEach { overlay.order.add(it.asString) }
-            obj.getAsJsonObject("states")?.entrySet()?.forEach { (id, v) ->
-                val s = v.asJsonObject
-                overlay.states[id] = PluginState(
-                    enabled = s.get("enabled")?.asBoolean ?: true,
-                    pinned = s.get("pinned")?.asBoolean ?: false
-                )
-            }
             obj.getAsJsonArray("chromeRecords")?.forEach { el ->
                 try {
                     gson.fromJson(el, Plugin::class.java)?.let {
@@ -171,14 +158,6 @@ class PluginStore private constructor(private val context: Context) {
                 (_plugins.value.map { it.id } + _builtInPlugins.value.map { it.id })
                     .forEach { order.add(it) }
                 overlay.add("order", order)
-                val states = com.google.gson.JsonObject()
-                (_plugins.value + _builtInPlugins.value).forEach { p ->
-                    val s = com.google.gson.JsonObject()
-                    s.addProperty("enabled", p.enabled)
-                    s.addProperty("pinned", p.pinned)
-                    states.add(p.id, s)
-                }
-                overlay.add("states", states)
                 val chrome = com.google.gson.JsonArray()
                 _plugins.value.filter { it.kind == PluginKind.CHROME_EXTENSION }
                     .forEach { chrome.add(gson.toJsonTree(it)) }
@@ -211,7 +190,6 @@ class PluginStore private constructor(private val context: Context) {
                         null
                     }
                 )
-                val state = overlay.states[manifest.resolvedId(dir.name)]
                 loaded.add(
                     Plugin.fromManifest(
                         manifest = manifest,
@@ -219,9 +197,8 @@ class PluginStore private constructor(private val context: Context) {
                         kind = kind,
                         hasPanel = File(dir, PANEL_FILE).exists(),
                         hasCss = File(dir, CSS_FILE).exists(),
-                        builtIn = false,
-                        enabled = state?.enabled ?: true
-                    ).copy(pinned = state?.pinned ?: false)
+                        builtIn = false
+                    )
                 )
             }
 
@@ -253,7 +230,6 @@ class PluginStore private constructor(private val context: Context) {
                 } catch (e: Exception) {
                     null
                 } ?: continue
-                val state = overlay.states[manifest.resolvedId(dirName)]
                 loaded.add(
                     Plugin.fromManifest(
                         manifest = manifest,
@@ -261,15 +237,16 @@ class PluginStore private constructor(private val context: Context) {
                         kind = PluginKind.HCJ,
                         hasPanel = assetExists("$BUILTIN_ASSET_DIR/$dirName/$PANEL_FILE"),
                         hasCss = assetExists("$BUILTIN_ASSET_DIR/$dirName/$CSS_FILE"),
-                        builtIn = true,
-                        enabled = state?.enabled ?: false
-                    ).copy(pinned = state?.pinned ?: false)
+                        builtIn = true
+                    )
                 )
             }
         } catch (e: Exception) {
             AppLogger.e(TAG, "failed to load built-in plugins", e)
         }
-        _builtInPlugins.value = loaded
+        val byId = loaded.associateBy { it.id }
+        _builtInPlugins.value = overlay.order.mapNotNull { byId[it] } +
+            loaded.filter { it.id !in overlay.order }
     }
 
     fun reloadBuiltInsIfLanguageChanged() {
@@ -295,8 +272,6 @@ class PluginStore private constructor(private val context: Context) {
     // ------------------------------------------------------------------
 
     fun getAllPlugins(): List<Plugin> = allCache
-
-    fun getEnabledPlugins(): List<Plugin> = allCache.filter { it.enabled }
 
     fun getPlugin(id: String): Plugin? = allCache.firstOrNull { it.id == id }
 
@@ -347,13 +322,13 @@ class PluginStore private constructor(private val context: Context) {
     }
 
     /**
-     * Resolve enabled plugins into injectable payloads. `ids == null` resolves
-     * the global enabled set (marked unattached so local-runtime pages can skip
+     * Resolve plugins into injectable payloads. `ids == null` resolves every
+     * installed plugin (marked unattached so local-runtime pages can skip
      * them); an explicit id list marks everything app-attached.
      */
     fun resolveForInjection(ids: List<String>? = null): List<PluginSession.Resolved> {
         val attached = ids != null
-        val base = if (ids == null) getEnabledPlugins() else getPluginsByIds(ids).filter { it.enabled }
+        val base = if (ids == null) allCache else getPluginsByIds(ids)
         return base.map { plugin ->
             if (plugin.isScriptPlugin) {
                 val code = loadPackageCode(plugin)
@@ -403,46 +378,17 @@ class PluginStore private constructor(private val context: Context) {
     // Mutation
     // ------------------------------------------------------------------
 
-    suspend fun toggleEnabled(id: String): Boolean {
-        val inUser = _plugins.value.find { it.id == id }
-        val inBuiltIn = _builtInPlugins.value.find { it.id == id }
-        when {
-            inUser != null -> {
-                val updated = inUser.copy(enabled = !inUser.enabled)
-                _plugins.value = _plugins.value.map { if (it.id == id) updated else it }
-                writeOverlay()
-                rebuildCache()
-                return updated.enabled
-            }
-            inBuiltIn != null -> {
-                val updated = inBuiltIn.copy(enabled = !inBuiltIn.enabled)
-                _builtInPlugins.value = _builtInPlugins.value.map { if (it.id == id) updated else it }
-                writeOverlay()
-                rebuildCache()
-                return updated.enabled
-            }
-            else -> return false
-        }
-    }
-
-    suspend fun setPinned(id: String, pinned: Boolean) {
-        var touched = false
-        _plugins.value = _plugins.value.map {
-            if (it.id == id) {
-                touched = true
-                it.copy(pinned = pinned)
-            } else it
-        }
-        _builtInPlugins.value = _builtInPlugins.value.map {
-            if (it.id == id) {
-                touched = true
-                it.copy(pinned = pinned)
-            } else it
-        }
-        if (touched) {
-            writeOverlay()
-            rebuildCache()
-        }
+    /**
+     * Persist a new list order (long-press drag in the manager). Ids not in
+     * [orderedIds] keep their relative position at the end.
+     */
+    suspend fun reorder(orderedIds: List<String>, builtIn: Boolean) {
+        val flow = if (builtIn) _builtInPlugins else _plugins
+        val byId = flow.value.associateBy { it.id }
+        flow.value = orderedIds.mapNotNull { byId[it] } +
+            flow.value.filter { it.id !in orderedIds }
+        writeOverlay()
+        rebuildCache()
     }
 
     suspend fun removePlugin(id: String): Boolean = withContext(Dispatchers.IO) {
@@ -464,8 +410,7 @@ class PluginStore private constructor(private val context: Context) {
     suspend fun installPackage(
         manifest: PluginManifest,
         kind: PluginKind = PluginKind.HCJ,
-        files: Map<String, String>,
-        enabled: Boolean = true
+        files: Map<String, String>
     ): Result<Plugin> = withContext(Dispatchers.IO) {
         try {
             val id = manifest.id.takeIf { it.isNotBlank() }
@@ -497,11 +442,8 @@ class PluginStore private constructor(private val context: Context) {
                 kind = kind,
                 hasPanel = File(dir, PANEL_FILE).exists(),
                 hasCss = File(dir, CSS_FILE).exists(),
-                builtIn = false,
-                // Reinstall/update keeps the user's enable + pin state.
-                enabled = existing?.enabled ?: enabled
+                builtIn = false
             ).copy(
-                pinned = existing?.pinned ?: false,
                 createdAt = existing?.createdAt ?: System.currentTimeMillis()
             )
             _plugins.value = _plugins.value.filter { it.id != plugin.id } + plugin
@@ -531,9 +473,4 @@ class PluginStore private constructor(private val context: Context) {
         }
     }
 
-    suspend fun reorder(ids: List<String>) {
-        val byId = _plugins.value.associateBy { it.id }
-        _plugins.value = ids.mapNotNull { byId[it] } + _plugins.value.filter { it.id !in ids }
-        writeOverlay()
-    }
 }

@@ -514,7 +514,7 @@ class ApkBuilder(private val context: Context) {
             logger.logKeyValue("embeddedPlugins.size", config.embeddedPlugins.size)
 
             config.embeddedPlugins.forEachIndexed { index, plugin ->
-                logger.log("  embeddedPlugin[$index]: id=${plugin.id}, name=${plugin.name}, kind=${plugin.kind}, enabled=${plugin.enabled}, runAt=${plugin.runAt}, jsLength=${plugin.mainJs.length}")
+                logger.log("  embeddedPlugin[$index]: id=${plugin.id}, name=${plugin.name}, kind=${plugin.kind}, runAt=${plugin.runAt}, jsLength=${plugin.mainJs.length}")
             }
 
             onProgress(10, "Checking template...")
@@ -5247,7 +5247,7 @@ fun WebApp.toApkConfigWithModules(packageName: String, context: android.content.
                 }
             }
 
-            val resolvedPlugins = pluginStore.getPluginsByIds(pluginIds).filter { it.enabled }
+            val resolvedPlugins = pluginStore.getPluginsByIds(pluginIds)
 
             if (resolvedPlugins.size < pluginIds.size) {
                 val foundIds = resolvedPlugins.map { it.id }.toSet()
@@ -5289,7 +5289,6 @@ fun WebApp.toApkConfigWithModules(packageName: String, context: android.content.
                     runAt = plugin.runAt.name,
                     permissions = plugin.permissions.map { it.name },
                     toolbar = plugin.showInToolbar,
-                    pinned = plugin.pinned,
                     hasPanel = code.panelHtml.isNotBlank(),
                     mainJs = code.mainJs,
                     css = code.css,
@@ -5303,8 +5302,7 @@ fun WebApp.toApkConfigWithModules(packageName: String, context: android.content.
                     backgroundScript = plugin.backgroundScript,
                     popupPath = plugin.popupPath,
                     optionsPagePath = plugin.optionsPagePath,
-                    legacyCompat = plugin.legacyCompat,
-                    enabled = true
+                    legacyCompat = plugin.legacyCompat
                 )
             }
         } catch (e: Exception) {

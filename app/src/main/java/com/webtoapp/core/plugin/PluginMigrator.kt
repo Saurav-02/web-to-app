@@ -47,7 +47,6 @@ class PluginMigrator(private val context: Context) {
                 versionName = m.obj("version")?.str("name") ?: "1.0.0",
                 authorName = m.obj("author")?.str("name") ?: "",
                 chromeExtId = m.str("chromeExtId"),
-                enabled = m.bool("enabled", true),
                 showInToolbar = true,
                 createdAt = m.long("createdAt"),
                 updatedAt = m.long("updatedAt")
@@ -197,8 +196,6 @@ class PluginMigrator(private val context: Context) {
 
             AppLogger.i(TAG, "migrating legacy extension_modules -> plugins")
             val overlay = readOverlayStates()
-            val builtinStates = readBuiltinStates(builtinStatesFile)
-            overlay.states.putAll(builtinStates)
 
             if (modulesFile.exists()) {
                 migrateModules(modulesFile, overlay)
@@ -240,7 +237,6 @@ class PluginMigrator(private val context: Context) {
     private fun migrateChromeRecord(m: JsonObject, overlay: Overlay) {
         val plugin = chromePluginFrom(m) ?: return
         overlay.chromeRecords.add(plugin)
-        overlay.states[plugin.id] = PluginMigrator.State(plugin.enabled, false)
     }
 
     private fun migrateScriptPackage(m: JsonObject, id: String, kind: PluginKind, overlay: Overlay) {
@@ -282,7 +278,6 @@ class PluginMigrator(private val context: Context) {
         seedConfig(context, id, m)
 
         overlay.order.add(id)
-        overlay.states[id] = State(m.bool("enabled", true), false)
     }
 
     private fun sidecar(name: String): String = try {
@@ -295,11 +290,8 @@ class PluginMigrator(private val context: Context) {
     // State overlay I/O (mirrors PluginStore's file shape)
     // ------------------------------------------------------------------
 
-    private class State(val enabled: Boolean, val pinned: Boolean)
-
     private class Overlay {
         val order = mutableListOf<String>()
-        val states = mutableMapOf<String, State>()
         val chromeRecords = mutableListOf<Plugin>()
     }
 
@@ -310,13 +302,6 @@ class PluginMigrator(private val context: Context) {
         try {
             val obj = JsonParser.parseString(stateFile.readText()).asJsonObject
             obj.getAsJsonArray("order")?.forEach { overlay.order.add(it.asString) }
-            obj.getAsJsonObject("states")?.entrySet()?.forEach { (id, v) ->
-                val s = v.asJsonObject
-                overlay.states[id] = State(
-                    s.get("enabled")?.asBoolean ?: true,
-                    s.get("pinned")?.asBoolean ?: false
-                )
-            }
             obj.getAsJsonArray("chromeRecords")?.forEach { el ->
                 try {
                     gson.fromJson(el, Plugin::class.java)?.let {
@@ -331,35 +316,11 @@ class PluginMigrator(private val context: Context) {
         return overlay
     }
 
-    private fun readBuiltinStates(file: File): Map<String, State> {
-        if (!file.exists()) return emptyMap()
-        return try {
-            JsonParser.parseString(file.readText()).asJsonObject.entrySet()
-                .mapNotNull { (id, v) ->
-                    try {
-                        id to State(v.asBoolean, false)
-                    } catch (e: Exception) {
-                        null
-                    }
-                }.toMap()
-        } catch (e: Exception) {
-            emptyMap()
-        }
-    }
-
     private fun writeStateFile(overlay: Overlay) {
         val root = com.google.gson.JsonObject()
         val order = com.google.gson.JsonArray()
         overlay.order.forEach { order.add(it) }
         root.add("order", order)
-        val states = com.google.gson.JsonObject()
-        overlay.states.forEach { (id, s) ->
-            val o = com.google.gson.JsonObject()
-            o.addProperty("enabled", s.enabled)
-            o.addProperty("pinned", s.pinned)
-            states.add(id, o)
-        }
-        root.add("states", states)
         val chrome = com.google.gson.JsonArray()
         overlay.chromeRecords.forEach { chrome.add(gson.toJsonTree(it)) }
         root.add("chromeRecords", chrome)

@@ -368,10 +368,6 @@ data class Plugin(
     @SerializedName("permissions")
     val permissions: List<PluginPermission> = emptyList(),
 
-    @SerializedName("enabled")
-    val enabled: Boolean = true,
-    @SerializedName("pinned")
-    val pinned: Boolean = false,
     @SerializedName("builtIn")
     val builtIn: Boolean = false,
     @SerializedName("showInToolbar")
@@ -459,8 +455,7 @@ data class Plugin(
             kind: PluginKind = PluginKind.HCJ,
             hasPanel: Boolean,
             hasCss: Boolean,
-            builtIn: Boolean = false,
-            enabled: Boolean = true
+            builtIn: Boolean = false
         ): Plugin = Plugin(
             id = manifest.resolvedId(packageDir),
             kind = kind,
@@ -474,7 +469,6 @@ data class Plugin(
             matches = manifest.matchRules(),
             runAt = manifest.resolvedRunAt(),
             permissions = manifest.resolvedPermissions().toList(),
-            enabled = enabled,
             builtIn = builtIn,
             showInToolbar = manifest.toolbar,
             hasPanel = hasPanel,

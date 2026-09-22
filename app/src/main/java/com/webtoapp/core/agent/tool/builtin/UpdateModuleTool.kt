@@ -65,7 +65,7 @@ class UpdateModuleTool : Tool {
             ?: return ToolResult.error("UpdateModule: merged manifest is malformed.")
 
         val newFiles = files - PluginStore.MANIFEST_FILE + filePatches
-        return store.installPackage(manifest, plugin.kind, newFiles, enabled = plugin.enabled).fold(
+        return store.installPackage(manifest, plugin.kind, newFiles).fold(
             onSuccess = { ToolResult.ok("Updated plugin id=${it.id} name=\"${it.name}\".") },
             onFailure = { ToolResult.error("UpdateModule failed: ${it.message}") }
         )

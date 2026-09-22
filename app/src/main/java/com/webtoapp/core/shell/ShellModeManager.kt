@@ -496,9 +496,6 @@ data class EmbeddedShellPlugin(
     @SerializedName("toolbar")
     val toolbar: Boolean = true,
 
-    @SerializedName("pinned")
-    val pinned: Boolean = false,
-
     @SerializedName("hasPanel")
     val hasPanel: Boolean = false,
 
@@ -539,10 +536,7 @@ data class EmbeddedShellPlugin(
     val optionsPagePath: String = "",
 
     @SerializedName("legacyCompat")
-    val legacyCompat: Boolean = false,
-
-    @SerializedName("enabled")
-    val enabled: Boolean = true
+    val legacyCompat: Boolean = false
 ) {
     companion object {
         /** Host preview direction: a resolved package payload → embedded record. */
@@ -566,7 +560,6 @@ data class EmbeddedShellPlugin(
                 runAt = p.runAt.name,
                 permissions = p.permissions.map { it.name },
                 toolbar = p.showInToolbar,
-                pinned = p.pinned,
                 hasPanel = resolved.panelHtml.isNotBlank() || p.hasPanel,
                 mainJs = resolved.mainJs,
                 css = resolved.css,
@@ -580,8 +573,7 @@ data class EmbeddedShellPlugin(
                 backgroundScript = p.backgroundScript,
                 popupPath = p.popupPath,
                 optionsPagePath = p.optionsPagePath,
-                legacyCompat = p.legacyCompat,
-                enabled = p.enabled
+                legacyCompat = p.legacyCompat
             )
         }
     }
@@ -621,9 +613,7 @@ data class EmbeddedShellPlugin(
             com.webtoapp.core.plugin.PluginPermission.parse(name)
         },
         showInToolbar = toolbar,
-        pinned = pinned,
         hasPanel = hasPanel || panelHtml.isNotBlank(),
-        enabled = enabled,
         gmGrants = gmGrants,
         requireUrls = requireUrls,
         resources = resources,
