@@ -67,7 +67,6 @@ fun PluginEditorScreen(
     var panelHtml by remember { mutableStateOf("") }
     var extraFiles by remember { mutableStateOf(mapOf<String, String>()) }
 
-    var tab by remember { mutableIntStateOf(0) }
     var codeEditTarget by remember { mutableStateOf<Int?>(null) } // 1=js 2=css 3=panel
     var nameError by remember { mutableStateOf(false) }
     // Fields the form doesn't edit (userscript grants/requires, legacyCompat,
@@ -123,7 +122,6 @@ fun PluginEditorScreen(
     fun save() {
         if (name.isBlank()) {
             nameError = true
-            tab = 0
             return
         }
         val manifest = PluginManifest(
@@ -191,46 +189,37 @@ fun PluginEditorScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                WtaTabRow(
-                    tabs = listOf(
-                        WtaTab(Strings.pluginTabInfo),
-                        WtaTab(Strings.pluginScriptTab),
-                        WtaTab("CSS"),
-                        WtaTab(Strings.pluginTabPanel)
-                    ),
-                    selectedIndex = tab,
-                    onTabSelected = { tab = it }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Field(Strings.pluginFieldName, name, { name = it; nameError = false },
+                    isError = nameError, errorText = Strings.pluginNameRequired)
+                Field(Strings.description, description, { description = it })
+                CodeSection(
+                    content = mainJs,
+                    language = "JavaScript",
+                    fileName = PluginStore.MAIN_FILE,
+                    placeholder = JS_PLACEHOLDER,
+                    onEdit = { codeEditTarget = 1 }
                 )
-
-                when (tab) {
-                    0 -> InfoTab(
-                        name = name, onName = { name = it; nameError = false },
-                        nameError = nameError,
-                        description = description, onDescription = { description = it }
-                    )
-                    1 -> CodeTab(
-                        content = mainJs,
-                        language = "JavaScript",
-                        fileName = PluginStore.MAIN_FILE,
-                        placeholder = JS_PLACEHOLDER,
-                        onEdit = { codeEditTarget = 1 }
-                    )
-                    2 -> CodeTab(
-                        content = css,
-                        language = "CSS",
-                        fileName = PluginStore.CSS_FILE,
-                        placeholder = CSS_PLACEHOLDER,
-                        onEdit = { codeEditTarget = 2 }
-                    )
-                    else -> CodeTab(
-                        content = panelHtml,
-                        language = "HTML",
-                        fileName = PluginStore.PANEL_FILE,
-                        placeholder = HTML_PLACEHOLDER,
-                        onEdit = { codeEditTarget = 3 }
-                    )
-                }
+                CodeSection(
+                    content = css,
+                    language = "CSS",
+                    fileName = PluginStore.CSS_FILE,
+                    placeholder = CSS_PLACEHOLDER,
+                    onEdit = { codeEditTarget = 2 }
+                )
+                CodeSection(
+                    content = panelHtml,
+                    language = "HTML",
+                    fileName = PluginStore.PANEL_FILE,
+                    placeholder = HTML_PLACEHOLDER,
+                    onEdit = { codeEditTarget = 3 }
+                )
             }
         }
     }
@@ -276,24 +265,6 @@ hcj.on('action', () => {
 """.trimStart()
 
 @Composable
-private fun InfoTab(
-    name: String, onName: (String) -> Unit,
-    nameError: Boolean,
-    description: String, onDescription: (String) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        Field(Strings.pluginFieldName, name, onName, isError = nameError, errorText = Strings.pluginNameRequired)
-        Field(Strings.description, description, onDescription)
-    }
-}
-
-@Composable
 private fun Field(
     label: String,
     value: String,
@@ -331,19 +302,14 @@ private fun Field(
 }
 
 @Composable
-private fun CodeTab(
+private fun CodeSection(
     content: String,
     language: String,
     fileName: String,
     placeholder: String,
     onEdit: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 fileName,
@@ -368,9 +334,10 @@ private fun CodeTab(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
+                .height(180.dp)
                 .clip(RoundedCornerShape(WtaRadius.Button))
                 .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                .verticalScroll(rememberScrollState())
                 .padding(14.dp)
         ) {
             if (content.isNotBlank()) {

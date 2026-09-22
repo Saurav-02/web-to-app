@@ -16089,32 +16089,6 @@ object StringsE {
         AppLanguage.KOREAN -> "플러그인 편집"
     }
 
-    val pluginTabInfo: String get() = when (Strings.lang) {
-        AppLanguage.CHINESE -> "信息"
-        AppLanguage.ENGLISH -> "Info"
-        AppLanguage.ARABIC -> "معلومات"
-        AppLanguage.PORTUGUESE -> "Info"
-        AppLanguage.SPANISH -> "Info"
-        AppLanguage.FRENCH -> "Infos"
-        AppLanguage.GERMAN -> "Info"
-        AppLanguage.RUSSIAN -> "Инфо"
-        AppLanguage.JAPANESE -> "情報"
-        AppLanguage.KOREAN -> "정보"
-    }
-
-    val pluginTabPanel: String get() = when (Strings.lang) {
-        AppLanguage.CHINESE -> "面板"
-        AppLanguage.ENGLISH -> "Panel"
-        AppLanguage.ARABIC -> "اللوحة"
-        AppLanguage.PORTUGUESE -> "Painel"
-        AppLanguage.SPANISH -> "Panel"
-        AppLanguage.FRENCH -> "Panneau"
-        AppLanguage.GERMAN -> "Panel"
-        AppLanguage.RUSSIAN -> "Панель"
-        AppLanguage.JAPANESE -> "パネル"
-        AppLanguage.KOREAN -> "패널"
-    }
-
     val pluginFieldName: String get() = when (Strings.lang) {
         AppLanguage.CHINESE -> "名称"
         AppLanguage.ENGLISH -> "Name"
@@ -16321,19 +16295,6 @@ object StringsE {
         AppLanguage.RUSSIAN -> "Требуется название"
         AppLanguage.JAPANESE -> "名前は必須です"
         AppLanguage.KOREAN -> "이름은 필수입니다"
-    }
-
-    val pluginScriptTab: String get() = when (Strings.lang) {
-        AppLanguage.CHINESE -> "脚本"
-        AppLanguage.ENGLISH -> "Script"
-        AppLanguage.ARABIC -> "النص"
-        AppLanguage.PORTUGUESE -> "Script"
-        AppLanguage.SPANISH -> "Script"
-        AppLanguage.FRENCH -> "Script"
-        AppLanguage.GERMAN -> "Skript"
-        AppLanguage.RUSSIAN -> "Скрипт"
-        AppLanguage.JAPANESE -> "スクリプト"
-        AppLanguage.KOREAN -> "스크립트"
     }
 
     val pluginAttachEmpty: String get() = when (Strings.lang) {

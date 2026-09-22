@@ -5189,8 +5189,7 @@ object Strings {
     val pluginDeleteConfirmTitle: String get() = StringsE.pluginDeleteConfirmTitle
     fun pluginImportSuccess(name: String): String = StringsE.pluginImportSuccess(name)
     val pluginEditorEdit: String get() = StringsE.pluginEditorEdit
-    val pluginTabInfo: String get() = StringsE.pluginTabInfo
-    val pluginTabPanel: String get() = StringsE.pluginTabPanel
+
     val pluginFieldName: String get() = StringsE.pluginFieldName
     val pluginFieldId: String get() = StringsE.pluginFieldId
     val pluginFieldVersion: String get() = StringsE.pluginFieldVersion
@@ -5207,7 +5206,6 @@ object Strings {
     val pluginPermDownload: String get() = StringsE.pluginPermDownload
     val pluginShowEntry: String get() = StringsE.pluginShowEntry
     val pluginNameRequired: String get() = StringsE.pluginNameRequired
-    val pluginScriptTab: String get() = StringsE.pluginScriptTab
     val pluginAttachEmpty: String get() = StringsE.pluginAttachEmpty
     val pluginAttachHint: String get() = StringsE.pluginAttachHint
     val pluginAdd: String get() = StringsE.pluginAdd
