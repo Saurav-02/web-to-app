@@ -259,11 +259,15 @@ private fun PluginSelectorDialog(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
-                            Text(
-                                "${kindLabel(plugin.kind)} · v${plugin.versionName}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            if (plugin.description.isNotBlank()) {
+                                Text(
+                                    plugin.description,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                         if (plugin.builtIn) {
                             Icon(

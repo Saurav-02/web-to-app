@@ -2,7 +2,6 @@ package com.webtoapp.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,7 +46,9 @@ fun PluginEditorScreen(
     var isNew by remember { mutableStateOf(pluginId == null) }
     var kind by remember { mutableStateOf(PluginKind.HCJ) }
 
-    // Manifest fields
+    // Manifest fields. Only name/description/matches are user-facing; the
+    // rest is preserved from the on-disk manifest (or defaulted for new
+    // plugins) — self-authored code needs no permission ceremony.
     var id by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var version by remember { mutableStateOf("1.0.0") }
@@ -57,7 +58,7 @@ fun PluginEditorScreen(
     var matches by remember { mutableStateOf("*") }
     var excludeMatches by remember { mutableStateOf("") }
     var runAt by remember { mutableStateOf(PluginRunAt.DOCUMENT_END) }
-    var permissions by remember { mutableStateOf(setOf<PluginPermission>()) }
+    var permissions by remember { mutableStateOf(PluginPermission.values().toSet()) }
     var showEntry by remember { mutableStateOf(true) }
 
     // Package files
@@ -172,9 +173,14 @@ fun PluginEditorScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = ::save) {
-                        Icon(Icons.Filled.Check, contentDescription = Strings.save)
-                    }
+                    WtaButton(
+                        onClick = ::save,
+                        text = Strings.save,
+                        variant = WtaButtonVariant.Primary,
+                        size = WtaButtonSize.Small,
+                        leadingIcon = Icons.Filled.Check,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
                 }
             )
         }
@@ -198,19 +204,10 @@ fun PluginEditorScreen(
 
                 when (tab) {
                     0 -> InfoTab(
-                        isNew = isNew,
-                        id = id, onId = { id = it },
                         name = name, onName = { name = it; nameError = false },
                         nameError = nameError,
-                        version = version, onVersion = { version = it },
-                        author = author, onAuthor = { author = it },
                         description = description, onDescription = { description = it },
-                        homepage = homepage, onHomepage = { homepage = it },
-                        matches = matches, onMatches = { matches = it },
-                        excludeMatches = excludeMatches, onExcludes = { excludeMatches = it },
-                        runAt = runAt, onRunAt = { runAt = it },
-                        permissions = permissions, onPermissions = { permissions = it },
-                        showEntry = showEntry, onShowEntry = { showEntry = it }
+                        matches = matches, onMatches = { matches = it }
                     )
                     1 -> CodeTab(
                         content = mainJs,
@@ -280,19 +277,10 @@ hcj.on('action', () => {
 
 @Composable
 private fun InfoTab(
-    isNew: Boolean,
-    id: String, onId: (String) -> Unit,
     name: String, onName: (String) -> Unit,
     nameError: Boolean,
-    version: String, onVersion: (String) -> Unit,
-    author: String, onAuthor: (String) -> Unit,
     description: String, onDescription: (String) -> Unit,
-    homepage: String, onHomepage: (String) -> Unit,
-    matches: String, onMatches: (String) -> Unit,
-    excludeMatches: String, onExcludes: (String) -> Unit,
-    runAt: PluginRunAt, onRunAt: (PluginRunAt) -> Unit,
-    permissions: Set<PluginPermission>, onPermissions: (Set<PluginPermission>) -> Unit,
-    showEntry: Boolean, onShowEntry: (Boolean) -> Unit
+    matches: String, onMatches: (String) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -302,68 +290,9 @@ private fun InfoTab(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Field(Strings.pluginFieldName, name, onName, isError = nameError, errorText = Strings.pluginNameRequired)
-        if (isNew) {
-            Field(Strings.pluginFieldId, id, onId, placeholder = slugFor(name))
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(modifier = Modifier.weight(1f)) {
-                Field(Strings.pluginFieldVersion, version, onVersion)
-            }
-            Box(modifier = Modifier.weight(1f)) {
-                Field(Strings.author, author, onAuthor)
-            }
-        }
         Field(Strings.description, description, onDescription)
-        Field("Homepage", homepage, onHomepage)
         Field(Strings.pluginFieldMatches, matches, onMatches, minLines = 3, hint = Strings.pluginFieldMatchesHint)
-        Field(Strings.pluginFieldExcludes, excludeMatches, onExcludes, minLines = 2, hint = Strings.pluginFieldMatchesHint)
-
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(Strings.pluginFieldRunAt, style = MaterialTheme.typography.labelLarge)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                WtaChip(runAt == PluginRunAt.DOCUMENT_START, { onRunAt(PluginRunAt.DOCUMENT_START) }, Strings.runAtStart)
-                WtaChip(runAt == PluginRunAt.DOCUMENT_END, { onRunAt(PluginRunAt.DOCUMENT_END) }, Strings.runAtEnd)
-                WtaChip(runAt == PluginRunAt.DOCUMENT_IDLE, { onRunAt(PluginRunAt.DOCUMENT_IDLE) }, Strings.runAtIdle)
-            }
-        }
-
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(Strings.pluginFieldPermissions, style = MaterialTheme.typography.labelLarge)
-            @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                permChip(permissions, onPermissions, PluginPermission.STORAGE, Strings.pluginPermStorage)
-                permChip(permissions, onPermissions, PluginPermission.FETCH, Strings.pluginPermFetch)
-                permChip(permissions, onPermissions, PluginPermission.NOTIFY, Strings.pluginPermNotify)
-                permChip(permissions, onPermissions, PluginPermission.BADGE, Strings.pluginPermBadge)
-                permChip(permissions, onPermissions, PluginPermission.CLIPBOARD, Strings.pluginPermClipboard)
-                permChip(permissions, onPermissions, PluginPermission.DOWNLOAD, Strings.pluginPermDownload)
-            }
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(Strings.pluginShowEntry, modifier = Modifier.weight(1f))
-            WtaSwitch(checked = showEntry, onCheckedChange = onShowEntry)
-        }
     }
-}
-
-@Composable
-private fun RowScope.permChip(
-    permissions: Set<PluginPermission>,
-    onPermissions: (Set<PluginPermission>) -> Unit,
-    perm: PluginPermission,
-    label: String
-) {
-    WtaChip(
-        selected = perm in permissions,
-        onClick = {
-            onPermissions(if (perm in permissions) permissions - perm else permissions + perm)
-        },
-        label = label
-    )
 }
 
 @Composable
@@ -429,42 +358,38 @@ private fun CodeTab(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Spacer(Modifier.width(10.dp))
+            WtaButton(
+                onClick = onEdit,
+                text = Strings.edit,
+                variant = WtaButtonVariant.Tonal,
+                size = WtaButtonSize.Small,
+                leadingIcon = Icons.Default.Edit
+            )
         }
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
                 .clip(RoundedCornerShape(WtaRadius.Button))
                 .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                .clickable { onEdit() }
-                .padding(14.dp),
-            verticalAlignment = Alignment.Top
+                .padding(14.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                if (content.isNotBlank()) {
-                    Text(
-                        text = content,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontFamily = FontFamily.Monospace,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 40,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                } else {
-                    Text(
-                        text = placeholder,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontFamily = FontFamily.Monospace,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            if (content.isNotBlank()) {
+                Text(
+                    text = content,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            } else {
+                Text(
+                    text = placeholder,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            Icon(
-                Icons.Default.Edit,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

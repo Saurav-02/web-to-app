@@ -281,30 +281,38 @@ fun PluginManagerScreen(
             onDismissRequest = { showHostStyle = false },
             title = Strings.pluginHostStyle,
             content = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Text(Strings.pluginEntryStyle, style = MaterialTheme.typography.labelLarge)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        WtaChip(entry == PluginEntryStyle.TOOLBAR, {
-                            entry = PluginEntryStyle.TOOLBAR; prefs.entryStyle = entry
-                        }, Strings.entryStyleToolbar)
-                        WtaChip(entry == PluginEntryStyle.MENU, {
-                            entry = PluginEntryStyle.MENU; prefs.entryStyle = entry
-                        }, Strings.entryStyleMenu)
-                        WtaChip(entry == PluginEntryStyle.FLOATING_HANDLE, {
-                            entry = PluginEntryStyle.FLOATING_HANDLE; prefs.entryStyle = entry
-                        }, Strings.entryStyleFloating)
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(
+                            PluginEntryStyle.TOOLBAR to Strings.entryStyleToolbar,
+                            PluginEntryStyle.MENU to Strings.entryStyleMenu,
+                            PluginEntryStyle.FLOATING_HANDLE to Strings.entryStyleFloating
+                        ).forEach { (style, label) ->
+                            WtaButton(
+                                onClick = { entry = style; prefs.entryStyle = style },
+                                text = label,
+                                variant = if (entry == style) WtaButtonVariant.Primary else WtaButtonVariant.Tonal,
+                                size = WtaButtonSize.Small,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                     Text(Strings.pluginPanelStyleLabel, style = MaterialTheme.typography.labelLarge)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        WtaChip(panel == PluginPanelStyle.BOTTOM_SHEET, {
-                            panel = PluginPanelStyle.BOTTOM_SHEET; prefs.panelStyle = panel
-                        }, Strings.panelStyleSheet)
-                        WtaChip(panel == PluginPanelStyle.FLOATING_WINDOW, {
-                            panel = PluginPanelStyle.FLOATING_WINDOW; prefs.panelStyle = panel
-                        }, Strings.panelStyleWindow)
-                        WtaChip(panel == PluginPanelStyle.FULLSCREEN, {
-                            panel = PluginPanelStyle.FULLSCREEN; prefs.panelStyle = panel
-                        }, Strings.panelStyleFullscreen)
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(
+                            PluginPanelStyle.BOTTOM_SHEET to Strings.panelStyleSheet,
+                            PluginPanelStyle.FLOATING_WINDOW to Strings.panelStyleWindow,
+                            PluginPanelStyle.FULLSCREEN to Strings.panelStyleFullscreen
+                        ).forEach { (style, label) ->
+                            WtaButton(
+                                onClick = { panel = style; prefs.panelStyle = style },
+                                text = label,
+                                variant = if (panel == style) WtaButtonVariant.Primary else WtaButtonVariant.Tonal,
+                                size = WtaButtonSize.Small,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
             },
