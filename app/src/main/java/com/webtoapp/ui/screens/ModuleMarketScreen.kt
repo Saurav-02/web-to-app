@@ -66,10 +66,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.webtoapp.core.i18n.Strings
 import com.webtoapp.core.market.GfBrowseCategory
-import com.webtoapp.core.market.GfFavorite
 import com.webtoapp.core.market.GfSearchResult
 import com.webtoapp.core.market.GfSort
-import com.webtoapp.core.market.GreasyForkFavorites
 import com.webtoapp.core.market.GreasyForkSearch
 import com.webtoapp.core.market.InstallProgress
 import com.webtoapp.core.market.MarketInstallState
@@ -155,18 +153,6 @@ fun ModuleMarketScreen(
     var gfQuery by remember { mutableStateOf("") }
     var gfSort by remember { mutableStateOf(GfSort.DAILY) }
     var gfBrowseCategory by remember { mutableStateOf(GfBrowseCategory.HOT) }
-    var gfFavorites by remember { mutableStateOf<List<GfFavorite>>(emptyList()) }
-    val gfFavoritesRepo = remember(context) { GreasyForkFavorites.getInstance(context) }
-
-    LaunchedEffect(selectedTab) {
-        if (selectedTab == 2) {
-            gfFavorites = gfFavoritesRepo.load()
-        }
-    }
-
-    LaunchedEffect(gfFavoritesRepo) {
-        gfFavorites = gfFavoritesRepo.load()
-    }
 
     val currentLocale = remember {
         val tag = java.util.Locale.getDefault().language
@@ -344,7 +330,7 @@ fun ModuleMarketScreen(
                     tabs = listOf(
                         WtaTab(Strings.extensionModulesTab, filteredCustom.size),
                         WtaTab(Strings.browserExtTab, filteredChromeExt.size),
-                        WtaTab(Strings.greasyForkTab, gfFavorites.size)
+                        WtaTab(Strings.greasyForkTab, gfResults.size)
                     ),
                     selectedIndex = selectedTab,
                     onTabSelected = { selectedTab = it },
@@ -364,7 +350,6 @@ fun ModuleMarketScreen(
                         onBrowseCategoryChange = { gfBrowseCategory = it },
                         installingId = installingId,
                         installProgress = installProgress,
-                        favorites = gfFavorites,
                         installedUserScriptNames = installedModules
                             .filter { it.kind == com.webtoapp.core.plugin.PluginKind.USERSCRIPT }
                             .map { it.name }
@@ -382,16 +367,6 @@ fun ModuleMarketScreen(
                                 )
                                 installingId = null
                                 installProgress = null
-                            }
-                        },
-                        onToggleFavorite = { result ->
-                            scope.launch {
-                                val fav = GfFavorite.fromResult(result)
-                                gfFavorites = if (gfFavorites.any { it.scriptId == result.id }) {
-                                    gfFavoritesRepo.remove(result.id)
-                                } else {
-                                    gfFavoritesRepo.add(fav)
-                                }
                             }
                         },
                         onOpenSource = { result ->

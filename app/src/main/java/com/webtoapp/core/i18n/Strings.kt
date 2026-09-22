@@ -3851,9 +3851,6 @@ object Strings {
     val gfSortRatings: String get() = StringsE.gfSortRatings
     val gfSortUpdated: String get() = StringsE.gfSortUpdated
     val gfInstallFailed: String get() = StringsE.gfInstallFailed
-    val gfFavorite: String get() = StringsE.gfFavorite
-    val gfUnfavorite: String get() = StringsE.gfUnfavorite
-    val gfFavoritesSection: String get() = StringsE.gfFavoritesSection
     val gfEmptyTitle: String get() = StringsE.gfEmptyTitle
     val gfFromUserScriptsTitle: String get() = StringsE.gfFromUserScriptsTitle
     val gfFromUserScriptsDesc: String get() = StringsE.gfFromUserScriptsDesc

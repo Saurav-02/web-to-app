@@ -25,8 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.OpenInNew
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -36,7 +34,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -47,10 +44,8 @@ import com.webtoapp.core.extension.UserScriptParser
 import com.webtoapp.core.i18n.Strings
 import com.webtoapp.core.logging.AppLogger
 import com.webtoapp.core.market.GfBrowseCategory
-import com.webtoapp.core.market.GfFavorite
 import com.webtoapp.core.market.GfSearchResult
 import com.webtoapp.core.market.GfSort
-import com.webtoapp.core.market.GreasyForkFavorites
 import com.webtoapp.core.market.GreasyForkSearch
 import com.webtoapp.core.market.InstallProgress
 import com.webtoapp.ui.design.WtaButton
@@ -75,17 +70,13 @@ fun GreasyForkSearchContent(
     onBrowseCategoryChange: (GfBrowseCategory) -> Unit = {},
     installingId: String?,
     installProgress: InstallProgress?,
-    favorites: List<GfFavorite>,
     installedUserScriptNames: Set<String>,
     onInstall: (GfSearchResult) -> Unit,
-    onToggleFavorite: (GfSearchResult) -> Unit,
     onOpenSource: (GfSearchResult) -> Unit,
     listState: LazyListState,
     onImportUserScript: (() -> Unit)? = null
 ) {
-    val favoriteIds = remember(favorites) { favorites.map { it.scriptId }.toSet() }
     val showBrowse = query.isBlank()
-    val showFavorites = showBrowse && !isSearching && errorMessage == null && favorites.isNotEmpty()
 
     if (isSearching && results.isEmpty()) {
         Box(
@@ -160,48 +151,6 @@ fun GreasyForkSearchContent(
             item(key = "gf-sort") {
                 GfSortRow(sortMode = sortMode, onSortModeChange = onSortModeChange)
             }
-            if (showFavorites) {
-                item(key = "gf-favorites-title") {
-                    Text(
-                        text = Strings.gfFavoritesSection,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-                items(favorites, key = { "fav-${it.scriptId}" }) { fav ->
-                    val favResult = GfSearchResult(
-                        id = fav.scriptId,
-                        name = fav.name,
-                        description = fav.description,
-                        version = fav.version,
-                        codeUrl = fav.codeUrl,
-                        pageUrl = fav.pageUrl,
-                        author = fav.author,
-                        authorUrl = null,
-                        fanScore = fav.fanScore,
-                        totalInstalls = fav.totalInstalls,
-                        dailyInstalls = 0L,
-                        goodRatings = 0L,
-                        okRatings = 0L,
-                        badRatings = 0L,
-                        codeUpdatedAt = "",
-                        license = "",
-                        locale = "",
-                        codeSize = 0L
-                    )
-                    val id = "gf-${fav.scriptId}"
-                    GfResultCard(
-                        result = favResult,
-                        isFavorite = true,
-                        isInstalled = fav.name in installedUserScriptNames,
-                        isInstalling = installingId == id,
-                        installProgress = if (installingId == id) installProgress else null,
-                        onInstall = { onInstall(favResult) },
-                        onToggleFavorite = { onToggleFavorite(favResult) },
-                        onOpenSource = { onOpenSource(favResult) }
-                    )
-                }
-            }
             item(key = "gf-section-title") {
                 Text(
                     text = if (browseCategory == GfBrowseCategory.HOT) {
@@ -250,12 +199,10 @@ fun GreasyForkSearchContent(
             val id = "gf-${result.id}"
             GfResultCard(
                 result = result,
-                isFavorite = result.id in favoriteIds,
                 isInstalled = result.name in installedUserScriptNames,
                 isInstalling = installingId == id,
                 installProgress = if (installingId == id) installProgress else null,
                 onInstall = { onInstall(result) },
-                onToggleFavorite = { onToggleFavorite(result) },
                 onOpenSource = { onOpenSource(result) }
             )
         }
@@ -311,12 +258,10 @@ private fun gfSortLabel(mode: GfSort): String = when (mode) {
 @Composable
 private fun GfResultCard(
     result: GfSearchResult,
-    isFavorite: Boolean,
     isInstalled: Boolean,
     isInstalling: Boolean,
     installProgress: InstallProgress?,
     onInstall: () -> Unit,
-    onToggleFavorite: () -> Unit,
     onOpenSource: () -> Unit
 ) {
     WtaCard(
@@ -380,13 +325,6 @@ private fun GfResultCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onOpenSource, modifier = Modifier.size(36.dp)) {
                     Icon(Icons.Default.OpenInNew, contentDescription = Strings.moduleMarketViewSource)
-                }
-                IconButton(onClick = onToggleFavorite, modifier = Modifier.size(36.dp)) {
-                    Icon(
-                        imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
-                        contentDescription = if (isFavorite) Strings.gfUnfavorite else Strings.gfFavorite,
-                        tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
                 Spacer(Modifier.weight(1f))
                 if (isInstalled) {
@@ -462,9 +400,4 @@ suspend fun installGreasyForkScript(
         AppLogger.e("GreasyForkInstall", "install failed for ${result.id}", e)
         snackbar.showSnackbar(Strings.gfInstallFailed.replace("%s", e.message ?: "unknown"))
     }
-}
-
-@Composable
-fun rememberGreasyForkFavorites(context: android.content.Context): GreasyForkFavorites {
-    return remember(context) { GreasyForkFavorites.getInstance(context) }
 }

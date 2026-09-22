@@ -490,42 +490,6 @@ object StringsE {
         AppLanguage.JAPANESE -> "インストール失敗"
         AppLanguage.KOREAN -> "설치 실패"
     }
-    val gfFavorite: String get() = when (Strings.lang) {
-        AppLanguage.CHINESE -> "收藏"
-        AppLanguage.ENGLISH -> "Favorite"
-        AppLanguage.ARABIC -> "المفضلة"
-        AppLanguage.PORTUGUESE -> "Favoritar"
-        AppLanguage.SPANISH -> "Favorito"
-        AppLanguage.FRENCH -> "Favori"
-        AppLanguage.GERMAN -> "Favorit"
-        AppLanguage.RUSSIAN -> "В избранное"
-        AppLanguage.JAPANESE -> "お気に入り"
-        AppLanguage.KOREAN -> "즐겨찾기"
-    }
-    val gfUnfavorite: String get() = when (Strings.lang) {
-        AppLanguage.CHINESE -> "取消收藏"
-        AppLanguage.ENGLISH -> "Unfavorite"
-        AppLanguage.ARABIC -> "إزالة من المفضلة"
-        AppLanguage.PORTUGUESE -> "Desfavoritar"
-        AppLanguage.SPANISH -> "Quitar de favoritos"
-        AppLanguage.FRENCH -> "Retirer des favoris"
-        AppLanguage.GERMAN -> "Aus Favoriten entfernen"
-        AppLanguage.RUSSIAN -> "Убрать из избранного"
-        AppLanguage.JAPANESE -> "お気に入り解除"
-        AppLanguage.KOREAN -> "즐겨찾기 해제"
-    }
-    val gfFavoritesSection: String get() = when (Strings.lang) {
-        AppLanguage.CHINESE -> "我的收藏"
-        AppLanguage.ENGLISH -> "My favorites"
-        AppLanguage.ARABIC -> "المفضلة لدي"
-        AppLanguage.PORTUGUESE -> "Meus favoritos"
-        AppLanguage.SPANISH -> "Mis favoritos"
-        AppLanguage.FRENCH -> "Mes favoris"
-        AppLanguage.GERMAN -> "Meine Favoriten"
-        AppLanguage.RUSSIAN -> "Мои избранные"
-        AppLanguage.JAPANESE -> "お気に入り"
-        AppLanguage.KOREAN -> "내 즐겨찾기"
-    }
     val gfEmptyTitle: String get() = when (Strings.lang) {
         AppLanguage.CHINESE -> "暂无 GreasyFork 脚本"
         AppLanguage.ENGLISH -> "No GreasyFork scripts"
