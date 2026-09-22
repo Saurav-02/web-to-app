@@ -99,6 +99,10 @@ class PluginStore private constructor(private val context: Context) {
     @Volatile
     private var builtInsLanguage: AppLanguage? = null
 
+    /** Per-plugin style overrides chosen in the manager (id → entry/panel).
+     *  Declared before init: loadBuiltIns runs during construction. */
+    private val styleOverrides = java.util.concurrent.ConcurrentHashMap<String, StyleOverride>()
+
     init {
         loadBuiltIns()
         rebuildCache()
@@ -191,9 +195,6 @@ class PluginStore private constructor(private val context: Context) {
         }
     }
 
-    /** Per-plugin style overrides chosen in the manager (id → entry/panel). */
-    private val styleOverrides = java.util.concurrent.ConcurrentHashMap<String, StyleOverride>()
-
     private fun Plugin.withOverride(): Plugin =
         styleOverrides[id]?.let {
             copy(entryStyle = PluginEntryStyle.parse(it.entry), panelStyle = PluginPanelStyle.parse(it.panel))
@@ -250,6 +251,7 @@ class PluginStore private constructor(private val context: Context) {
     private fun loadBuiltIns() {
         builtInsLanguage = Strings.lang
         val overlay = readOverlay()
+        styleOverrides.putAll(overlay.styles)
         val loaded = mutableListOf<Plugin>()
         try {
             val dirs = context.assets.list(BUILTIN_ASSET_DIR) ?: emptyArray()
