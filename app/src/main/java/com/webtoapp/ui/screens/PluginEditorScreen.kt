@@ -139,6 +139,7 @@ fun PluginEditorScreen(
             permissions = permissions.map { it.name },
             toolbar = showEntry,
             preferredEntry = preservedManifest?.preferredEntry.orEmpty(),
+            preferredPanel = preservedManifest?.preferredPanel.orEmpty(),
             gmGrants = preservedManifest?.gmGrants.orEmpty(),
             requireUrls = preservedManifest?.requireUrls.orEmpty(),
             resources = preservedManifest?.resources.orEmpty(),

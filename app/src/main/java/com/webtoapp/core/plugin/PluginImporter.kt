@@ -296,15 +296,19 @@ class PluginImporter(private val context: Context) {
     // ------------------------------------------------------------------
 
     suspend fun exportHcj(plugin: Plugin): File? = withContext(Dispatchers.IO) {
-        val dir = File(File(context.filesDir, PluginStore.PLUGINS_DIR), plugin.packageDir)
-        if (!dir.isDirectory) return@withContext null
         val out = File(context.cacheDir, "${plugin.name.replace(Regex("[^a-zA-Z0-9\\u4e00-\\u9fa5]"), "_")}.hcj")
         try {
             java.util.zip.ZipOutputStream(out.outputStream().buffered()).use { zos ->
-                dir.walkTopDown().filter { it.isFile }.forEach { f ->
-                    zos.putNextEntry(ZipEntry(f.relativeTo(dir).path))
-                    f.inputStream().use { it.copyTo(zos) }
-                    zos.closeEntry()
+                if (plugin.builtIn) {
+                    writeAssetDir(zos, plugin.packageDir, "")
+                } else {
+                    val dir = File(File(context.filesDir, PluginStore.PLUGINS_DIR), plugin.packageDir)
+                    if (!dir.isDirectory) return@withContext null
+                    dir.walkTopDown().filter { it.isFile }.forEach { f ->
+                        zos.putNextEntry(ZipEntry(f.relativeTo(dir).path))
+                        f.inputStream().use { it.copyTo(zos) }
+                        zos.closeEntry()
+                    }
                 }
             }
             out
@@ -312,6 +316,18 @@ class PluginImporter(private val context: Context) {
             AppLogger.e(TAG, "exportHcj failed", e)
             null
         }
+    }
+
+    /** Recursively zip an assets directory ([packageDir] like "plugins/dark-mode"). */
+    private fun writeAssetDir(zos: java.util.zip.ZipOutputStream, path: String, prefix: String) {
+        val children = context.assets.list(path).orEmpty()
+        if (children.isEmpty()) {
+            zos.putNextEntry(ZipEntry(prefix))
+            context.assets.open(path).use { it.copyTo(zos) }
+            zos.closeEntry()
+            return
+        }
+        children.forEach { writeAssetDir(zos, "$path/$it", "$prefix$it") }
     }
 
     internal fun fileNameFor(uri: Uri): String? {

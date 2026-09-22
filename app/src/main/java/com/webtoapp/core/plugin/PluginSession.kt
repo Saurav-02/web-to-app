@@ -26,6 +26,9 @@ object PluginHostState {
         val hasPanel: Boolean,
         val badge: String = "",
         val badgeColor: String = "",
+        /** Per-plugin host styles — resolved manifest preference or override. */
+        val entryStyle: PluginEntryStyle = PluginEntryStyle.TOOLBAR,
+        val panelStyle: PluginPanelStyle = PluginPanelStyle.BOTTOM_SHEET,
         /** GM_registerMenuCommand names for userscript entries. */
         val menuCommands: List<String> = emptyList()
     )
@@ -39,6 +42,7 @@ object PluginHostState {
         /** For HCJ/USERSCRIPT panels: raw html loaded via loadDataWithBaseURL. */
         val html: String? = null,
         val baseUrl: String? = null,
+        val panelStyle: PluginPanelStyle = PluginPanelStyle.BOTTOM_SHEET,
         val seq: Long = System.nanoTime()
     )
 
@@ -187,7 +191,9 @@ class PluginSession(
                         icon = r.plugin.icon,
                         kind = r.plugin.kind,
                         matchesCurrentUrl = r.plugin.matchesUrl(currentUrl),
-                        hasPanel = r.plugin.hasPanel
+                        hasPanel = r.plugin.hasPanel,
+                        entryStyle = r.plugin.entryStyle,
+                        panelStyle = r.plugin.panelStyle
                     )
                 }
         )
@@ -387,14 +393,14 @@ class PluginSession(
         )
 
     private fun openPanelRequest(resolved: Resolved) {
-        val req = panelRequestOverride?.invoke(resolved)
+        val req = (panelRequestOverride?.invoke(resolved)
             ?: PluginHostState.PanelRequest(
                 pluginId = resolved.plugin.id,
                 kind = resolved.plugin.kind,
                 url = "",
                 html = resolved.panelHtml.takeIf { it.isNotBlank() },
                 baseUrl = "hcj-plugin://${resolved.plugin.id}/"
-            )
+            )).copy(panelStyle = resolved.plugin.panelStyle)
         PluginHostState.requestPanel(req)
     }
 }

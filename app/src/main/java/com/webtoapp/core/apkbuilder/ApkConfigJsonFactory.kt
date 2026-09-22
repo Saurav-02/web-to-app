@@ -592,6 +592,8 @@ internal object ApkConfigJsonFactory {
         "permissions" to permissions,
         "toolbar" to toolbar,
         "hasPanel" to hasPanel,
+        "entryStyle" to entryStyle,
+        "panelStyle" to panelStyle,
         "mainJs" to mainJs,
         "css" to css,
         "panelHtml" to panelHtml,

@@ -60,7 +60,6 @@ fun PluginManagerScreen(
     val scope = rememberCoroutineScope()
     val store = remember { PluginStore.getInstance(context) }
     val importer = remember { PluginImporter(context) }
-    val prefs = remember { PluginPrefs(context) }
     val extensionFileManager = remember { ExtensionFileManager(context) }
 
     val installed by store.plugins.collectAsStateWithLifecycle()
@@ -68,7 +67,7 @@ fun PluginManagerScreen(
     val isLoading by store.isLoading.collectAsStateWithLifecycle()
 
     var searchQuery by remember { mutableStateOf("") }
-    var showHostStyle by remember { mutableStateOf(false) }
+    var styleTarget by remember { mutableStateOf<Plugin?>(null) }
     var pendingDelete by remember { mutableStateOf<Plugin?>(null) }
     var isImporting by remember { mutableStateOf(false) }
 
@@ -165,12 +164,6 @@ fun PluginManagerScreen(
                                 onClick = { showMenu = false; onNavigateToMarket() },
                                 leadingIcon = { Icon(Icons.Default.Storefront, null, Modifier.size(20.dp)) }
                             )
-                            WtaDivider()
-                            DropdownMenuItem(
-                                text = { Text(Strings.pluginHostStyle) },
-                                onClick = { showMenu = false; showHostStyle = true },
-                                leadingIcon = { Icon(Icons.Default.Tune, null, Modifier.size(20.dp)) }
-                            )
                         }
                     }
                 }
@@ -217,6 +210,7 @@ fun PluginManagerScreen(
                     if (dragState.itemKey == null) builtinWorking = shownBuiltIns
                 }
                 val spacingPx = with(LocalDensity.current) { 10.dp.toPx() }
+                val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
                 val latestInstalled = rememberUpdatedState(installedWorking)
                 val latestBuiltIns = rememberUpdatedState(builtinWorking)
 
@@ -254,6 +248,7 @@ fun PluginManagerScreen(
                                             itemId = plugin.id,
                                             dragState = dragState,
                                             spacingPx = spacingPx,
+                                            haptic = haptic,
                                             currentList = { latestInstalled.value },
                                             onReorder = { installedWorking = it },
                                             onPersist = { persistOrder(builtIn = false) },
@@ -262,6 +257,7 @@ fun PluginManagerScreen(
                                     onEdit = if (plugin.isScriptPlugin) {
                                         { onNavigateToEditor(plugin.id) }
                                     } else null,
+                                    onStyle = { styleTarget = plugin },
                                     onExport = if (plugin.isScriptPlugin) {
                                         {
                                             scope.launch {
@@ -289,13 +285,19 @@ fun PluginManagerScreen(
                                             itemId = plugin.id,
                                             dragState = dragState,
                                             spacingPx = spacingPx,
+                                            haptic = haptic,
                                             currentList = { latestBuiltIns.value },
                                             onReorder = { builtinWorking = it },
                                             onPersist = { persistOrder(builtIn = true) },
                                             onCancel = { builtinWorking = shownBuiltIns }
                                         ),
                                     onEdit = null,
-                                    onExport = null,
+                                    onStyle = { styleTarget = plugin },
+                                    onExport = {
+                                        scope.launch {
+                                            importer.exportHcj(plugin)?.let { shareHcj(context, it) }
+                                        }
+                                    },
                                     onDelete = null
                                 )
                             }
@@ -323,11 +325,11 @@ fun PluginManagerScreen(
         )
     }
 
-    showHostStyle.takeIf { it }?.let {
-        var entry by remember { mutableStateOf(prefs.entryStyle) }
-        var panel by remember { mutableStateOf(prefs.panelStyle) }
+    styleTarget?.let { target ->
+        var entry by remember(target.id) { mutableStateOf(target.entryStyle) }
+        var panel by remember(target.id) { mutableStateOf(target.panelStyle) }
         WtaAlertDialog(
-            onDismissRequest = { showHostStyle = false },
+            onDismissRequest = { styleTarget = null },
             title = Strings.pluginHostStyle,
             content = {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -339,7 +341,10 @@ fun PluginManagerScreen(
                             PluginEntryStyle.FLOATING_HANDLE to Strings.entryStyleFloating
                         ).forEach { (style, label) ->
                             WtaButton(
-                                onClick = { entry = style; prefs.entryStyle = style },
+                                onClick = {
+                                    entry = style
+                                    scope.launch { store.setPluginStyle(target.id, entry, panel) }
+                                },
                                 text = label,
                                 variant = if (entry == style) WtaButtonVariant.Primary else WtaButtonVariant.Tonal,
                                 size = WtaButtonSize.Small,
@@ -355,7 +360,10 @@ fun PluginManagerScreen(
                             PluginPanelStyle.FULLSCREEN to Strings.panelStyleFullscreen
                         ).forEach { (style, label) ->
                             WtaButton(
-                                onClick = { panel = style; prefs.panelStyle = style },
+                                onClick = {
+                                    panel = style
+                                    scope.launch { store.setPluginStyle(target.id, entry, panel) }
+                                },
                                 text = label,
                                 variant = if (panel == style) WtaButtonVariant.Primary else WtaButtonVariant.Tonal,
                                 size = WtaButtonSize.Small,
@@ -366,7 +374,7 @@ fun PluginManagerScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showHostStyle = false }) { Text(Strings.confirm) }
+                TextButton(onClick = { styleTarget = null }) { Text(Strings.confirm) }
             }
         )
     }
@@ -455,17 +463,27 @@ private fun Modifier.pluginReorderable(
     itemId: String,
     dragState: PluginDragState,
     spacingPx: Float,
+    haptic: androidx.compose.ui.hapticfeedback.HapticFeedback,
     currentList: () -> List<Plugin>,
     onReorder: (List<Plugin>) -> Unit,
     onPersist: () -> Unit,
     onCancel: () -> Unit
 ): Modifier = this
     .zIndex(if (dragState.itemKey == itemKey) 1f else 0f)
-    .graphicsLayer { translationY = if (dragState.itemKey == itemKey) dragState.offsetPx else 0f }
+    .graphicsLayer {
+        val dragging = dragState.itemKey == itemKey
+        translationY = if (dragging) dragState.offsetPx else 0f
+        scaleX = if (dragging) 1.02f else 1f
+        scaleY = if (dragging) 1.02f else 1f
+        shadowElevation = if (dragging) 8.dp.toPx() else 0f
+    }
     .onSizeChanged { dragState.rowHeightPx = it.height }
     .pointerInput(itemKey) {
         detectDragGesturesAfterLongPress(
             onDragStart = {
+                haptic.performHapticFeedback(
+                    androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress
+                )
                 dragState.itemKey = itemKey
                 dragState.offsetPx = 0f
             },
@@ -510,6 +528,7 @@ private fun PluginRow(
     isDragging: Boolean,
     modifier: Modifier = Modifier,
     onEdit: (() -> Unit)?,
+    onStyle: (() -> Unit)?,
     onExport: (() -> Unit)?,
     onDelete: (() -> Unit)?
 ) {
@@ -566,7 +585,7 @@ private fun PluginRow(
                     )
                 }
             }
-            if (onEdit != null || onExport != null || onDelete != null) {
+            if (onEdit != null || onStyle != null || onExport != null || onDelete != null) {
                 Box {
                     var rowMenu by remember { mutableStateOf(false) }
                     IconButton(onClick = { rowMenu = true }) {
@@ -578,6 +597,13 @@ private fun PluginRow(
                                 text = { Text(Strings.edit) },
                                 onClick = { rowMenu = false; edit() },
                                 leadingIcon = { Icon(Icons.Default.Edit, null, Modifier.size(20.dp)) }
+                            )
+                        }
+                        onStyle?.let { style ->
+                            DropdownMenuItem(
+                                text = { Text(Strings.pluginHostStyle) },
+                                onClick = { rowMenu = false; style() },
+                                leadingIcon = { Icon(Icons.Default.Tune, null, Modifier.size(20.dp)) }
                             )
                         }
                         onExport?.let { export ->

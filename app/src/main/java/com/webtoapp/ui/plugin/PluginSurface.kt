@@ -172,40 +172,61 @@ internal fun pluginIcon(icon: String): ImageVector = when (icon) {
 // ---------------------------------------------------------------------------
 
 /**
- * Plugin button inside the native toolbar: puzzle icon with a badge counting
- * plugins active on the current page. Click opens the plugin sheet.
+ * Toolbar plugin entries. Each plugin that picked [PluginEntryStyle.TOOLBAR]
+ * gets its own icon; plugins living in the menu or on the floating handle are
+ * reachable through the puzzle button, which opens the plugin sheet.
  */
 @Composable
-fun PluginToolbarButton(
-    onClick: () -> Unit,
+fun PluginToolbarEntries(
+    onOpenSheet: () -> Unit,
     modifier: Modifier = Modifier,
-    tint: Color = Color.Unspecified,
-    /** MENU entry style renders an overflow ⋮ icon instead of the puzzle icon. */
-    menuStyle: Boolean = false
+    tint: Color = Color.Unspecified
 ) {
     val entries by PluginHostState.entries.collectAsStateWithLifecycle()
-    val activeCount = entries.count { it.matchesCurrentUrl }
-    val explicitBadge = entries.firstOrNull { it.badge.isNotBlank() }?.badge
+    val session = PluginHostState.session
+    val effectiveTint = if (tint == Color.Unspecified) {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    } else {
+        tint
+    }
+    val toolbarEntries = entries.filter { it.entryStyle == PluginEntryStyle.TOOLBAR }
+    val hiddenEntries = entries.filter { it.entryStyle != PluginEntryStyle.TOOLBAR }
 
-    BadgedBox(
-        badge = {
-            when {
-                explicitBadge != null -> Badge { Text(explicitBadge.take(4)) }
-                activeCount > 0 -> Badge { Text("$activeCount") }
-            }
-        },
-        modifier = modifier
-    ) {
-        IconButton(onClick = onClick) {
-            Icon(
-                if (menuStyle) Icons.Filled.MoreVert else Icons.Filled.Extension,
-                contentDescription = pluginsTitle,
-                tint = if (tint == Color.Unspecified) {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                } else {
-                    tint
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
+        toolbarEntries.forEach { entry ->
+            BadgedBox(
+                badge = {
+                    if (entry.badge.isNotBlank()) Badge { Text(entry.badge.take(4)) }
                 }
-            )
+            ) {
+                IconButton(onClick = { session?.activateEntry(entry.pluginId) }) {
+                    Icon(
+                        pluginIcon(entry.icon),
+                        contentDescription = entry.name,
+                        tint = effectiveTint
+                    )
+                }
+            }
+        }
+        if (hiddenEntries.isNotEmpty() || toolbarEntries.isEmpty()) {
+            val activeCount = hiddenEntries.count { it.matchesCurrentUrl }
+            val explicitBadge = hiddenEntries.firstOrNull { it.badge.isNotBlank() }?.badge
+            BadgedBox(
+                badge = {
+                    when {
+                        explicitBadge != null -> Badge { Text(explicitBadge.take(4)) }
+                        activeCount > 0 -> Badge { Text("$activeCount") }
+                    }
+                }
+            ) {
+                IconButton(onClick = onOpenSheet) {
+                    Icon(
+                        if (toolbarEntries.isEmpty()) Icons.Filled.MoreVert else Icons.Filled.Extension,
+                        contentDescription = pluginsTitle,
+                        tint = effectiveTint
+                    )
+                }
+            }
         }
     }
 }
@@ -439,7 +460,6 @@ private fun PluginMenuCommandRow(
 @Composable
 fun PluginSurfaceHost(
     entryStyle: PluginEntryStyle,
-    panelStyle: PluginPanelStyle,
     toolbarVisible: Boolean = true,
     floatingHandleModifier: Modifier = Modifier,
     onManage: (() -> Unit)? = null
@@ -447,6 +467,7 @@ fun PluginSurfaceHost(
     val sheetOpen by PluginHostState.sheetOpen.collectAsStateWithLifecycle()
     val panelRequest by PluginHostState.panelRequest.collectAsStateWithLifecycle()
     val panelOpen by PluginHostState.panelOpen.collectAsStateWithLifecycle()
+    val entries by PluginHostState.entries.collectAsStateWithLifecycle()
 
     if (sheetOpen) {
         PluginSheet(
@@ -459,14 +480,15 @@ fun PluginSurfaceHost(
     if (panelOpen && request != null) {
         PluginPanelHost(
             request = request,
-            style = panelStyle,
+            style = request.panelStyle,
             onDismiss = { PluginHostState.dismissPanel() }
         )
     }
 
-    // TOOLBAR/MENU entries live in the app bar; when the bar is hidden the
-    // floating handle is the fallback so plugins always stay reachable.
-    if (entryStyle == PluginEntryStyle.FLOATING_HANDLE || !toolbarVisible) {
+    // TOOLBAR/MENU entries live in the app bar; a plugin that picked the
+    // floating handle (or a hidden toolbar) renders the draggable launcher.
+    val wantsHandle = entries.any { it.entryStyle == PluginEntryStyle.FLOATING_HANDLE }
+    if (entryStyle == PluginEntryStyle.FLOATING_HANDLE || wantsHandle || !toolbarVisible) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
             PluginFloatingHandle(
                 onClick = { PluginHostState.openPluginSheet() },

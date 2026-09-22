@@ -4654,16 +4654,13 @@ private fun WebApp.buildTranslateBlock(): TranslateBlock = TranslateBlock(
     showButton = translateConfig?.showFloatingButton ?: true
 )
 
-private fun WebApp.buildPluginBlock(context: android.content.Context?): PluginBlock {
-    val prefs = context?.let { com.webtoapp.core.plugin.PluginPrefs(it) }
-    return PluginBlock(
-        enabled = pluginsEnabled,
-        pluginIds = pluginIds,
-        embeddedPlugins = emptyList(),
-        entryStyle = prefs?.entryStyle?.name ?: com.webtoapp.core.plugin.PluginEntryStyle.TOOLBAR.name,
-        panelStyle = prefs?.panelStyle?.name ?: com.webtoapp.core.plugin.PluginPanelStyle.BOTTOM_SHEET.name
-    )
-}
+private fun WebApp.buildPluginBlock(context: android.content.Context?): PluginBlock = PluginBlock(
+    enabled = pluginsEnabled,
+    pluginIds = pluginIds,
+    embeddedPlugins = emptyList(),
+    entryStyle = com.webtoapp.core.plugin.PluginEntryStyle.TOOLBAR.name,
+    panelStyle = com.webtoapp.core.plugin.PluginPanelStyle.BOTTOM_SHEET.name
+)
 
 private fun WebApp.buildAutoStartBlock(): AutoStartBlock = AutoStartBlock(
     enabled = false,
@@ -5290,6 +5287,8 @@ fun WebApp.toApkConfigWithModules(packageName: String, context: android.content.
                     permissions = plugin.permissions.map { it.name },
                     toolbar = plugin.showInToolbar,
                     hasPanel = code.panelHtml.isNotBlank(),
+                    entryStyle = plugin.entryStyle.name,
+                    panelStyle = plugin.panelStyle.name,
                     mainJs = code.mainJs,
                     css = code.css,
                     panelHtml = code.panelHtml,

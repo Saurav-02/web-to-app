@@ -970,6 +970,8 @@ data class EmbeddedPlugin(
     val permissions: List<String> = emptyList(),
     val toolbar: Boolean = true,
     val hasPanel: Boolean = false,
+    val entryStyle: String = "",
+    val panelStyle: String = "",
     val mainJs: String = "",
     val css: String = "",
     val panelHtml: String = "",

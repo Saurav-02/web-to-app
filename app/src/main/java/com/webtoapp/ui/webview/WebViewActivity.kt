@@ -3045,11 +3045,10 @@ fun WebViewScreen(
         )
     }
 
-    // Plugin host surface: entry/panel forms come from the global host prefs
-    // (per-app overrides travel inside the exported shell config instead).
-    val previewPluginPrefs = remember { com.webtoapp.core.plugin.PluginPrefs(context) }
-    val previewPluginEntryStyle = previewPluginPrefs.entryStyle
-    val previewPluginPanelStyle = previewPluginPrefs.panelStyle
+    // Plugin host surface: per-plugin styles ride on each plugin record; these
+    // are only the app-level fallbacks for plugins without their own choice.
+    val previewPluginEntryStyle = com.webtoapp.core.plugin.PluginEntryStyle.TOOLBAR
+    val previewPluginPanelStyle = com.webtoapp.core.plugin.PluginPanelStyle.BOTTOM_SHEET
     val previewPluginsEnabled = webApp?.pluginsEnabled == true ||
         (isTestMode && !testModuleIds.isNullOrEmpty())
 
@@ -3154,15 +3153,11 @@ fun WebViewScreen(
                                 contentDescription = Strings.nativeBridgeCapsFindInPage
                             )
                         }
-                        // Plugin slot — unified entry for HCJ plugins / userscripts /
-                        // chrome extensions. TOOLBAR shows the puzzle icon, MENU shows ⋮.
-                        if (previewPluginsEnabled &&
-                            (previewPluginEntryStyle == com.webtoapp.core.plugin.PluginEntryStyle.TOOLBAR ||
-                                previewPluginEntryStyle == com.webtoapp.core.plugin.PluginEntryStyle.MENU)
-                        ) {
-                            com.webtoapp.ui.plugin.PluginToolbarButton(
-                                onClick = { com.webtoapp.core.plugin.PluginHostState.openPluginSheet() },
-                                menuStyle = previewPluginEntryStyle == com.webtoapp.core.plugin.PluginEntryStyle.MENU
+                        // Plugin slot — per-plugin toolbar icons plus the sheet
+                        // entry for menu/handle-style plugins.
+                        if (previewPluginsEnabled) {
+                            com.webtoapp.ui.plugin.PluginToolbarEntries(
+                                onOpenSheet = { com.webtoapp.core.plugin.PluginHostState.openPluginSheet() }
                             )
                         }
                     },
@@ -3888,7 +3883,6 @@ fun WebViewScreen(
             if (previewPluginsEnabled || webApp?.appType == com.webtoapp.data.model.AppType.MULTI_WEB) {
                 com.webtoapp.ui.plugin.PluginSurfaceHost(
                     entryStyle = previewPluginEntryStyle,
-                    panelStyle = previewPluginPanelStyle,
                     toolbarVisible = shouldShowTopBar,
                     floatingHandleModifier = Modifier
                         .align(Alignment.BottomEnd)

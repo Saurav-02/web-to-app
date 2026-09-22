@@ -234,9 +234,12 @@ data class PluginManifest(
     /** Show an entry for this plugin in the plugin surface. */
     @SerializedName("toolbar")
     val toolbar: Boolean = true,
-    /** Plugin's suggested entry style; the app-level user choice wins. */
+    /** Plugin's suggested entry style; a per-plugin user override wins. */
     @SerializedName("preferredEntry")
     val preferredEntry: String = "",
+    /** Plugin's suggested panel host style; a per-plugin user override wins. */
+    @SerializedName("preferredPanel")
+    val preferredPanel: String = "",
     /** Greasemonkey grants carried over for USERSCRIPT packages. */
     @SerializedName("gmGrants")
     val gmGrants: List<String> = emptyList(),
@@ -319,6 +322,7 @@ data class PluginManifest(
                 permissions = strList(obj, "permissions", emptyList()),
                 toolbar = bool(obj, "toolbar", true),
                 preferredEntry = str(obj, "preferredEntry", ""),
+                preferredPanel = str(obj, "preferredPanel", ""),
                 gmGrants = strList(obj, "gmGrants", emptyList()),
                 requireUrls = strList(obj, "requireUrls", emptyList()),
                 resources = strMap(obj, "resources"),
@@ -372,6 +376,12 @@ data class Plugin(
     val builtIn: Boolean = false,
     @SerializedName("showInToolbar")
     val showInToolbar: Boolean = true,
+
+    /** Resolved per-plugin host styles — manifest preference or user override. */
+    @SerializedName("entryStyle")
+    val entryStyle: PluginEntryStyle = PluginEntryStyle.TOOLBAR,
+    @SerializedName("panelStyle")
+    val panelStyle: PluginPanelStyle = PluginPanelStyle.BOTTOM_SHEET,
 
     @SerializedName("hasPanel")
     val hasPanel: Boolean = false,
@@ -471,6 +481,8 @@ data class Plugin(
             permissions = manifest.resolvedPermissions().toList(),
             builtIn = builtIn,
             showInToolbar = manifest.toolbar,
+            entryStyle = PluginEntryStyle.parse(manifest.preferredEntry),
+            panelStyle = PluginPanelStyle.parse(manifest.preferredPanel),
             hasPanel = hasPanel,
             hasCss = hasCss,
             gmGrants = manifest.gmGrants,

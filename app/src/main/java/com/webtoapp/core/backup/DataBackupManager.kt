@@ -135,8 +135,7 @@ class DataBackupManager(private val context: Context) {
             "isolation_prefs",
             "chrome_extension_storage",
             "chrome_extension_content_scripts",
-            "gallery_positions",
-            "plugin_host_prefs"
+            "gallery_positions"
         )
 
         /**

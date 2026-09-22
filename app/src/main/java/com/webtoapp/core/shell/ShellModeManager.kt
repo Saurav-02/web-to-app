@@ -499,6 +499,12 @@ data class EmbeddedShellPlugin(
     @SerializedName("hasPanel")
     val hasPanel: Boolean = false,
 
+    @SerializedName("entryStyle")
+    val entryStyle: String = "",
+
+    @SerializedName("panelStyle")
+    val panelStyle: String = "",
+
     @SerializedName("mainJs")
     val mainJs: String = "",
 
@@ -560,6 +566,8 @@ data class EmbeddedShellPlugin(
                 runAt = p.runAt.name,
                 permissions = p.permissions.map { it.name },
                 toolbar = p.showInToolbar,
+                entryStyle = p.entryStyle.name,
+                panelStyle = p.panelStyle.name,
                 hasPanel = resolved.panelHtml.isNotBlank() || p.hasPanel,
                 mainJs = resolved.mainJs,
                 css = resolved.css,
@@ -613,6 +621,8 @@ data class EmbeddedShellPlugin(
             com.webtoapp.core.plugin.PluginPermission.parse(name)
         },
         showInToolbar = toolbar,
+        entryStyle = com.webtoapp.core.plugin.PluginEntryStyle.parse(entryStyle),
+        panelStyle = com.webtoapp.core.plugin.PluginPanelStyle.parse(panelStyle),
         hasPanel = hasPanel || panelHtml.isNotBlank(),
         gmGrants = gmGrants,
         requireUrls = requireUrls,

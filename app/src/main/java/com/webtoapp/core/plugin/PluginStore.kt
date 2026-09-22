@@ -124,9 +124,12 @@ class PluginStore private constructor(private val context: Context) {
     // State overlay
     // ------------------------------------------------------------------
 
+    private data class StyleOverride(val entry: String, val panel: String)
+
     private data class StateOverlay(
         val order: MutableList<String> = mutableListOf(),
-        val chromeRecords: MutableList<Plugin> = mutableListOf()
+        val chromeRecords: MutableList<Plugin> = mutableListOf(),
+        val styles: MutableMap<String, StyleOverride> = mutableMapOf()
     )
 
     private fun readOverlay(): StateOverlay {
@@ -135,6 +138,15 @@ class PluginStore private constructor(private val context: Context) {
             val obj = JsonParser.parseString(stateFile.readText()).asJsonObject
             val overlay = StateOverlay()
             obj.getAsJsonArray("order")?.forEach { overlay.order.add(it.asString) }
+            obj.getAsJsonObject("styles")?.entrySet()?.forEach { (id, el) ->
+                runCatching {
+                    val s = el.asJsonObject
+                    overlay.styles[id] = StyleOverride(
+                        entry = s.get("entry")?.asString.orEmpty(),
+                        panel = s.get("panel")?.asString.orEmpty()
+                    )
+                }
+            }
             obj.getAsJsonArray("chromeRecords")?.forEach { el ->
                 try {
                     gson.fromJson(el, Plugin::class.java)?.let {
@@ -158,6 +170,16 @@ class PluginStore private constructor(private val context: Context) {
                 (_plugins.value.map { it.id } + _builtInPlugins.value.map { it.id })
                     .forEach { order.add(it) }
                 overlay.add("order", order)
+                val styles = com.google.gson.JsonObject()
+                (_plugins.value + _builtInPlugins.value).forEach { p ->
+                    styleOverrides[p.id]?.let { o ->
+                        styles.add(p.id, com.google.gson.JsonObject().apply {
+                            addProperty("entry", o.entry)
+                            addProperty("panel", o.panel)
+                        })
+                    }
+                }
+                overlay.add("styles", styles)
                 val chrome = com.google.gson.JsonArray()
                 _plugins.value.filter { it.kind == PluginKind.CHROME_EXTENSION }
                     .forEach { chrome.add(gson.toJsonTree(it)) }
@@ -168,6 +190,14 @@ class PluginStore private constructor(private val context: Context) {
             }
         }
     }
+
+    /** Per-plugin style overrides chosen in the manager (id → entry/panel). */
+    private val styleOverrides = java.util.concurrent.ConcurrentHashMap<String, StyleOverride>()
+
+    private fun Plugin.withOverride(): Plugin =
+        styleOverrides[id]?.let {
+            copy(entryStyle = PluginEntryStyle.parse(it.entry), panelStyle = PluginPanelStyle.parse(it.panel))
+        } ?: this
 
     // ------------------------------------------------------------------
     // Loading
@@ -202,13 +232,14 @@ class PluginStore private constructor(private val context: Context) {
                 )
             }
 
+            styleOverrides.putAll(overlay.styles)
             loaded.addAll(overlay.chromeRecords)
 
             // Stored order first; anything new (fresh installs, migrated) after.
             val byId = loaded.associateBy { it.id }
             val ordered = overlay.order.mapNotNull { byId[it] } +
                 loaded.filter { it.id !in overlay.order }
-            _plugins.value = ordered
+            _plugins.value = ordered.map { it.withOverride() }
             AppLogger.d(TAG, "loaded ${ordered.size} plugins")
         } catch (e: Exception) {
             AppLogger.e(TAG, "failed to load plugins", e)
@@ -245,8 +276,8 @@ class PluginStore private constructor(private val context: Context) {
             AppLogger.e(TAG, "failed to load built-in plugins", e)
         }
         val byId = loaded.associateBy { it.id }
-        _builtInPlugins.value = overlay.order.mapNotNull { byId[it] } +
-            loaded.filter { it.id !in overlay.order }
+        _builtInPlugins.value = (overlay.order.mapNotNull { byId[it] } +
+            loaded.filter { it.id !in overlay.order }).map { it.withOverride() }
     }
 
     fun reloadBuiltInsIfLanguageChanged() {
@@ -387,6 +418,15 @@ class PluginStore private constructor(private val context: Context) {
         val byId = flow.value.associateBy { it.id }
         flow.value = orderedIds.mapNotNull { byId[it] } +
             flow.value.filter { it.id !in orderedIds }
+        writeOverlay()
+        rebuildCache()
+    }
+
+    /** Persist a per-plugin host-style override (entry + panel). */
+    suspend fun setPluginStyle(id: String, entry: PluginEntryStyle, panel: PluginPanelStyle) {
+        styleOverrides[id] = StyleOverride(entry.name, panel.name)
+        _plugins.value = _plugins.value.map { if (it.id == id) it.withOverride() else it }
+        _builtInPlugins.value = _builtInPlugins.value.map { if (it.id == id) it.withOverride() else it }
         writeOverlay()
         rebuildCache()
     }
