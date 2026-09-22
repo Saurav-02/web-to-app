@@ -103,6 +103,10 @@ class PluginStore private constructor(private val context: Context) {
      *  Declared before init: loadBuiltIns runs during construction. */
     private val styleOverrides = java.util.concurrent.ConcurrentHashMap<String, StyleOverride>()
 
+    /** Built-ins the user hid via the row menu; restorable from the ⋮ menu. */
+    private val _hiddenBuiltIns = MutableStateFlow<Set<String>>(emptySet())
+    val hiddenBuiltIns: StateFlow<Set<String>> = _hiddenBuiltIns.asStateFlow()
+
     init {
         loadBuiltIns()
         rebuildCache()
@@ -133,7 +137,8 @@ class PluginStore private constructor(private val context: Context) {
     private data class StateOverlay(
         val order: MutableList<String> = mutableListOf(),
         val chromeRecords: MutableList<Plugin> = mutableListOf(),
-        val styles: MutableMap<String, StyleOverride> = mutableMapOf()
+        val styles: MutableMap<String, StyleOverride> = mutableMapOf(),
+        val hidden: MutableList<String> = mutableListOf()
     )
 
     private fun readOverlay(): StateOverlay {
@@ -142,6 +147,7 @@ class PluginStore private constructor(private val context: Context) {
             val obj = JsonParser.parseString(stateFile.readText()).asJsonObject
             val overlay = StateOverlay()
             obj.getAsJsonArray("order")?.forEach { overlay.order.add(it.asString) }
+            obj.getAsJsonArray("hidden")?.forEach { overlay.hidden.add(it.asString) }
             obj.getAsJsonObject("styles")?.entrySet()?.forEach { (id, el) ->
                 runCatching {
                     val s = el.asJsonObject
@@ -174,6 +180,9 @@ class PluginStore private constructor(private val context: Context) {
                 (_plugins.value.map { it.id } + _builtInPlugins.value.map { it.id })
                     .forEach { order.add(it) }
                 overlay.add("order", order)
+                val hidden = com.google.gson.JsonArray()
+                hiddenBuiltIns.value.forEach { hidden.add(it) }
+                overlay.add("hidden", hidden)
                 val styles = com.google.gson.JsonObject()
                 (_plugins.value + _builtInPlugins.value).forEach { p ->
                     styleOverrides[p.id]?.let { o ->
@@ -241,6 +250,7 @@ class PluginStore private constructor(private val context: Context) {
             val ordered = overlay.order.mapNotNull { byId[it] } +
                 loaded.filter { it.id !in overlay.order }
             _plugins.value = ordered.map { it.withOverride() }
+            refreshBuiltIns()
             AppLogger.d(TAG, "loaded ${ordered.size} plugins")
         } catch (e: Exception) {
             AppLogger.e(TAG, "failed to load plugins", e)
@@ -252,6 +262,7 @@ class PluginStore private constructor(private val context: Context) {
         builtInsLanguage = Strings.lang
         val overlay = readOverlay()
         styleOverrides.putAll(overlay.styles)
+        _hiddenBuiltIns.value = overlay.hidden.toSet()
         val loaded = mutableListOf<Plugin>()
         try {
             val dirs = context.assets.list(BUILTIN_ASSET_DIR) ?: emptyArray()
@@ -278,8 +289,20 @@ class PluginStore private constructor(private val context: Context) {
             AppLogger.e(TAG, "failed to load built-in plugins", e)
         }
         val byId = loaded.associateBy { it.id }
-        _builtInPlugins.value = (overlay.order.mapNotNull { byId[it] } +
-            loaded.filter { it.id !in overlay.order }).map { it.withOverride() }
+        _builtInPlugins.value = filterBuiltIns(
+            (overlay.order.mapNotNull { byId[it] } +
+                loaded.filter { it.id !in overlay.order }).map { it.withOverride() }
+        )
+    }
+
+    /** Drop hidden built-ins and any shadowed by an installed copy of the same id. */
+    private fun filterBuiltIns(list: List<Plugin>): List<Plugin> {
+        val installedIds = _plugins.value.map { it.id }.toSet()
+        return list.filter { it.id !in _hiddenBuiltIns.value && it.id !in installedIds }
+    }
+
+    private suspend fun refreshBuiltIns() {
+        _builtInPlugins.value = filterBuiltIns(_builtInPlugins.value)
     }
 
     fun reloadBuiltInsIfLanguageChanged() {
@@ -297,7 +320,8 @@ class PluginStore private constructor(private val context: Context) {
 
     private fun rebuildCache() {
         val userIds = _plugins.value.map { it.id }.toSet()
-        allCache = _builtInPlugins.value.filter { it.id !in userIds } + _plugins.value
+        allCache = _builtInPlugins.value
+            .filter { it.id !in userIds && it.id !in _hiddenBuiltIns.value } + _plugins.value
     }
 
     // ------------------------------------------------------------------
@@ -385,11 +409,36 @@ class PluginStore private constructor(private val context: Context) {
     // Raw package access (editor)
     // ------------------------------------------------------------------
 
-    /** One text file inside an installed package dir; null when absent. */
+    private fun assetText(path: String): String? = try {
+        context.assets.open(path).bufferedReader().use { it.readText() }
+    } catch (e: Exception) {
+        null
+    }
+
+    private fun assetFiles(dir: String): Map<String, String> {
+        val out = mutableMapOf<String, String>()
+        fun walk(path: String, rel: String) {
+            val kids = context.assets.list(path).orEmpty()
+            if (kids.isEmpty()) {
+                assetText(path)?.let { out[rel] = it }
+                return
+            }
+            kids.forEach { walk("$path/$it", "$rel/$it") }
+        }
+        context.assets.list(dir).orEmpty().forEach { walk("$dir/$it", it) }
+        return out
+    }
+
+    /** One text file inside a package; null when absent. Built-ins read from assets. */
     suspend fun readPackageFile(pluginId: String, rel: String): String? =
         withContext(Dispatchers.IO) {
             if (rel.isBlank() || rel.contains("..")) return@withContext null
-            val f = File(pluginsDir, pluginId).resolve(rel)
+            val plugin = getPlugin(pluginId)
+            if (plugin?.builtIn == true) {
+                return@withContext assetText("${plugin.packageDir}/$rel")
+            }
+            val dirName = plugin?.packageDir?.takeIf { it.isNotBlank() } ?: pluginId
+            val f = File(pluginsDir, dirName).resolve(rel)
             try {
                 f.takeIf { it.isFile }?.readText()
             } catch (e: Exception) {
@@ -397,10 +446,13 @@ class PluginStore private constructor(private val context: Context) {
             }
         }
 
-    /** Every file in the package dir keyed by relative path (editor round-trip). */
+    /** Every file in the package keyed by relative path (editor round-trip). */
     suspend fun readPackageFiles(pluginId: String): Map<String, String> =
         withContext(Dispatchers.IO) {
-            val dir = File(pluginsDir, pluginId)
+            val plugin = getPlugin(pluginId)
+            if (plugin?.builtIn == true) return@withContext assetFiles(plugin.packageDir)
+            val dirName = plugin?.packageDir?.takeIf { it.isNotBlank() } ?: pluginId
+            val dir = File(pluginsDir, dirName)
             if (!dir.isDirectory) return@withContext emptyMap()
             dir.walkTopDown().filter { it.isFile }.associate { f ->
                 f.relativeTo(dir).path to runCatching { f.readText() }.getOrDefault("")
@@ -440,9 +492,27 @@ class PluginStore private constructor(private val context: Context) {
         }
         _plugins.value = _plugins.value.filter { it.id != id }
         PluginConfigStore(context).clear(id)
+        refreshBuiltIns()
         writeOverlay()
         rebuildCache()
         true
+    }
+
+    /** Hide a built-in plugin (row ⋮ → Delete); restore from the screen ⋮ menu. */
+    suspend fun hideBuiltIn(id: String) {
+        _hiddenBuiltIns.value = _hiddenBuiltIns.value + id
+        refreshBuiltIns()
+        writeOverlay()
+        rebuildCache()
+    }
+
+    /** Bring back every hidden built-in. */
+    suspend fun restoreBuiltIns() {
+        if (_hiddenBuiltIns.value.isEmpty()) return
+        _hiddenBuiltIns.value = emptySet()
+        loadBuiltIns()
+        writeOverlay()
+        rebuildCache()
     }
 
     /**
@@ -489,6 +559,7 @@ class PluginStore private constructor(private val context: Context) {
                 createdAt = existing?.createdAt ?: System.currentTimeMillis()
             )
             _plugins.value = _plugins.value.filter { it.id != plugin.id } + plugin
+            refreshBuiltIns()
             writeOverlay()
             rebuildCache()
             Result.success(plugin)

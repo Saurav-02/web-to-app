@@ -16058,30 +16058,19 @@ object StringsE {
         AppLanguage.KOREAN -> "전체 화면 대화상자"
     }
 
-    val pluginPin: String get() = when (Strings.lang) {
-        AppLanguage.CHINESE -> "固定到工具栏"
-        AppLanguage.ENGLISH -> "Pin to toolbar"
-        AppLanguage.ARABIC -> "تثبيت في شريط الأدوات"
-        AppLanguage.PORTUGUESE -> "Fixar na barra"
-        AppLanguage.SPANISH -> "Fijar a la barra"
-        AppLanguage.FRENCH -> "Épingler à la barre"
-        AppLanguage.GERMAN -> "An Symbolleiste anheften"
-        AppLanguage.RUSSIAN -> "Закрепить на панели"
-        AppLanguage.JAPANESE -> "ツールバーに固定"
-        AppLanguage.KOREAN -> "툴바에 고정"
-    }
 
-    val pluginUnpin: String get() = when (Strings.lang) {
-        AppLanguage.CHINESE -> "取消固定"
-        AppLanguage.ENGLISH -> "Unpin"
-        AppLanguage.ARABIC -> "إلغاء التثبيت"
-        AppLanguage.PORTUGUESE -> "Desafixar"
-        AppLanguage.SPANISH -> "Desfijar"
-        AppLanguage.FRENCH -> "Désépingler"
-        AppLanguage.GERMAN -> "Lösen"
-        AppLanguage.RUSSIAN -> "Открепить"
-        AppLanguage.JAPANESE -> "固定を解除"
-        AppLanguage.KOREAN -> "고정 해제"
+
+    val pluginRestoreBuiltIns: String get() = when (Strings.lang) {
+        AppLanguage.CHINESE -> "恢复内置插件"
+        AppLanguage.ENGLISH -> "Restore built-in plugins"
+        AppLanguage.ARABIC -> "استعادة الإضافات المدمجة"
+        AppLanguage.PORTUGUESE -> "Restaurar plugins integrados"
+        AppLanguage.SPANISH -> "Restaurar plugins integrados"
+        AppLanguage.FRENCH -> "Restaurer les plugins intégrés"
+        AppLanguage.GERMAN -> "Integrierte Plugins wiederherstellen"
+        AppLanguage.RUSSIAN -> "Восстановить встроенные плагины"
+        AppLanguage.JAPANESE -> "内蔵プラグインを復元"
+        AppLanguage.KOREAN -> "내장 플러그인 복원"
     }
 
     val pluginExportHcj: String get() = when (Strings.lang) {

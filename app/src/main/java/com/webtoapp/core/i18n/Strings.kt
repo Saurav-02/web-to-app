@@ -5187,8 +5187,7 @@ object Strings {
     val panelStyleSheet: String get() = StringsE.panelStyleSheet
     val panelStyleWindow: String get() = StringsE.panelStyleWindow
     val panelStyleFullscreen: String get() = StringsE.panelStyleFullscreen
-    val pluginPin: String get() = StringsE.pluginPin
-    val pluginUnpin: String get() = StringsE.pluginUnpin
+    val pluginRestoreBuiltIns: String get() = StringsE.pluginRestoreBuiltIns
     val pluginExportHcj: String get() = StringsE.pluginExportHcj
     val pluginDeleteConfirmTitle: String get() = StringsE.pluginDeleteConfirmTitle
     fun pluginImportSuccess(name: String): String = StringsE.pluginImportSuccess(name)

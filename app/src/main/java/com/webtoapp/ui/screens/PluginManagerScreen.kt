@@ -64,6 +64,7 @@ fun PluginManagerScreen(
 
     val installed by store.plugins.collectAsStateWithLifecycle()
     val builtIns by store.builtInPlugins.collectAsStateWithLifecycle()
+    val hiddenBuiltIns by store.hiddenBuiltIns.collectAsStateWithLifecycle()
     val isLoading by store.isLoading.collectAsStateWithLifecycle()
 
     var searchQuery by remember { mutableStateOf("") }
@@ -164,6 +165,17 @@ fun PluginManagerScreen(
                                 onClick = { showMenu = false; onNavigateToMarket() },
                                 leadingIcon = { Icon(Icons.Default.Storefront, null, Modifier.size(20.dp)) }
                             )
+                            if (hiddenBuiltIns.isNotEmpty()) {
+                                WtaDivider()
+                                DropdownMenuItem(
+                                    text = { Text(Strings.pluginRestoreBuiltIns) },
+                                    onClick = {
+                                        showMenu = false
+                                        scope.launch { store.restoreBuiltIns() }
+                                    },
+                                    leadingIcon = { Icon(Icons.Default.Restore, null, Modifier.size(20.dp)) }
+                                )
+                            }
                         }
                     }
                 }
@@ -291,14 +303,14 @@ fun PluginManagerScreen(
                                             onPersist = { persistOrder(builtIn = true) },
                                             onCancel = { builtinWorking = shownBuiltIns }
                                         ),
-                                    onEdit = null,
+                                    onEdit = { onNavigateToEditor(plugin.id) },
                                     onStyle = { styleTarget = plugin },
                                     onExport = {
                                         scope.launch {
                                             importer.exportHcj(plugin)?.let { shareHcj(context, it) }
                                         }
                                     },
-                                    onDelete = null
+                                    onDelete = { pendingDelete = plugin }
                                 )
                             }
                         }
@@ -386,7 +398,9 @@ fun PluginManagerScreen(
             text = plugin.name,
             confirmButton = {
                 PremiumButton(onClick = {
-                    scope.launch { store.removePlugin(plugin.id) }
+                    scope.launch {
+                        if (plugin.builtIn) store.hideBuiltIn(plugin.id) else store.removePlugin(plugin.id)
+                    }
                     pendingDelete = null
                 }) { Text(Strings.delete) }
             },
