@@ -16154,45 +16154,6 @@ object StringsE {
         AppLanguage.KOREAN -> "버전"
     }
 
-    val pluginFieldMatches: String get() = when (Strings.lang) {
-        AppLanguage.CHINESE -> "匹配规则"
-        AppLanguage.ENGLISH -> "Match patterns"
-        AppLanguage.ARABIC -> "أنماط المطابقة"
-        AppLanguage.PORTUGUESE -> "Padrões de correspondência"
-        AppLanguage.SPANISH -> "Patrones de coincidencia"
-        AppLanguage.FRENCH -> "Motifs de correspondance"
-        AppLanguage.GERMAN -> "Treffermuster"
-        AppLanguage.RUSSIAN -> "Шаблоны совпадения"
-        AppLanguage.JAPANESE -> "マッチパターン"
-        AppLanguage.KOREAN -> "일치 패턴"
-    }
-
-    val pluginFieldMatchesHint: String get() = when (Strings.lang) {
-        AppLanguage.CHINESE -> "每行一条，如 *://*.example.com/* 或 /正则/"
-        AppLanguage.ENGLISH -> "One per line, e.g. *://*.example.com/* or /regex/"
-        AppLanguage.ARABIC -> "واحد في كل سطر، مثل *://*.example.com/* أو /regex/"
-        AppLanguage.PORTUGUESE -> "Um por linha, ex.: *://*.example.com/* ou /regex/"
-        AppLanguage.SPANISH -> "Uno por línea, ej.: *://*.example.com/* o /regex/"
-        AppLanguage.FRENCH -> "Un par ligne, ex. *://*.example.com/* ou /regex/"
-        AppLanguage.GERMAN -> "Eines pro Zeile, z. B. *://*.example.com/* oder /regex/"
-        AppLanguage.RUSSIAN -> "По одному в строке, напр. *://*.example.com/* или /regex/"
-        AppLanguage.JAPANESE -> "1 行に 1 つ。例: *://*.example.com/* または /正規表現/"
-        AppLanguage.KOREAN -> "한 줄에 하나씩, 예: *://*.example.com/* 또는 /정규식/"
-    }
-
-    val pluginFieldExcludes: String get() = when (Strings.lang) {
-        AppLanguage.CHINESE -> "排除规则"
-        AppLanguage.ENGLISH -> "Exclude patterns"
-        AppLanguage.ARABIC -> "أنماط الاستبعاد"
-        AppLanguage.PORTUGUESE -> "Padrões de exclusão"
-        AppLanguage.SPANISH -> "Patrones de exclusión"
-        AppLanguage.FRENCH -> "Motifs d'exclusion"
-        AppLanguage.GERMAN -> "Ausschlussmuster"
-        AppLanguage.RUSSIAN -> "Шаблоны исключения"
-        AppLanguage.JAPANESE -> "除外パターン"
-        AppLanguage.KOREAN -> "제외 패턴"
-    }
-
     val pluginFieldRunAt: String get() = when (Strings.lang) {
         AppLanguage.CHINESE -> "注入时机"
         AppLanguage.ENGLISH -> "Run at"

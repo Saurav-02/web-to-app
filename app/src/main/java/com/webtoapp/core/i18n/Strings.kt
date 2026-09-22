@@ -5194,9 +5194,6 @@ object Strings {
     val pluginFieldName: String get() = StringsE.pluginFieldName
     val pluginFieldId: String get() = StringsE.pluginFieldId
     val pluginFieldVersion: String get() = StringsE.pluginFieldVersion
-    val pluginFieldMatches: String get() = StringsE.pluginFieldMatches
-    val pluginFieldMatchesHint: String get() = StringsE.pluginFieldMatchesHint
-    val pluginFieldExcludes: String get() = StringsE.pluginFieldExcludes
     val pluginFieldRunAt: String get() = StringsE.pluginFieldRunAt
     val runAtStart: String get() = StringsE.runAtStart
     val runAtEnd: String get() = StringsE.runAtEnd

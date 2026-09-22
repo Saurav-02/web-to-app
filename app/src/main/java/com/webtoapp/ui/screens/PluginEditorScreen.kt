@@ -46,7 +46,7 @@ fun PluginEditorScreen(
     var isNew by remember { mutableStateOf(pluginId == null) }
     var kind by remember { mutableStateOf(PluginKind.HCJ) }
 
-    // Manifest fields. Only name/description/matches are user-facing; the
+    // Manifest fields. Only name/description are user-facing; the
     // rest is preserved from the on-disk manifest (or defaulted for new
     // plugins) — self-authored code needs no permission ceremony.
     var id by remember { mutableStateOf("") }
@@ -207,8 +207,7 @@ fun PluginEditorScreen(
                     0 -> InfoTab(
                         name = name, onName = { name = it; nameError = false },
                         nameError = nameError,
-                        description = description, onDescription = { description = it },
-                        matches = matches, onMatches = { matches = it }
+                        description = description, onDescription = { description = it }
                     )
                     1 -> CodeTab(
                         content = mainJs,
@@ -280,8 +279,7 @@ hcj.on('action', () => {
 private fun InfoTab(
     name: String, onName: (String) -> Unit,
     nameError: Boolean,
-    description: String, onDescription: (String) -> Unit,
-    matches: String, onMatches: (String) -> Unit
+    description: String, onDescription: (String) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -292,7 +290,6 @@ private fun InfoTab(
     ) {
         Field(Strings.pluginFieldName, name, onName, isError = nameError, errorText = Strings.pluginNameRequired)
         Field(Strings.description, description, onDescription)
-        Field(Strings.pluginFieldMatches, matches, onMatches, minLines = 3, hint = Strings.pluginFieldMatchesHint)
     }
 }
 
