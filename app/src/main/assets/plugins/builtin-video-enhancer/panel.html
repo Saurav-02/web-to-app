@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, -apple-system, sans-serif; padding: 16px; color: #1f2937; }
+  body { font-family: system-ui, -apple-system, sans-serif; padding: 16px; color: var(--wta-on-surface, #1f2937); }
 .wta-video-panel{padding:4px}
 .wta-video-empty{text-align:center;padding:40px;color:var(--wta-on-surface-variant,#9ca3af)}
-.wta-video-empty-icon{font-size:48px;margin-bottom:16px}
+.wta-video-empty-icon{font-size:28px;margin-bottom:10px}
 .wta-video-section{margin-bottom:16px}
 .wta-video-section-title{font-size:14px;color:var(--wta-on-surface-variant,#6b7280);margin-bottom:12px;display:flex;align-items:center;gap:6px}
 .wta-video-speed-grid{display:flex;flex-wrap:wrap;gap:8px}
@@ -23,7 +23,7 @@
 .wta-video-yt-toggle-title{font-size:14px;color:var(--wta-on-surface,#374151);display:flex;align-items:center;gap:6px}
 .wta-video-yt-toggle-desc{font-size:11px;color:var(--wta-on-surface-variant,#9ca3af);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wta-video-yt-chip{padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600}
-.wta-video-yt-chip-on{background:rgba(205,68,50,.15);color:#cc4432}
+.wta-video-yt-chip-on{background:var(--wta-accent-soft,rgba(99,102,241,.12));color:var(--wta-accent,#6366f1)}
 .wta-video-yt-chip-off{background:var(--wta-outline,#e5e7eb);color:var(--wta-on-surface-variant,#9ca3af)}
   #wta-toast { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%);
     background: #111827; color: #fff; font-size: 13px; padding: 8px 16px; border-radius: 20px;
@@ -32,7 +32,7 @@
 </style>
 </head>
 <body>
-<div id="root"><div class="wta-video-empty"><div class="wta-video-empty-icon"><svg style="display:block;margin:0 auto" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="13" height="16" rx="2"/><path d="M15 9l7-4v14l-7-4z"/></svg></div><div id="wta-video-status">Looking for video...</div></div></div>
+<div id="root"><div class="wta-video-empty"><div class="wta-video-empty-icon"><svg style="display:block;margin:0 auto" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="13" height="16" rx="2"/><path d="M15 9l7-4v14l-7-4z"/></svg></div><div id="wta-video-status">Looking for video...</div></div></div>
 <div id="wta-toast"></div>
 <script>
   var root = document.getElementById('root');

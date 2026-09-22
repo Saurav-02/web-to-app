@@ -5,11 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, -apple-system, sans-serif; padding: 16px; color: #1f2937; }
-.wta-privacy-panel{padding:16px}
-.wta-privacy-header{text-align:center;margin-bottom:16px}
-.wta-privacy-icon{font-size:48px;margin-bottom:8px}
-.wta-privacy-item{display:flex;align-items:center;gap:12px;padding:16px;background:var(--wta-surface-dim,#f9fafb);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:background .2s}
+  body { font-family: system-ui, -apple-system, sans-serif; padding: 16px; color: var(--wta-on-surface, #1f2937); }
+.wta-privacy-panel{padding:4px}
+.wta-privacy-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--wta-surface-dim,#f9fafb);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:background .2s}
 .wta-privacy-item:active{background:var(--wta-accent-soft,rgba(99,102,241,.06))}
 .wta-privacy-item-icon{font-size:24px}
 .wta-privacy-item-text{flex:1}
@@ -18,7 +16,7 @@
 .wta-toggle{position:relative;width:48px;height:28px;flex-shrink:0}
 .wta-toggle-track{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--wta-outline,#d1d5db);border-radius:14px;transition:.3s}
 .wta-toggle-thumb{position:absolute;height:24px;width:24px;left:2px;bottom:2px;background:white;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
-.wta-privacy-item[data-state="on"] .wta-toggle-track{background:#22c55e}
+.wta-privacy-item[data-state="on"] .wta-toggle-track{background:var(--wta-accent,#22c55e)}
 .wta-privacy-item[data-state="on"] .wta-toggle-thumb{left:22px}
   #wta-toast { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%);
     background: #111827; color: #fff; font-size: 13px; padding: 8px 16px; border-radius: 20px;
@@ -28,7 +26,6 @@
 </head>
 <body>
 <div id="root"><div class="wta-mod-panel wta-privacy-panel">
-<div class="wta-privacy-header"><div class="wta-privacy-icon"><svg style="display:block;margin:0 auto" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3.5v6c0 5-3.4 9.3-8 10.5-4.6-1.2-8-5.5-8-10.5v-6L12 2z"/></svg></div><div class="wta-mod-desc" id="wta-privacy-subtitle"></div></div>
 <div class="wta-privacy-item" data-wta-action="privacyToggle" data-wta-arg="tracking" id="wta-priv-tracking"><span class="wta-privacy-item-icon"><svg style="display:block" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg></span><div class="wta-privacy-item-text"><div class="wta-privacy-item-name" id="wta-priv-tracking-name"></div><div class="wta-privacy-item-desc" id="wta-priv-tracking-desc"></div></div><div class="wta-toggle"><div class="wta-toggle-track"></div><div class="wta-toggle-thumb"></div></div></div>
 <div class="wta-privacy-item" data-wta-action="privacyToggle" data-wta-arg="fingerprint" id="wta-priv-fingerprint"><span class="wta-privacy-item-icon"><svg style="display:block" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 018-8 8 8 0 018 8v3"/><path d="M8 12a4 4 0 014-4 4 4 0 014 4v5"/><path d="M12 12v7"/></svg></span><div class="wta-privacy-item-text"><div class="wta-privacy-item-name" id="wta-priv-fingerprint-name"></div><div class="wta-privacy-item-desc" id="wta-priv-fingerprint-desc"></div></div><div class="wta-toggle"><div class="wta-toggle-track"></div><div class="wta-toggle-thumb"></div></div></div>
 <div class="wta-privacy-item" data-wta-action="privacyToggle" data-wta-arg="cookies" id="wta-priv-cookies"><span class="wta-privacy-item-icon"><svg style="display:block" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="10" r="1"/><circle cx="10" cy="15" r="1"/><circle cx="15.5" cy="15" r="1"/></svg></span><div class="wta-privacy-item-text"><div class="wta-privacy-item-name" id="wta-priv-cookies-name"></div><div class="wta-privacy-item-desc" id="wta-priv-cookies-desc"></div></div><div class="wta-toggle"><div class="wta-toggle-track"></div><div class="wta-toggle-thumb"></div></div></div>

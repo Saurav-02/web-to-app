@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, -apple-system, sans-serif; padding: 16px; color: #1f2937; }
+  body { font-family: system-ui, -apple-system, sans-serif; padding: 16px; color: var(--wta-on-surface, #1f2937); }
 .wta-media-panel{padding:4px}
 .wta-media-header{margin-bottom:16px}
 .wta-media-title{font-size:15px;font-weight:600;color:var(--wta-on-surface,#1f2937);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -14,7 +14,7 @@
 .wta-media-btn:active{opacity:.8}
 .wta-media-tip{margin-top:16px;padding:12px;background:var(--wta-surface-dim,#fef3f6);border-radius:8px;font-size:12px;color:var(--wta-on-surface-variant,#9ca3af)}
 .wta-media-empty{text-align:center;padding:40px;color:var(--wta-on-surface-variant,#9ca3af)}
-.wta-media-empty-icon{font-size:48px;margin-bottom:16px}
+.wta-media-empty-icon{font-size:28px;margin-bottom:10px}
 .wta-media-list{max-height:200px;overflow-y:auto}
 .wta-media-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--wta-surface-dim,#f9fafb);border-radius:8px;margin-bottom:8px}
 .wta-media-item-icon{font-size:20px}
@@ -27,7 +27,7 @@
 </style>
 </head>
 <body>
-<div id="root"><div class="wta-media-empty"><div class="wta-media-empty-icon"><svg style="display:block;margin:0 auto" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/></svg></div><div id="wta-media-status">Scanning for media...</div></div></div>
+<div id="root"><div class="wta-media-empty"><div class="wta-media-empty-icon"><svg style="display:block;margin:0 auto" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/></svg></div><div id="wta-media-status">Scanning for media...</div></div></div>
 <div id="wta-toast"></div>
 <script>
   var root = document.getElementById('root');

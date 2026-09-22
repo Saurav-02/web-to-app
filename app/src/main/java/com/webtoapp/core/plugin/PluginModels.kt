@@ -511,8 +511,8 @@ internal fun String.escapeForJsSingleQuote(): String =
         .replace("'", "\\'")
         .replace("\n", "\\n")
         .replace("\r", "\\r")
-        .replace("", "\\u2028")
-        .replace("", "\\u2029")
+        .replace("\u2028", "\\u2028")
+        .replace("\u2029", "\\u2029")
 
 internal fun String.escapeForJsTemplate(): String =
     replace("\\", "\\\\")

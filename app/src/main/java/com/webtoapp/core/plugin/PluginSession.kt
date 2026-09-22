@@ -151,6 +151,21 @@ class PluginSession(
 
     val bridge = PluginBridge(configStore, BridgeHost())
 
+    /**
+     * Bridge callbacks (`send`, `fetch` resolves, …) fire on the WebView's
+     * JavaBridge HandlerThread, but `evaluateJavascript` must run on the main
+     * thread — hop through this handler for every evaluator call.
+     */
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+
+    private fun evalOnPage(js: String) {
+        mainHandler.post { pageEvaluator(js) }
+    }
+
+    private fun evalOnPanel(js: String) {
+        mainHandler.post { panelEvaluator?.invoke(js) }
+    }
+
     /** Panel messaging endpoint — set by the panel host while a panel is open. */
     @Volatile
     var panelEvaluator: ((String) -> Unit)? = null
@@ -256,7 +271,7 @@ class PluginSession(
 
     /** Toolbar tap on a plugin without a panel: deliver `hcj.on('action')`. */
     fun emitAction(pluginId: String) {
-        pageEvaluator(PluginInjection.emitEvent(pluginId, "action", "null"))
+        evalOnPage(PluginInjection.emitEvent(pluginId, "action", "null"))
     }
 
     /** Set by the runtime: what to do when a chrome-extension entry is tapped. */
@@ -290,7 +305,7 @@ class PluginSession(
     /** Invoke a `GM_registerMenuCommand` handler registered by a userscript. */
     fun invokeMenuCommand(pluginId: String, name: String) {
         val alias = userscriptAliasFor?.invoke(pluginId) ?: pluginId
-        pageEvaluator(
+        evalOnPage(
             "(function(){var m=window.__WTA_GM_MENU__&&window.__WTA_GM_MENU__[" +
                 org.json.JSONObject.quote(alias) + "];var f=m&&m[" +
                 org.json.JSONObject.quote(name) + "];if(f)try{f()}catch(e){console.error('[GM menu]',e)}})();"
@@ -310,12 +325,12 @@ class PluginSession(
 
     /** A message arrived from the panel surface towards the page script. */
     fun deliverPanelMessageToPage(pluginId: String, json: String) {
-        pageEvaluator(PluginInjection.emitEvent(pluginId, "panel", json))
+        evalOnPage(PluginInjection.emitEvent(pluginId, "panel", json))
     }
 
     /** A message arrived from the page script towards the panel surface. */
     fun deliverPanelMessageToPanel(json: String) {
-        panelEvaluator?.invoke("window.__hcjPanelOnMsg && window.__hcjPanelOnMsg($json);")
+        evalOnPanel("window.__hcjPanelOnMsg && window.__hcjPanelOnMsg($json);")
     }
 
     fun destroy() {
@@ -329,7 +344,7 @@ class PluginSession(
     }
 
     private inner class BridgeHost : PluginBridge.Host {
-        override fun evaluatePageJs(js: String) = pageEvaluator(js)
+        override fun evaluatePageJs(js: String) = evalOnPage(js)
         override fun pluginFor(pluginId: String): Plugin? = this@PluginSession.pluginFor(pluginId)
 
         override fun onBadge(pluginId: String, text: String, color: String) {

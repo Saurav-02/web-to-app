@@ -42,7 +42,7 @@
             '<div class="wta-analyzer-section"><div class="wta-analyzer-section-title">' + T.perf + '</div>' +
             '<div class="wta-analyzer-perf-grid">' +
             '<div class="wta-analyzer-perf-card"><div class="wta-analyzer-perf-num">' + (loadTime > 0 ? loadTime : '-') + '</div><div class="wta-analyzer-perf-label">' + T.loadTime + '</div></div>' +
-            '<div class="wta-analyzer-perf-card" style="background:var(--wta-surface-dim,#eff6ff)"><div class="wta-analyzer-perf-num" style="color:#3b82f6">' + (domReady > 0 ? domReady : '-') + '</div><div class="wta-analyzer-perf-label">' + T.domReady + '</div></div></div></div>' +
+            '<div class="wta-analyzer-perf-card" style="background:var(--wta-surface-dim,#eff6ff)"><div class="wta-analyzer-perf-num" style="color:var(--wta-accent,#3b82f6)">' + (domReady > 0 ? domReady : '-') + '</div><div class="wta-analyzer-perf-label">' + T.domReady + '</div></div></div></div>' +
             '<div class="wta-analyzer-section"><div class="wta-analyzer-section-title">' + T.stats + '</div>' +
             '<div class="wta-analyzer-stat-grid">' +
             [['<svg style="display:block;margin:0 auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>', info.scripts, T.scripts],

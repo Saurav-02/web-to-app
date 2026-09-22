@@ -162,7 +162,7 @@
             '<button class="wta-video-feature-btn" data-wta-action="skipFwd"><span class="wta-video-feature-icon"><svg style="display:block" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 19 22 12 13 5 13 19"/><polygon points="2 19 11 12 2 5 2 19"/></svg></span>' + T.fwd10 + '</button>' +
             '</div></div>';
 
-        if (!v && !isYouTube) return '<div class="wta-video-empty"><div class="wta-video-empty-icon"><svg style="display:block;margin:0 auto" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="13" height="16" rx="2"/><path d="M15 9l7-4v14l-7-4z"/></svg></div><div>' + T.noVideo + '</div></div>';
+        if (!v && !isYouTube) return '<div class="wta-video-empty"><div class="wta-video-empty-icon"><svg style="display:block;margin:0 auto" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="13" height="16" rx="2"/><path d="M15 9l7-4v14l-7-4z"/></svg></div><div>' + T.noVideo + '</div></div>';
         if (!isYouTube) return html + featuresHtml + '</div>';
 
         return html + featuresHtml +

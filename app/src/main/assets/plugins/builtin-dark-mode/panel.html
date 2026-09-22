@@ -5,33 +5,37 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, -apple-system, sans-serif; padding: 20px; text-align: center; color: #1f2937; }
-  .icon { font-size: 52px; margin-bottom: 14px; line-height: 1; }
-  .status { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
-  .desc { font-size: 13px; color: #9ca3af; margin-bottom: 20px; }
-  .btn { width: 100%; padding: 13px; border: none; border-radius: 12px; font-size: 15px; font-weight: 500; cursor: pointer; transition: opacity .15s; }
-  .btn:active { opacity: .8; }
-  .btn.primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
-  .btn.secondary { background: #f3f4f6; color: #374151; }
+  body { font-family: system-ui, -apple-system, sans-serif; padding: 8px 16px 16px; color: var(--wta-on-surface, #1f2937); }
+  .row { display: flex; align-items: center; gap: 12px; padding: 12px 2px; }
+  .row-text { flex: 1; min-width: 0; }
+  .status { font-size: 15px; font-weight: 500; }
+  .desc { font-size: 12px; color: var(--wta-on-surface-variant, #9ca3af); margin-top: 2px; }
+  .switch { position: relative; width: 46px; height: 28px; flex-shrink: 0; border: none; background: none; cursor: pointer; padding: 0; }
+  .switch .track { position: absolute; inset: 0; border-radius: 14px; background: var(--wta-outline, #d1d5db); transition: background .2s; }
+  .switch .thumb { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: left .2s; }
+  .switch[data-state="on"] .track { background: var(--wta-accent, #6366f1); }
+  .switch[data-state="on"] .thumb { left: 21px; }
 </style>
 </head>
 <body>
-  <div class="icon" id="icon">🌙</div>
-  <div class="status" id="status"></div>
-  <div class="desc" id="desc"></div>
-  <button class="btn primary" id="btn"></button>
+  <div class="row">
+    <div class="row-text">
+      <div class="status" id="status"></div>
+      <div class="desc" id="desc"></div>
+    </div>
+    <button class="switch" id="btn" data-state="off" aria-label="toggle">
+      <span class="track"></span><span class="thumb"></span>
+    </button>
+  </div>
 <script>
-  var iconEl = document.getElementById('icon');
   var statusEl = document.getElementById('status');
   var descEl = document.getElementById('desc');
   var btn = document.getElementById('btn');
 
   function render(s) {
-    iconEl.textContent = s.enabled ? '🌙' : '☀️';
     statusEl.textContent = s.enabled ? s.t.on : s.t.off;
     descEl.textContent = s.t.desc;
-    btn.textContent = s.enabled ? s.t.turnOff : s.t.turnOn;
-    btn.className = 'btn ' + (s.enabled ? 'secondary' : 'primary');
+    btn.setAttribute('data-state', s.enabled ? 'on' : 'off');
   }
 
   hcjPanel.onMessage(function (m) {

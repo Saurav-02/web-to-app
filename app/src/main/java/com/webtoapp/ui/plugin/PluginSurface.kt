@@ -54,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -209,14 +210,11 @@ fun PluginToolbarEntries(
             }
         }
         if (hiddenEntries.isNotEmpty() || toolbarEntries.isEmpty()) {
-            val activeCount = hiddenEntries.count { it.matchesCurrentUrl }
+            // Plugin-authored badge only — never an auto "N active" count.
             val explicitBadge = hiddenEntries.firstOrNull { it.badge.isNotBlank() }?.badge
             BadgedBox(
                 badge = {
-                    when {
-                        explicitBadge != null -> Badge { Text(explicitBadge.take(4)) }
-                        activeCount > 0 -> Badge { Text("$activeCount") }
-                    }
+                    if (explicitBadge != null) Badge { Text(explicitBadge.take(4)) }
                 }
             ) {
                 IconButton(onClick = onOpenSheet) {
@@ -245,7 +243,7 @@ fun PluginFloatingHandle(
     modifier: Modifier = Modifier
 ) {
     val entries by PluginHostState.entries.collectAsStateWithLifecycle()
-    val activeCount = entries.count { it.matchesCurrentUrl }
+    val explicitBadge = entries.firstOrNull { it.badge.isNotBlank() }?.badge
     var offsetX by remember { mutableStateOf(0f) }
     var offsetY by remember { mutableStateOf(0f) }
     val density = LocalDensity.current
@@ -263,7 +261,7 @@ fun PluginFloatingHandle(
     ) {
         BadgedBox(
             badge = {
-                if (activeCount > 0) Badge { Text("$activeCount") }
+                if (explicitBadge != null) Badge { Text(explicitBadge.take(4)) }
             }
         ) {
             Surface(
@@ -618,6 +616,24 @@ private fun PluginPanelWebView(
     modifier: Modifier = Modifier
 ) {
     val session = PluginHostState.session
+    // Feed the app's real palette into the panel document: authored panels
+    // style themselves with var(--wta-*) tokens and fall back to light greys
+    // when the host does not define them.
+    val scheme = MaterialTheme.colorScheme
+    val panelThemeHead = remember(scheme) {
+        fun hex(c: Color): String = "#%06X".format(c.toArgb() and 0xFFFFFF)
+        "<style>:root{" +
+            "--wta-surface:${hex(scheme.surface)};" +
+            "--wta-surface-dim:${hex(scheme.surfaceVariant)};" +
+            "--wta-on-surface:${hex(scheme.onSurface)};" +
+            "--wta-on-surface-variant:${hex(scheme.onSurfaceVariant)};" +
+            "--wta-outline:${hex(scheme.outlineVariant)};" +
+            "--wta-accent:${hex(scheme.primary)};" +
+            "--wta-on-accent:${hex(scheme.onPrimary)};" +
+            "--wta-accent-soft:${hex(scheme.primaryContainer)};" +
+            "--wta-danger:${hex(scheme.error)};" +
+            "}body{background:${hex(scheme.surface)};color:${hex(scheme.onSurface)}}</style>"
+    }
     AndroidView(
         modifier = modifier,
         factory = { ctx ->
@@ -630,6 +646,7 @@ private fun PluginPanelWebView(
             chromeWv ?: WebView(ctx).apply {
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
+                setBackgroundColor(scheme.surface.toArgb())
                 webViewClient = object : WebViewClient() {}
                 session?.panelEvaluator = { js ->
                     evaluateJavascript(js, null)
@@ -640,7 +657,7 @@ private fun PluginPanelWebView(
                         addJavascriptInterface(panelBridge, "__hcjPanelBridge")
                     }
                     val bootstrap = PluginInjection.panelBootstrap(pid)
-                    val html = injectPanelBootstrap(rawHtml, bootstrap)
+                    val html = injectPanelBootstrap(rawHtml, bootstrap, panelThemeHead)
                     loadDataWithBaseURL(request.baseUrl, html, "text/html", "UTF-8", null)
                 } ?: run {
                     request.url.takeIf { it.isNotBlank() }?.let { loadUrl(it) }
@@ -657,9 +674,9 @@ private fun PluginPanelWebView(
     )
 }
 
-/** Inject the hcjPanel bootstrap into authored panel HTML ahead of its scripts. */
-private fun injectPanelBootstrap(html: String, bootstrap: String): String {
-    val tag = "<script>$bootstrap</script>"
+/** Inject the hcjPanel bootstrap + theme vars into authored panel HTML ahead of its scripts. */
+private fun injectPanelBootstrap(html: String, bootstrap: String, themeHead: String): String {
+    val tag = "<script>$bootstrap</script>$themeHead"
     Regex("<head[^>]*>", RegexOption.IGNORE_CASE).find(html)?.let {
         return html.substring(0, it.range.last + 1) + tag + html.substring(it.range.last + 1)
     }

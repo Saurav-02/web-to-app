@@ -290,7 +290,6 @@ val syncShellRuntimeSources by tasks.registering(Sync::class) {
         "**/core/plugin/PluginStore.kt",
         "**/core/plugin/PluginImporter.kt",
         "**/core/plugin/PluginMigrator.kt",
-        "**/core/plugin/PluginPrefs.kt",
 
         // Strings.kt / StringsA-E.kt carry the full 10-language editor surface
         // (~4.3 MB source, mostly editor-only text). Shell gets reduced copies
