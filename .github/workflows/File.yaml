@@ -30,13 +30,12 @@ jobs:
       - name: 🔑 Generate Random Signing Keystore
         run: |
           STORE_PASS=$(openssl rand -base64 32 | tr -dc 'A-Za-z0-9' | head -c 24)
-          KEY_PASS=$(openssl rand -base64 32 | tr -dc 'A-Za-z0-9' | head -c 24)
           KEY_ALIAS="release-$(date +%s)"
 
           keytool -genkeypair -v \
             -keystore "${{ github.workspace }}/release.keystore.jks" \
             -storepass "$STORE_PASS" \
-            -keypass "$KEY_PASS" \
+            -keypass "$STORE_PASS" \
             -alias "$KEY_ALIAS" \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -dname "CN=PixelMusic, OU=Dev, O=Dev, L=Unknown, S=Unknown, C=IN"
@@ -45,7 +44,7 @@ jobs:
             echo "signing.storeFile=${{ github.workspace }}/release.keystore.jks"
             echo "signing.storePassword=$STORE_PASS"
             echo "signing.keyAlias=$KEY_ALIAS"
-            echo "signing.keyPassword=$KEY_PASS"
+            echo "signing.keyPassword=$STORE_PASS"
           } >> local.properties
 
       - name: 📈 Increment Version Code (+1) & Patch Version (+0.0.1)
@@ -118,4 +117,3 @@ jobs:
               gh release delete "$tag" --cleanup-tag -y || true
             fi
           done
-          
