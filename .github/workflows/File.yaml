@@ -77,7 +77,7 @@ jobs:
           echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
 
       - name: 🔨 Build Release APK
-        run: ./gradlew :app:assembleRelease
+        run: ./gradlew :app:assembleStandardRelease --build-cache --parallel
 
       - name: 💾 Commit & Push Version Bump
         run: |
@@ -104,7 +104,7 @@ jobs:
           tag_name: ${{ env.TAG_NAME }}
           name: 🔧 Sub-Release ${{ env.TAG_NAME }}
           body: ${{ env.RELEASE_BODY }}
-          files: app/build/outputs/apk/release/*.apk
+          files: app/build/outputs/apk/standard/release/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
