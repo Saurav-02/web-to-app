@@ -1,0 +1,121 @@
+name: 🧰 Sub Release Build (Minor Update)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: 🛠️ Build Signed Sub-Release APK & Publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: ☕ Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: 🔐 Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: 🔑 Generate Random Signing Keystore
+        run: |
+          STORE_PASS=$(openssl rand -base64 32 | tr -dc 'A-Za-z0-9' | head -c 24)
+          KEY_PASS=$(openssl rand -base64 32 | tr -dc 'A-Za-z0-9' | head -c 24)
+          KEY_ALIAS="release-$(date +%s)"
+
+          keytool -genkeypair -v \
+            -keystore "${{ github.workspace }}/release.keystore.jks" \
+            -storepass "$STORE_PASS" \
+            -keypass "$KEY_PASS" \
+            -alias "$KEY_ALIAS" \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=PixelMusic, OU=Dev, O=Dev, L=Unknown, S=Unknown, C=IN"
+
+          {
+            echo "storeFile=${{ github.workspace }}/release.keystore.jks"
+            echo "storePassword=$STORE_PASS"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASS"
+          } > keystore.properties
+
+      - name: 📈 Increment Version Code (+1) & Patch Version (+0.0.1)
+        id: versioning
+        run: |
+          BASE_CODE=$(grep "^APP_VERSION_CODE=" gradle.properties | cut -d'=' -f2 | tr -d '\r' | tr -d ' ')
+          RAW_NAME=$(grep "^APP_VERSION_NAME=" gradle.properties | cut -d'=' -f2 | tr -d '\r' | tr -d ' ')
+
+          IFS='.' read -r MAJOR MINOR PATCH EXTRA <<< "$RAW_NAME"
+          MAJOR=${MAJOR:-4}
+          MINOR=${MINOR:-4}
+          PATCH=${PATCH:-0}
+
+          NEW_PATCH=$((PATCH + 1))
+          NEW_NAME="${MAJOR}.${MINOR}.${NEW_PATCH}"
+          NEW_CODE=$((BASE_CODE + 1))
+
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG_NAME=${GITHUB_REF#refs/tags/}
+            NEW_NAME=${TAG_NAME#v}
+          else
+            TAG_NAME="v${NEW_NAME}"
+          fi
+
+          sed -i "s/^APP_VERSION_CODE=.*/APP_VERSION_CODE=${NEW_CODE}/" gradle.properties
+          sed -i "s/^APP_VERSION_NAME=.*/APP_VERSION_NAME=${NEW_NAME}/" gradle.properties
+
+          echo "NEW_CODE=${NEW_CODE}" >> $GITHUB_ENV
+          echo "NEW_NAME=${NEW_NAME}" >> $GITHUB_ENV
+          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
+
+      - name: 🔨 Build Release APK
+        run: ./gradlew :app:assembleRelease
+
+      - name: 💾 Commit & Push Version Bump
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add gradle.properties
+          git commit -m "chore: bump version to v${{ env.NEW_NAME }} (Code: ${{ env.NEW_CODE }}) [skip ci]" || echo "No changes to commit"
+          git push
+
+      - name: 📝 Read Release Notes from File
+        run: |
+          echo "RELEASE_BODY<<EOF" >> $GITHUB_ENV
+          if [ -f changelog.txt ]; then
+            cat changelog.txt >> $GITHUB_ENV
+          else
+            echo "✨ Minor update and bug fixes." >> $GITHUB_ENV
+          fi
+          echo -e "\n\n---\n*📦 Current Version Code: ${{ env.NEW_CODE }}*" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          name: 🔧 Sub-Release ${{ env.TAG_NAME }}
+          body: ${{ env.RELEASE_BODY }}
+          files: app/build/outputs/apk/release/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🧹 Clean Up Older Releases (Keep Last 3)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release list --limit 100 --json tagName -q ".[].tagName" | tail -n +4 | while read -r tag; do
+            if [ -n "$tag" ] && [ "$tag" != "${{ env.TAG_NAME }}" ]; then
+              gh release delete "$tag" --cleanup-tag -y || true
+            fi
+          done
+          
