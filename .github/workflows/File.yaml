@@ -42,11 +42,11 @@ jobs:
             -dname "CN=PixelMusic, OU=Dev, O=Dev, L=Unknown, S=Unknown, C=IN"
 
           {
-            echo "storeFile=${{ github.workspace }}/release.keystore.jks"
-            echo "storePassword=$STORE_PASS"
-            echo "keyAlias=$KEY_ALIAS"
-            echo "keyPassword=$KEY_PASS"
-          } > keystore.properties
+            echo "signing.storeFile=${{ github.workspace }}/release.keystore.jks"
+            echo "signing.storePassword=$STORE_PASS"
+            echo "signing.keyAlias=$KEY_ALIAS"
+            echo "signing.keyPassword=$KEY_PASS"
+          } >> local.properties
 
       - name: 📈 Increment Version Code (+1) & Patch Version (+0.0.1)
         id: versioning
