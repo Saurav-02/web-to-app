@@ -91,6 +91,7 @@ data class DeviceDisguiseConfig(
         DeviceBrand.XIAOMI -> "25015PN20G"
         DeviceBrand.OPPO -> "PHH110"
         DeviceBrand.VIVO -> "V2432A"
+        DeviceBrand.REALME -> "RMX5032"
         DeviceBrand.ONEPLUS -> "CPH2691"
         DeviceBrand.SONY -> "XQ-EC72"
         DeviceBrand.MOTOROLA -> "XT2451-2"
@@ -257,6 +258,7 @@ enum class DeviceBrand(
     XIAOMI("Xiaomi", setOf(DeviceType.PHONE), setOf(DeviceOS.ANDROID)),
     OPPO("OPPO", setOf(DeviceType.PHONE), setOf(DeviceOS.ANDROID)),
     VIVO("vivo", setOf(DeviceType.PHONE), setOf(DeviceOS.ANDROID)),
+    REALME("realme", setOf(DeviceType.PHONE), setOf(DeviceOS.ANDROID)),
     ONEPLUS("OnePlus", setOf(DeviceType.PHONE), setOf(DeviceOS.ANDROID)),
     SONY("Sony", setOf(DeviceType.PHONE), setOf(DeviceOS.ANDROID)),
     MOTOROLA("Motorola", setOf(DeviceType.PHONE), setOf(DeviceOS.ANDROID)),
@@ -344,7 +346,8 @@ object DevicePresets {
 
         DevicePreset("X300 Ultra", DeviceType.PHONE, DeviceOS.ANDROID, DeviceBrand.VIVO, "V2432A", "X300 Ultra", 412, 915, 3.5f),
         DevicePreset("X300 Pro", DeviceType.PHONE, DeviceOS.ANDROID, DeviceBrand.VIVO, "V2431A", "X300 Pro", 412, 892, 3f),
-
+        DevicePreset("realme P3 Pro 5G", DeviceType.PHONE, DeviceOS.ANDROID, DeviceBrand.REALME, "RMX5032", "realme P3 Pro 5G", 412, 915, 3.5f),
+        
         DevicePreset("Magic 8 Pro", DeviceType.PHONE, DeviceOS.ANDROID, DeviceBrand.HONOR, "FNE-AN10", "Magic 8 Pro", 412, 915, 3.5f),
 
         DevicePreset("Xperia 1 VII", DeviceType.PHONE, DeviceOS.ANDROID, DeviceBrand.SONY, "XQ-EC72", "Xperia 1 VII", 411, 960, 3.5f),
